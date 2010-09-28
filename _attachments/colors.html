@@ -1,0 +1,25 @@
+<!doctype html>
+<style type="text/css">
+.color {
+	font-size: 100px;
+	height: 1em;
+	width: 1em;
+	float: left;
+}
+br {
+	clear: both;
+}
+</style>
+<body>
+<script>
+var colors = '000,5e320b,900000,006600,0000f3;'+
+	'fff,fffa53,ffd1fc,8ffa8e,80e9fd';
+//'f00,f0f,00f,0ff,0f0,ff0';
+document.body.innerHTML = colors.split(';').map(function (colors) {
+	return colors.split(',').map(function(color) {
+		return '<div class="color" style="background-color:#' + color + '"><'+'/div>';
+	}).join('');
+}).join('<br>');
+</script>
+</body>
+</html>

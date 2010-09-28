@@ -1,0 +1,1 @@
+[{"to": "index.html", "from": ""}, {"to": "../../*", "from": "db/*"}, {"to": "images/favicon.ico", "from": "favicon.ico"}, {"to": "*", "from": "*"}]

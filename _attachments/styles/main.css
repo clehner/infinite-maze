@@ -1,0 +1,177 @@
+/* All */
+
+body {
+	width: 100%;
+	margin: 0;
+	font: 12pt Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 { margin: 0; }
+
+.hidden {
+	display: none;
+}
+
+/* #header */
+
+#header {
+	height: 32px;
+	bottom: auto;
+	text-align: center;
+	background-color: #60ccfe;
+	z-index: 1;
+	border-bottom: 2px solid #005DE5;
+	
+	/*box-shadow: 0 2px 15px #03a;
+	-webkit-box-shadow: 0 2px 15px #03a;
+	-moz-box-shadow: 0 2px 15px #03a;*/
+}
+
+#title {
+	margin: 0;
+	display: inline;
+	font: 24px "Bodoni SvtyTwo ITC TT", Century, "Lucida Bright", "Snell Roundhand", "Liberation Serif", Times, serif;
+	line-height: 32px;
+	font-weight: normal;
+	letter-spacing: 1px;
+}
+
+#header nav {
+	line-height: 32px;
+	min-width: 20%;
+}
+#header nav, x:-moz-any-link {
+	margin-top: -2em;
+}
+#header nav, x:-moz-any-link, x:default {
+	margin-top: 0;
+}
+
+#leftnav {
+	float: left;
+	text-align: left;
+	margin-left: 8px;
+}
+
+#rightnav {
+	float: right;
+	text-align: right;
+	margin-right: 8px;
+}
+
+#header nav a {
+	text-decoration: none;
+	padding: 5px;
+	background-color: #60ccfe;
+	color: #04e; /*#03f*/
+	border: 1px solid #6cf;
+	border-radius: 10px;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+}
+
+#header nav a:hover {
+	/*-webkit-box-shadow: inset #cdf 0px 0px 10px;*/
+	/*background: -webkit-gradient(radial, center center, 0, center center, 16, from(#cdf), to(rgba(255, 255,255,0)));*/
+	/*background-color: rgba(192, 225, 255, 0.6);*/
+	background-color: #AEE4FF; /*9ad9ff*/
+	
+	/* header bg */
+	box-shadow: inset #60ccfe 0px 0px 5px;
+	-webkit-box-shadow: inset #60ccfe 0px 0px 5px;
+	-moz-box-shadow: inset #60ccfe 0px 0px 5px;
+}
+
+/* Main */
+
+#main-container {
+	top: 34px;
+	/*background-color: #F6D3CF;*/
+	overflow: hidden;
+	/*min-height: 500px;*/
+}
+
+#main > :first-child {
+	margin: 8px;
+}
+
+/* Mazes */
+
+.layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.maze {
+	background-color: white;
+}
+
+.in, .in * {
+	cursor: crosshair;
+}
+
+.centerer {
+	top: 50%;
+	left: 50%;
+	/*-webkit-transition-property: top, left;
+	-webkit-transition-duration: 500ms;*/
+}
+
+canvas, .maze .layer {
+	/* for ipad/iphone */
+	-webkit-user-select: none;
+}
+
+/*
+.tile {
+	border: 1px solid grey;
+}
+*/
+
+.marker {
+	position: absolute;
+	width: 25px;
+	height: 25px;
+	border: 1px solid rgb(0, 200, 0);
+	border-radius: 13px;
+	background-color: rgb(127, 255, 127);
+	background-color: rgba(0, 255, 0, 0.5);
+	margin: -13px;
+	opacity: .5;
+	/*-webkit-transition: opacity 250ms ease-out;*/
+}
+
+.marker.highlight, .marker:hover {
+	opacity: 1;
+}
+
+.help-window {
+	position: absolute;
+	width: 200px;
+	margin-left: -100px;
+	opacity: 0.85;
+	color: white;
+	background-color: black;
+	border: 12px solid black;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
+	-webkit-box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
+	-moz-box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
+	/*-webkit-transition: opacity 250ms ease-out;*/
+}
+
+.player-marker {
+	position: absolute;
+	width: 5px;
+	height: 5px;
+	/*border: 1px solid #f00;*/
+	/*background-color: rgba(255, 0, 0, 0.75);*/
+	border-radius: 5px;
+	background-color: #f00;
+	margin: -2px 0 0 -2px;
+	z-index: 2;
+}

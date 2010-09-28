@@ -1,0 +1,24 @@
+Version control?
+Set up maze storage directory structure. [done]
+Make single-image maze viewer. [done]
+	draw paths in a tiled overlay canvas [done]
+	restrict paths to light parts of the image. [done]
+	implement some path-finding algorithm instead of trying to draw straight lines
+Make tiled-image maze viewer. [done]
+Add support for viewing/playing weave mazes.
+Make maze editor
+	allow image uploading
+	support weave mazes
+	server-side scripting
+	accounts?
+Make wave gadget.
+	playback/history?
+Show position of people in mazes, in real time.
+	websockets, Node.js
+Make infinite maze site and editor.
+Get hosting.
+	host: VPS, for Node.js?
+	for images: cloud storage? Amazon S3?
+
+Make login/signup page
+Make draw page
