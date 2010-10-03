@@ -1,4 +1,4 @@
-Version control?
+Version control [done]
 Set up maze storage directory structure. [done]
 Make single-image maze viewer. [done]
 	draw paths in a tiled overlay canvas [done]
