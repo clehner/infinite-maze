@@ -11,11 +11,15 @@ br {
 }
 </style>
 <body>
+<div id="colors">
+000,5e320b,900000,006600,0000f0
+fff,fffa53,ffd1fc,8ffa8e,80e9fd
+
+f00,f0f,00f,0ff,0f0,ff0
+</div>
 <script>
-var colors = '000,5e320b,900000,006600,0000f3;'+
-	'fff,fffa53,ffd1fc,8ffa8e,80e9fd';
-//'f00,f0f,00f,0ff,0f0,ff0';
-document.body.innerHTML = colors.split(';').map(function (colors) {
+var colors = document.getElementById('colors');
+colors.innerHTML = colors.innerHTML.trim().split('\n').map(function (colors) {
 	return colors.split(',').map(function(color) {
 		return '<div class="color" style="background-color:#' + color + '"><'+'/div>';
 	}).join('');
