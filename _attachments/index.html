@@ -14,7 +14,8 @@
 		<script src="scripts/utils.js"></script>
 		<script src="scripts/transitions.js"></script>
 		<script src="scripts/couchdb.js"></script>
-		<script src="scripts/maze.js"></script>
+		<script src="scripts/mazeviewer.js"></script>
+		<script src="scripts/site.js"></script>
 	</head>
 	<body>
 		<div id="header" class="layer">
@@ -52,12 +53,7 @@
 			</div>
 		</div>
 		<script>
-			var init = MazeController.init;
-			if (!window.JSON) {
-				loadScript("/scripts/json2.js", init);
-			} else {
-				init();
-			}
+			init();
 		</script>
 	</body>
 </html>

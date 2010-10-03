@@ -1,0 +1,78 @@
+.layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.maze {
+	background-color: white;
+}
+
+.in, .in * {
+	cursor: crosshair;
+}
+
+.centerer {
+	top: 50%;
+	left: 50%;
+	/*-webkit-transition-property: top, left;
+	-webkit-transition-duration: 500ms;*/
+}
+
+canvas, .maze .layer {
+	/* for ipad/iphone */
+	-webkit-user-select: none;
+}
+
+/*
+.tile {
+	border: 1px solid grey;
+}
+*/
+
+.marker {
+	position: absolute;
+	width: 25px;
+	height: 25px;
+	border: 1px solid rgb(0, 200, 0);
+	border-radius: 13px;
+	background-color: rgb(127, 255, 127);
+	background-color: rgba(0, 255, 0, 0.5);
+	margin: -13px;
+	opacity: .5;
+	/*-webkit-transition: opacity 250ms ease-out;*/
+}
+
+.marker.highlight, .marker:hover {
+	opacity: 1;
+}
+
+.help-window {
+	position: absolute;
+	width: 200px;
+	margin-left: -100px;
+	opacity: 0.85;
+	color: white;
+	background-color: black;
+	border: 12px solid black;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
+	-webkit-box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
+	-moz-box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
+	/*-webkit-transition: opacity 250ms ease-out;*/
+}
+
+.player-marker {
+	position: absolute;
+	width: 5px;
+	height: 5px;
+	/*border: 1px solid #f00;*/
+	/*background-color: rgba(255, 0, 0, 0.75);*/
+	border-radius: 5px;
+	background-color: #f00;
+	margin: -2px 0 0 -2px;
+	z-index: 2;
+}

@@ -89,3 +89,57 @@ Function.prototype.unbind = function () {
 	}
 	setInterval(pollHash, 100);
 })();
+
+function line(x0, y0, x1, y1, point) {
+	var x = Math.floor(x0);
+	var y = Math.floor(y0);
+	
+	if (point(x, y) === false) {
+		return;
+	}
+	
+	var xFloor1 = Math.floor(x1);
+	var yFloor1 = Math.floor(y1);
+	
+	if (x == xFloor1 && y == yFloor1) {
+		// single pixel
+		return;
+	}
+	
+	var yStep = y0 < y1 ? 1 : -1;
+	var xStep = x0 < x1 ? 1 : -1;
+	var xBorderStep = x0 < x1 ? 1 : 0;
+	var slope = (y1 - y0) / (x1 - x0);
+	var yInt = y0 - slope * x0;
+	
+	var j = 0;
+	
+	do {
+		// check y of left or right border
+		var x2 = x + xBorderStep;
+		var y2 = Math.floor(slope * x2 + yInt);
+		if (y2 == y) {
+			// move to the right
+			x += xStep;
+			y = y2;
+		} else {
+			// move vertically
+			y += yStep;
+		}
+		if (point(x, y) === false) { return; }
+	
+		if (j++ > 1000) throw new Error("Too much iteration.");
+	} while (x != xFloor1 || y != yFloor1);
+		
+	/*while (x != xFloor1 || y != yFloor1) {
+		// right border
+		var x2 = x + 1;
+		var y2 = Math.floor(slope * x2 + yInt);
+		while (y2 != y && y != yFloor1) {
+			point(x, y);
+			y += yStep;
+		}
+		x = x2;
+		point(x, y);
+	}*/
+}

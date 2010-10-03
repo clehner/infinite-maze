@@ -1,232 +1,3 @@
-Couch.urlPrefix = "/couchdb";
-
-var supportsTouch = !!window.Touch;
-
-if (window.applicationCache &&
-	applicationCache.status != applicationCache.UNCACHED) {
-	
-	applicationCache.addEventListener("updateready", function () {
-		// Todo:
-		// Make sure something important isn't happening before we refresh.
-		applicationCache.update();
-		applicationCache.swapCache();
-		location.reload();
-	}, false);
-}
-
-function line(x0, y0, x1, y1, point) {
-	var x = Math.floor(x0);
-	var y = Math.floor(y0);
-	
-	if (point(x, y) === false) {
-		return;
-	}
-	
-	var xFloor1 = Math.floor(x1);
-	var yFloor1 = Math.floor(y1);
-	
-	if (x == xFloor1 && y == yFloor1) {
-		// single pixel
-		return;
-	}
-	
-	var yStep = y0 < y1 ? 1 : -1;
-	var xStep = x0 < x1 ? 1 : -1;
-	var xBorderStep = x0 < x1 ? 1 : 0;
-	var slope = (y1 - y0) / (x1 - x0);
-	var yInt = y0 - slope * x0;
-	
-	var j = 0;
-	
-	do {
-		// check y of left or right border
-		var x2 = x + xBorderStep;
-		var y2 = Math.floor(slope * x2 + yInt);
-		if (y2 == y) {
-			// move to the right
-			x += xStep;
-			y = y2;
-		} else {
-			// move vertically
-			y += yStep;
-		}
-		if (point(x, y) === false) { return; }
-	
-		if (j++ > 1000) throw new Error("Too much iteration.");
-	} while (x != xFloor1 || y != yFloor1);
-		
-	/*while (x != xFloor1 || y != yFloor1) {
-		// right border
-		var x2 = x + 1;
-		var y2 = Math.floor(slope * x2 + yInt);
-		while (y2 != y && y != yFloor1) {
-			point(x, y);
-			y += yStep;
-		}
-		x = x2;
-		point(x, y);
-	}*/
-}
-
-function Page(title, content) {
-	this.page = document.createElement("div");
-	this.element = document.createElement("div");
-	if (title) this.title = title;
-	if (content) this.element.innerHTML = content;
-}
-Page.prototype = {
-	element: null,
-	title: "",
-	onLoad: function () {},
-	onUnload: function () {}
-};
-
-function MazesListPage(mazesDb) {
-	this.title = "Mazes";
-	this.element = document.getElementById("mazes-list-page");
-	var list = document.getElementById("mazes-list");
-	
-	mazesDb.view("maze/all", {
-		success: function (data) {
-			renderList(data.rows);
-		},
-		error: function () {
-			list.innerHTML = "Unable to load the list.";
-		}
-	});
-	
-	function renderList(rows) {
-		//list.innerHTML = "";
-		for (var i = 0; i < rows.length; i++) {
-			var row = rows[i];
-			var li = document.createElement("li");
-			
-				var href = "#/mazes/" + encodeURIComponent(row.id);
-				var title = row.value.title;
-				var a = document.createElement("a");
-				a.setAttribute("href", href);
-				a.appendChild(document.createTextNode(title));
-				li.appendChild(a);
-			
-			list.appendChild(li);
-		}
-	}
-};
-
-function SimplePage(id) {
-	this.element = document.getElementById(id);
-	this.title = this.element.getAttribute("title");
-}
-
-var getSimplePage = function (id) {
-	return new SimplePage(id);
-}.memoized();
-
-// Maze Controller
-
-var mazesDb = Couch.db("maze");//db");
-
-var pageHandlers = {
-	"": getSimplePage.curry("home-page"),
-	"_404": getSimplePage.curry("not-found-page"),
-	"login": getSimplePage.curry("login-page"),
-	"draw": getSimplePage.curry("draw-page"),
-	"mazes": function (path) {
-		var mazeId = path[0];
-		if (!mazeId) {
-			return new MazesListPage(mazesDb);
-		}
-		return new MazePage(mazeId, mazesDb);
-	}
-};
-
-function updateHash() {
-	MazeController.setPath(location.hash.substr(1));
-}
-	
-function init() {
-	var container = document.getElementById("main");
-	var titleElement = document.getElementById("title");
-	MazeController = new Site(pageHandlers, container, titleElement);
-	
-	if (supportsTouch) {
-		document.body.addEventListener("touchmove", function (e) {
-			e.preventDefault();
-		}, false);
-	}
-	
-	window.addEventListener("hashchange", updateHash, false);
-	updateHash();
-}
-
-var MazeController = {init: init};
-
-function Site(dirHandlers, main, titleElement) {
-	var self = this;
-	
-	// clear the title and replace it with our own text node.
-	titleElement.innerHTML = "";
-	var titleText = titleElement.appendChild(document.createTextNode(""));
-	
-	var currentPage;
-
-	var getPageAtPath = function (path) {
-		if (path[0] == "/") path = path.substr(1);
-		var dirs = path.split("/");
-		for (
-			var handlers = dirHandlers, dir;
-			handlers;
-			dir = dirs.shift(), handlers = handlers[dir]
-		) {
-			if (typeof handlers == "function") {
-				return handlers(dirs);
-			}
-		}
-		if (typeof dirHandlers._404 == "function") {
-			return dirHandlers._404(path);
-		}
-		return new Page(); // default page;
-	}.memoized();
-	
-	this.setPath = function (path) {
-		this.setPage(getPageAtPath(path));
-	};
-	
-	this.setPage = function (page) {
-		if (currentPage) {
-			if (page == currentPage) return;
-			if (currentPage.onUnload) currentPage.onUnload();
-			main.removeChild(currentPage.element);
-		}
-		currentPage = page;
-		if (!page.element) {
-			throw new Error("Page at \"" + path + "\"has no element");
-		}
-		main.appendChild(page.element);
-		self.updateTitle();
-		if (page.onLoad) page.onLoad();
-	};
-	
-	this.updateTitle = function () {
-		titleText.nodeValue = currentPage.title || "";
-	};
-	
-	/*var prefPrefix = "mazePrefs.";
-	
-	var getPref = window.localStorage ? function (name) {
-		return localStorage.getItem(prefPrefix + name);
-	} : function () {};
-	
-	var setPref = window.localStorage ? function (name, value) {
-		localStorage.setItem(prefPrefix + name, value);
-	} : function () {};*/
-	
-	/*,
-	getPref: getPref,
-	setPref: setPref
-	*/
-}
-
 // Maze stuff
 
 function HelpWindow(options) {
@@ -447,34 +218,48 @@ TiledCanvas.prototype = {
 	}
 };
 
-// Maze
+// MazeViewer
 
-function MazePage(id, mazesDb) {
-	this.url = mazesDb.uri + Couch.encodeDocId(id) + "/";
-	this.element = document.createElement("div");
-	
+function MazeViewer(options) {
 	this.bindMethods(this.onResize, this.onMouseDown, this.onMouseDrag,
 		this.onMouseUp, this.onTouchStart, this.onTouchMove, this.onTouchEnd);
 
-	window.maze = this;
+	this.element = document.createElement("div");
+	this.element.className = "layer maze";
+	
+	this.centerer = document.createElement("div");
+	this.centerer.className = "layer centerer";
+	this.element.appendChild(this.centerer);
+	
+	if (options) {
+		if (options.tileSize) this.tileSize = options.tileSize;
+		if (options.startPos) this.startPos = options.startPos;
+		if (options.getTileSrc) this.getTileSrc = options.getTileSrc;
+	}
 
-	mazesDb.openDoc(id, {
-		success: this.loadDoc.bind(this),
-		error: this.fail.bind(this),
-	});
+	this.mazeCanvas = new TiledCanvas(this.tileSize[0], this.tileSize[1]);
+	this.mazeCanvas.initTile = this.initMazeTile.bind(this);
+	this.centerer.appendChild(this.mazeCanvas.element);
+	
+	// Create player marker, but don't add it until we enter the maze.
+	this.playerMarker = document.createElement("div");
+	this.playerMarker.className = "player-marker";
+	
+	this.setPosition(this.startPos[0], this.startPos[1]);
+	
+	this.showStartMarker();
+	this.showHelpWindow();
+	
+	//this.updateViewport();
 }
 
-MazePage.prototype = {
-	constructor: MazePage,
+MazeViewer.prototype = {
+	constructor: MazeViewer,
 	
-	doc: null,
-	url: "",
-	
-	element: null,
+	element: null, // contains the whole maze viewer
 	centerer: null,
 	
-	title: "",
-	rendered: false,
+	//title: "",
 	entered: false,
 	mazeCanvas: null, // TiledCanvas
 	overlay: null, // TiledCanvas
@@ -484,41 +269,19 @@ MazePage.prototype = {
 	offsetY: NaN,
 	playerMarker: HTMLDivElement,
 	tileSize: [256, 256],
-
-	loadDoc: function (doc) {
-		if (!doc) {
-			alert('Error, no maze doc!');
-			return;
-		}
-		this.doc = doc;
-		this.render();
-		this.title = doc.title;
-		MazeController.updateTitle();
-	},
+	startPos: [0, 0],
 	
-	fail: function () {
-		this.title = "Maze?";
-		this.element.innerHTML = "There is no maze with that name.";
-		MazeController.updateTitle();
-	},
-	
-	onLoad: function () {
+	load: function () {
 		window.addEventListener("resize", this.onResize, false);
 		window.addEventListener("orientationchange", this.onResize, false);
+		this.updateViewport();
 	},
 	
-	onUnload: function () {
+	unload: function () {
 		window.removeEventListener("resize", this.onResize, false);
 		window.removeEventListener("orientationchange", this.onResize, false);
 	},
-	
-	/*renderInto: function (container) {
-		MazeController.setTitle(this.doc.title);
-		this.container = container;
-		this.render();
-		container.appendChild(this.element);
-	},*/
-	
+		
 	bindMethods: function () {
 		for (var i = 0; i < arguments.length; i++) {
 			var method = arguments[i];
@@ -531,56 +294,23 @@ MazePage.prototype = {
 		}
 	},
 	
-	render: function () {
-		if (this.rendered) return;
-		this.rendered = true;
-		
-		this.element.className = "layer maze";
-		
-		this.centerer = document.createElement("div");
-		this.centerer.className = "layer centerer";
-		this.element.appendChild(this.centerer);
-	
-		var tileSize = this.doc.tile_size || this.tileSize;
-		this.mazeCanvas = new TiledCanvas(tileSize[0], tileSize[1]);
-		this.mazeCanvas.initTile = this.initMazeTile.bind(this);
-		this.centerer.appendChild(this.mazeCanvas.element);
-		
-		// Create player marker, but don't add it until we enter the maze.
-		this.playerMarker = document.createElement("div");
-		this.playerMarker.className = "player-marker";
-		
-		//this.setPosition(this.doc.start[0], this.doc.start[1]);
-		this.setPosition.apply(this, this.doc.start);
-		
-		this.showStartMarker();
-		
-		// Add a help window if the user is new.
-		//if (!MazeController.getPref("userHasClosedHelp")) {
-			this.showHelpWindow();
-		//}
-	
-		this.updateViewport();
-	},
+	// override in instances or subclasses
+	getTileSrc: function (x, y) {},
 	
 	initMazeTile: function (tile, x, y) {
-		var tileSrc = (this.doc.tiles[y] || {})[x];
-		if (tileSrc && (tileSrc in this.doc._attachments)) {
-		
-		//var isAttached = (tileSrc in this.doc.attachments);
-		//var isAbsolute = (tileSrc[0] == "/") || (!tileSrc.indexOf("http:"));
-		//if (isAttached || isAbsolute) {
-			var img = new Image();
-			img.onload = tile.drawImage.bind(tile, img);
-			//img.onload = tile.ctx.drawImage.bind(tile.ctx, img, 0, 0);
-			img.src = this.url + tileSrc;
-		}
+		this.getTileSrc(x, y, function (tileSrc) {
+			if (tileSrc) {
+				var img = new Image();
+				img.onload = tile.drawImage.bind(tile, img);
+				img.src = tileSrc;
+			}
+		});
 	},
 	
 	showStartMarker: function () {
-		var marker = this.startMarker = new Marker({
-			x: this.doc.start[0],
-			y: this.doc.start[1]
+		var marker = this.startPosMarker = new Marker({
+			x: this.startPos[0],
+			y: this.startPos[1]
 		});
 		if (supportsTouch) {
 			marker.element.addEventListener("touchmove",
@@ -600,9 +330,9 @@ MazePage.prototype = {
 		var helpWindow = this.helpWindow = new HelpWindow({
 			content: "Move your mouse through the maze, starting here!"
 		});
-		helpWindow.style.left = this.doc.start[0] + "px";
-		helpWindow.style.top = this.doc.start[1] - 80 + "px";
-		var marker = this.startMarker;
+		helpWindow.style.left = this.startPos[0] + "px";
+		helpWindow.style.top = this.startPos[1] - 80 + "px";
+		var marker = this.startPosMarker;
 		helpWindow.onmouseover = marker.highlight.bind(marker);
 		helpWindow.onmouseout = marker.unhighlight.bind(marker);
 		this.centerer.appendChild(helpWindow);
@@ -618,9 +348,7 @@ MazePage.prototype = {
 	},
 	
 	onResize: function () {
-		if (this.rendered) {
-			this.updateViewport();
-		}
+		this.updateViewport();
 	},
 	
 	enterMaze: function () {
@@ -630,11 +358,11 @@ MazePage.prototype = {
 		this.element.className = "layer maze in";
 		
 		// hide start marker
-		Transition(this.startMarker.element, {opacity: 0}, 250,
+		Transition(this.startPosMarker.element, {opacity: 0}, 250,
 			this.centerer.removeChild.bind(
-			this.centerer, this.startMarker.element)
+			this.centerer, this.startPosMarker.element)
 		);
-		delete this.startMarker;
+		delete this.startPosMarker;
 		
 		
 		this.hideHelpWindow();
@@ -683,7 +411,7 @@ MazePage.prototype = {
 		for (var el = this.centerer; el; el = el.offsetParent) {
 			x += el.offsetLeft;
 			y += el.offsetTop;
-		};
+		}
 		this.offsetX = x;
 		this.offsetY = y;
 	},
@@ -711,6 +439,10 @@ MazePage.prototype = {
 	
 	updateViewport: function () {
 		var parent = this.element.offsetParent; //this.container
+		if (!parent) {
+			mazeCanvas.setVisibleTiles([]);
+			return;
+		}
 		var width = parent.offsetWidth;
 		var height = parent.offsetHeight;
 		var mazeCanvas = this.mazeCanvas;
