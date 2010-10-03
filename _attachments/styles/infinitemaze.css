@@ -1,3 +1,9 @@
+body {
+	width: 100%;
+	margin: 0;
+	font: 12pt Arial, sans-serif;
+}
+
 #main {
 	overflow: hidden;
 }
