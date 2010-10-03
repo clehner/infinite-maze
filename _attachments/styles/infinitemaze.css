@@ -1,0 +1,11 @@
+#main {
+	overflow: hidden;
+}
+
+.maze {
+	background-color: #777;
+}
+
+.tile.highlight {
+	outline: 1px solid #ccc;
+}

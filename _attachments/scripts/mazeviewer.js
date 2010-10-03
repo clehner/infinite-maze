@@ -1,3 +1,5 @@
+var supportsTouch = !!window.Touch;
+
 // Maze stuff
 
 function HelpWindow(options) {
@@ -84,6 +86,7 @@ Tile.prototype = {
 	offsetY: NaN,
 	element: null,
 	ctx: null,
+	isEmpty: false,
 	
 	drawLine: function (x1, y1, x2, y2) {
 		var ctx = this.ctx;
@@ -94,7 +97,14 @@ Tile.prototype = {
 	},
 	
 	drawImage: function (img) {
+		if (this.isEmpty) {
+			this.isEmpty = false;
+		}
 		this.ctx.drawImage(img, 0, 0);
+	},
+	
+	empty: function () {
+		this.isEmpty = true;
 	},
 	
 	hide: function () {
@@ -235,6 +245,7 @@ function MazeViewer(options) {
 		if (options.tileSize) this.tileSize = options.tileSize;
 		if (options.startPos) this.startPos = options.startPos;
 		if (options.getTileSrc) this.getTileSrc = options.getTileSrc;
+		if (options.container) container.appendChild(this.element);
 	}
 
 	this.mazeCanvas = new TiledCanvas(this.tileSize[0], this.tileSize[1]);
@@ -250,7 +261,7 @@ function MazeViewer(options) {
 	this.showStartMarker();
 	this.showHelpWindow();
 	
-	//this.updateViewport();
+	this.updateViewport();
 }
 
 MazeViewer.prototype = {
@@ -269,7 +280,7 @@ MazeViewer.prototype = {
 	offsetY: NaN,
 	playerMarker: HTMLDivElement,
 	tileSize: [256, 256],
-	startPos: [0, 0],
+	startPos: [127, 127],
 	
 	load: function () {
 		window.addEventListener("resize", this.onResize, false);
@@ -298,13 +309,13 @@ MazeViewer.prototype = {
 	getTileSrc: function (x, y) {},
 	
 	initMazeTile: function (tile, x, y) {
-		this.getTileSrc(x, y, function (tileSrc) {
-			if (tileSrc) {
-				var img = new Image();
-				img.onload = tile.drawImage.bind(tile, img);
-				img.src = tileSrc;
-			}
-		});
+		var tileSrc = this.getTileSrc(x, y);
+		if (tileSrc) {
+			var img = new Image();
+			img.onload = tile.drawImage.bind(tile, img);
+			img.onerror = tile.empty.bind(tile);
+			img.src = tileSrc;
+		}
 	},
 	
 	showStartMarker: function () {
@@ -438,6 +449,7 @@ MazeViewer.prototype = {
 	},
 	
 	updateViewport: function () {
+		var mazeCanvas = this.mazeCanvas;
 		var parent = this.element.offsetParent; //this.container
 		if (!parent) {
 			mazeCanvas.setVisibleTiles([]);
@@ -445,7 +457,6 @@ MazeViewer.prototype = {
 		}
 		var width = parent.offsetWidth;
 		var height = parent.offsetHeight;
-		var mazeCanvas = this.mazeCanvas;
 		var oldTiles = mazeCanvas.getVisibleTiles();
 		var newTiles = this.mazeCanvas.getTilesInRect(
 			this.x - width / 2, //-c.offsetLeft,

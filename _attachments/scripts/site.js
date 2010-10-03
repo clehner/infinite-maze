@@ -94,7 +94,7 @@ var MazeController;
 
 function init() {
 	if (!window.JSON) {
-		loadScript("/scripts/json2.js", init2);
+		loadScript("scripts/json2.js", init2);
 	} else {
 		init2();
 	}
@@ -230,15 +230,13 @@ MazePage.prototype = {
 		this.controller && this.controller.updateTitle();
 	},
 	
-	getTileSrc: function (x, y, cb) {
+	getTileSrc: function (x, y) {
 		var tileSrc = (this.doc.tiles[y] || {})[x];
 		//var isAttached = (tileSrc in this.doc.attachments);
 		//var isAbsolute = (tileSrc[0] == "/") || (!tileSrc.indexOf("http:"));
 		//if (isAttached || isAbsolute) {
 		if (tileSrc && (tileSrc in this.doc._attachments)) {
-			cb(this.url + tileSrc);
-		} else {
-			cb(null);
+			return this.url + tileSrc;
 		}
 	},
 	
