@@ -14,7 +14,7 @@ function init() {
 
 function init2() {
 	container = document.getElementById("main");
-	maze = new MazeViewer({
+	maze = new GridMazeViewer({
 		container: container,
 		getTileSrc: getTileSrc,
 		startPos: [237, 600]

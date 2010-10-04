@@ -86,7 +86,7 @@ Tile.prototype = {
 	offsetY: NaN,
 	element: null,
 	ctx: null,
-	isEmpty: false,
+	isEmpty: true,
 	
 	drawLine: function (x1, y1, x2, y2) {
 		var ctx = this.ctx;
@@ -113,6 +113,10 @@ Tile.prototype = {
 	
 	show: function () {
 		this.element.style.display = "";
+	},
+	
+	toString: function () {
+		return "[Tile " + this.offsetX + "," + this.offsetY + "]";
 	}
 };
 Tile.hide = Tile.prototype.hide.unbind();
@@ -186,7 +190,8 @@ TiledCanvas.prototype = {
 	isPixelPassable: function (x, y) {
 		var pixel = this.getPixelValue(x, y);
 		var fg = (pixel[0] + pixel[1] + pixel[2]) * pixel[3];
-		var bg = 765 * (255 - pixel[3]);
+		// change 0 to 765 for passable bg
+		var bg = 0 * (255 - pixel[3]);
 		return fg + bg > 97537;
 	},
 	
@@ -266,13 +271,15 @@ function MazeViewer(options) {
 	this.showHelpWindow();
 	
 	this.updateViewport();
+	this.updateOffset();
 }
 
 MazeViewer.prototype = {
 	constructor: MazeViewer,
 	
 	element: null, // contains the whole maze viewer
-	centerer: null,
+	centerer: null, // child of element. contains maze
+	overlay: null, // child of centerer. contains player's path and marker
 	
 	//title: "",
 	entered: false,
@@ -372,7 +379,7 @@ MazeViewer.prototype = {
 		if (this.entered) return false;
 		this.entered = true;
 		
-		this.element.className = "layer maze in";
+		addClass(this.element, "in");
 		
 		// hide start marker
 		var self = this;
@@ -447,6 +454,7 @@ MazeViewer.prototype = {
 		this.prevPageX = e.pageX;
 		this.prevPageY = e.pageY;
 		e.preventDefault();
+		this.element.className += ' moving'; // changes cursor
 		this.element.removeEventListener("mousemove", this.onMouseMove, false);
 		document.addEventListener("mousemove", this.onMouseDrag, false);
 		document.addEventListener("mouseup", this.onMouseUp, false);
@@ -454,6 +462,7 @@ MazeViewer.prototype = {
 	
 	onMouseUp: function (e) {
 		this.updateOffset();
+		removeClass(this.element, 'moving');
 		this.element.addEventListener("mousemove", this.onMouseMove, false);
 		document.removeEventListener("mousemove", this.onMouseDrag, false);
 		document.removeEventListener("mouseup", this.onMouseUp, false);
@@ -512,18 +521,25 @@ MazeViewer.prototype = {
 		this.playerMarker.style.top = y + "px";
 	},
 	
+	// override this. it fires when the viewer hits a maze edge
+	onHitEdge: function (x, y) {},
+	
+	// move toward a pixel
 	moveToPixel: function (xTo, yTo) {
 		var xStart = this.x;
 		var yStart = this.y;
 		var xEnd, yEnd;
 		if (xTo == xStart && yTo == yStart) { return; }
 		
+		var self = this;
 		var mazeCanvas = this.mazeCanvas;
+		var onHitEdge = this.onHitEdge;
 		line(xStart, yStart, xTo, yTo, function (x, y) {
 			if (mazeCanvas.isPixelPassable(x, y)) {
 				xEnd = x;
 				yEnd = y;
 			} else {
+				onHitEdge.call(self, x, y);
 				return false;
 			}
 		});

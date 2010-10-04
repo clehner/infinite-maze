@@ -10,8 +10,12 @@
 	background-color: white;
 }
 
-.in, .in * {
+.in {
 	cursor: crosshair;
+}
+
+.moving {
+	cursor: move;
 }
 
 .centerer {

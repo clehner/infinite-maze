@@ -12,6 +12,15 @@ body {
 	background-color: #777;
 }
 
-.tile.highlight {
-	outline: 1px solid #ccc;
+.tile-highlight {
+	position: absolute;
+	border: 1px solid rgba(200, 200, 200, 0.4);
+	text-align: center;
+	z-index: 4;
+}
+.tile-highlight {
+	cursor: default;
+}
+.tile-highlight div {
+	padding: 100px 0;
 }

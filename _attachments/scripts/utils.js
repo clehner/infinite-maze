@@ -143,3 +143,19 @@ function line(x0, y0, x1, y1, point) {
 		point(x, y);
 	}*/
 }
+
+function Classy(d,e){var c,a,b;if(!e){a=d;d=null}else{function f(){}f.prototype=d.prototype;a=new f();for(b in e){a[b]=e[b]}}if(a.hasOwnProperty("constructor")){c=a.constructor}else{if(d){c=function(){d.apply(this,arguments)}}else{c=function(){}}a.constructor=c}c.prototype=a;/*@cc_on var g=["toString","toLocaleString","isPrototypeOf","propertyIsEnumerable","hasOwnProperty","valueOf"];while(b=g.pop()){if(e.hasOwnProperty(b)){a[b]=obj[b]}}@*/return c}
+
+var getClassRegex = function (className) {
+	return new RegExp(className + ' | ' + className, 'g');
+}.memoized();
+
+function removeClass(element, className) {
+	var old = element.className;
+	element.className = (old == className) ? '' :
+		old.replace(getClassRegex(className), '');
+}
+
+function addClass(element, className) {
+	element.className += ' ' + className;
+}
