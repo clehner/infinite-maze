@@ -157,5 +157,6 @@ function removeClass(element, className) {
 }
 
 function addClass(element, className) {
+	if (!className) return;
 	element.className += ' ' + className;
 }

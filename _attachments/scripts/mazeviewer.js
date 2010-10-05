@@ -513,6 +513,7 @@ MazeViewer.prototype = {
 		}
 	},
 	
+	// directly set the position.
 	setPosition: function (x, y) {
 		this.x = x;
 		this.y = y;
@@ -520,9 +521,6 @@ MazeViewer.prototype = {
 		this.playerMarker.style.left = x + "px";
 		this.playerMarker.style.top = y + "px";
 	},
-	
-	// override this. it fires when the viewer hits a maze edge
-	onHitEdge: function (x, y) {},
 	
 	// move toward a pixel
 	moveToPixel: function (xTo, yTo) {
@@ -533,13 +531,11 @@ MazeViewer.prototype = {
 		
 		var self = this;
 		var mazeCanvas = this.mazeCanvas;
-		var onHitEdge = this.onHitEdge;
 		line(xStart, yStart, xTo, yTo, function (x, y) {
 			if (mazeCanvas.isPixelPassable(x, y)) {
 				xEnd = x;
 				yEnd = y;
 			} else {
-				onHitEdge.call(self, x, y);
 				return false;
 			}
 		});

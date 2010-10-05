@@ -14,26 +14,54 @@ GridMazeViewer = Classy(MazeViewer, {
 	},
 	moveToPixel: function (x, y) {
 		this.hideTileHighlights();
-		this.hoverTile(this.mazeCanvas.getTileAtPixel(x, y));
+		// Highlight the tile under the mouse
+		var tile = this.mazeCanvas.getTileAtPixel(x, y);
+		this.onTileMouseOver(tile);
 		MazeViewer.prototype.moveToPixel.call(this, x, y);
 	},
-	onHitEdge: function (x, y) {
-		var tile = this.mazeCanvas.getTileAtPixel(x, y);
-		if (tile.isEmpty) {
-			// The user is trying to enter an empty (probably uncreated) tile.
-			// Give them the option to draw the tile.
-			this.showTileHighlight(tile, this.tileHighlights.drawHere);
+	setPosition: function (x, y) {
+		// Highlight tile adjacent to the current location, if the current
+		// location is on its border.
+		var mazeCanvas = this.mazeCanvas;
+		var currentTile = mazeCanvas.getTileAtPixel(x, y);
+		var tileWidth = this.tileSize[0];
+		var tileHeight = this.tileSize[1];
+		var xInTile = x % tileWidth;
+		var yInTile = y % tileHeight;
+		// Find any adjacent tiles, and hover them.
+		if (xInTile == 0) {
+			this.showCanDrawTile(mazeCanvas.getTileAtPixel(x - tileWidth, y));
+		} else if (xInTile == tileWidth - 1) {
+			this.showCanDrawTile(mazeCanvas.getTileAtPixel(x + tileWidth, y));
 		}
+		if (yInTile == 0) {
+			this.showCanDrawTile(mazeCanvas.getTileAtPixel(x, y - tileHeight));
+		} else if (yInTile == tileHeight - 1) {
+			this.showCanDrawTile(mazeCanvas.getTileAtPixel(x, y + tileHeight));
+		}
+		
+		MazeViewer.prototype.setPosition.call(this, x, y);
 	},
-	hoverTile: function (tile) {
+	onTileMouseOver: function (tile) {
 		var highlight = tile.isEmpty ? this.tileHighlights.getHere :
 			this.tileHighlights.blank;
 		this.showTileHighlight(tile, highlight);
+	}, 
+	showCanDrawTile: function (tile) {
+		if (tile.isEmpty) {
+			this.showTileHighlight(tile, this.tileHighlights.drawHere);
+		}
 	},
 	tileHighlights: {
 		blank: "",
-		drawHere: "Draw this square!",
-		getHere: "If you can get to this square, you can draw it."
+		drawHere: {
+			className: "draw-here",
+			text: "Now that you have made it to this square, you can draw it!"
+		},
+		getHere: {
+			className: "get-here",
+			text: "If you can get to this square, you can draw it."
+		}
 	},
 	showTileHighlight: function (tile, message) {
 		var tileId = tile.toString();
@@ -67,6 +95,10 @@ function TileHighlight(tile, message) {
 	el.style.width = tile.element.width + "px";
 	el.style.height = tile.element.height + "px";
 	var child = document.createElement("div");
-	child.innerHTML = message;
+	child.innerHTML = message.text || "";
+	addClass(el, message.className);
+	for (var property in message) {
+		child[property] = message[property];
+	}
 	el.appendChild(child);
 }

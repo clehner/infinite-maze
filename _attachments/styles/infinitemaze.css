@@ -24,3 +24,9 @@ body {
 .tile-highlight div {
 	padding: 100px 0;
 }
+.tile-highlight.get-here {
+	
+}
+.tile-highlight.draw-here {
+	color: #00b;
+}
