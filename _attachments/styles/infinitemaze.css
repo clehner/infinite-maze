@@ -12,21 +12,25 @@ body {
 	background-color: #777;
 }
 
-.tile-highlight {
+.tile-box {
 	position: absolute;
 	border: 1px solid rgba(200, 200, 200, 0.4);
 	text-align: center;
 	z-index: 4;
 }
-.tile-highlight {
-	cursor: default;
+.tile-box.get-here, .tile-box.draw-here {
+	cursor: auto;
 }
-.tile-highlight div {
+.tile-box div {
 	padding: 100px 0;
 }
-.tile-highlight.get-here {
+.tile-box.get-here {
 	
 }
-.tile-highlight.draw-here {
+.tile-box.draw-here {
 	color: #00b;
+}
+
+.help-window {
+	color: #7d7;
 }

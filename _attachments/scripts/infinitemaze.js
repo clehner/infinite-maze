@@ -22,17 +22,9 @@ function init2() {
 }
 
 var tiles = [
-	[
-		0,
-		1,
-		1
-	],
-	[
-		0,
-		0,
-		0,
-		1
-	]
+	[0,1,1],
+	[0,0,0],
+	[0,0,0]
 ];
 function getTileSrc(x, y) {
 	if ((tiles[x] || {})[y]) {

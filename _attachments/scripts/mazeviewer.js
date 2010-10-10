@@ -240,6 +240,14 @@ TiledCanvas.prototype = {
 		// todo: optimize this, maybe
 		this.getVisibleTiles().forEach(Tile.hide);
 		(this.visibleTiles = tiles).forEach(Tile.show);
+	},
+	
+	// not pixels!
+	getTileCoords: function (tile) {
+		return [
+			tile.offsetX / this.tileWidth,
+			tile.offsetY / this.tileHeight
+		];
 	}
 };
 
