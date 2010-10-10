@@ -96,10 +96,20 @@ Tile.prototype = {
 		ctx.stroke();
 	},
 	
+	loadImageSrc: function (src) {
+		var img = new Image();
+		// Draw the image once it is loaded.
+		img.onload = this.drawImage.bind(this, img);
+		// We can't say the image is empty until it has loaded,
+		// but if it is a 404, then it is empty.
+		img.onerror = this.empty.bind(this);
+		this.isEmpty = false;
+		img.src = src;
+		// to do: show a loading sign?
+	},
+	
 	drawImage: function (img) {
-		if (this.isEmpty) {
-			this.isEmpty = false;
-		}
+		this.isEmpty = false;
 		this.ctx.drawImage(img, 0, 0);
 	},
 	
@@ -324,10 +334,7 @@ MazeViewer.prototype = {
 	initMazeTile: function (tile, x, y) {
 		var tileSrc = this.getTileSrc(x, y);
 		if (tileSrc) {
-			var img = new Image();
-			img.onload = tile.drawImage.bind(tile, img);
-			img.onerror = tile.empty.bind(tile);
-			img.src = tileSrc;
+			tile.loadImageSrc(tileSrc);
 		}
 	},
 	
