@@ -394,7 +394,7 @@ MazeViewer.prototype = {
 		if (this.entered) return false;
 		this.entered = true;
 		
-		addClass(this.element, "in");
+		addClass(this.centerer, "in");
 		
 		// hide start marker
 		var self = this;
@@ -410,12 +410,12 @@ MazeViewer.prototype = {
 		this.centerer.appendChild(this.overlay.element);
 		
 		if (supportsTouch) {
-			this.element.addEventListener("touchstart",
+			this.centerer.addEventListener("touchstart",
 				this.onTouchStart, false);
 		} else {
 			this.updateOffset();
-			this.element.addEventListener("mousedown", this.onMouseDown, false);
-			this.element.addEventListener("mousemove", this.onMouseMove, false);
+			this.centerer.addEventListener("mousedown", this.onMouseDown, false);
+			this.centerer.addEventListener("mousemove", this.onMouseMove, false);
 		}
 		
 		// add player marker (red dot)
@@ -469,16 +469,16 @@ MazeViewer.prototype = {
 		this.prevPageX = e.pageX;
 		this.prevPageY = e.pageY;
 		e.preventDefault();
-		this.element.className += ' moving'; // changes cursor
-		this.element.removeEventListener("mousemove", this.onMouseMove, false);
+		addClass(this.centerer, 'moving'); // change cursor
+		this.centerer.removeEventListener("mousemove", this.onMouseMove, false);
 		document.addEventListener("mousemove", this.onMouseDrag, false);
 		document.addEventListener("mouseup", this.onMouseUp, false);
 	},
 	
 	onMouseUp: function (e) {
 		this.updateOffset();
-		removeClass(this.element, 'moving');
-		this.element.addEventListener("mousemove", this.onMouseMove, false);
+		removeClass(this.centerer, 'moving');
+		this.centerer.addEventListener("mousemove", this.onMouseMove, false);
 		document.removeEventListener("mousemove", this.onMouseDrag, false);
 		document.removeEventListener("mouseup", this.onMouseUp, false);
 		//this.updateViewport();
@@ -494,7 +494,7 @@ MazeViewer.prototype = {
 	
 	updateViewport: function (transition) {
 		var mazeCanvas = this.mazeCanvas;
-		var parent = this.element.offsetParent; //this.container
+		var parent = this.centerer.offsetParent; //this.container
 		if (!parent) {
 			mazeCanvas.setVisibleTiles([]);
 			return;
