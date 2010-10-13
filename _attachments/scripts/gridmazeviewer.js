@@ -92,6 +92,9 @@ var GridMazeViewer = Classy(MazeViewer, {
 	getHereTileBox: null,
 	drawHereTileBox: null,
 	
+	// a tile in draw mode
+	drawingTile: null,
+	
 	constructor: function (options) {
 		MazeViewer.call(this, options);
 		
@@ -171,7 +174,85 @@ var GridMazeViewer = Classy(MazeViewer, {
 	
 	// the user has decided to draw this tile. enter tile drawing mode.
 	enterDrawTileMode: function (tile) {
-		console.log('drawing tile at', this.mazeCanvas.getTileCoords(tile));
-		alert('Coming soon!');
+		if (this.drawingTile == tile) return;
+		this.drawingTile = tile;
+		
+		// the pixel leading into this cell.
+		var outerEntrancePixel = [this.x, this.y];
+		
+		//alert('Coming soon!');
+		
+		var editor = new GridMazeTileEditor(this, tile);
+		/* .element! */
+		this.element.appendChild(editor.element);
+		
+		
+		Transition(editor.element, {bottom: "-120px"}, 500);
+		Transition(this.element, {bottom: "120px"}, 500, function () {
+			// adjust center. todo: get rid of jerk
+			this.centerY -= 60;
+			this.updateViewport();
+		}.bind(this));
+		
+		
 	},
+	
+	exitDrawTileMode: function () {
+		if (!this.drawingTile) return;
+		this.drawingTile = null;
+		
+		Transition(editor.element, {bottom: "0px"}, 500);
+		Transition(this.element, {bottom: "0px"}, 500, function () {
+			// adjust center. todo: get rid of jerk
+			this.centerY += 60;
+			this.updateViewport();
+			this.element.removeChild(editor.element);
+		}.bind(this));
+	}
+});
+
+var darkColors = "#000,#5e320b,#900000,#006000,#0000f0".split(",");
+var lightColors = "#fff,#fffa53,#ffd1f0,#8ffa8e,#80e9fd".split(",");
+
+
+var GridMazeTileEditor = Classy(Box, {
+	maze: null,
+	tile: null,
+	tileCoords: null,
+	tileCtx: null,
+	
+	constructor: function (maze, tile) {
+		Box.call(this);
+
+		this.tileCoords = maze.mazeCanvas.getTileCoords(tile);
+		this.tileCtx = tile.ctx;
+		
+		//console.log('drawing tile at', this.tileCoords);
+		
+		// Set up the editor toolbox.
+		this.element.id = "editor-toolbox";
+		this.element.innerHTML = "<div id=\"rules\">" +
+			"<h3>Maze Rules</h3>" +
+			"You must allow a path from the entrance point of the square to go to at least two adjacent empty squares, if possible." +
+			"</div>";
+			
+		// Build color picker.
+		var colorPicker = document.createElement("div");
+		colorPicker.id = "color-picker";
+		colorPicker.innerHTML = [darkColors,lightColors].map(function (colors) {
+			return "<div class=\"color-row\">" + colors.map(function (color) {
+				return "<div class=\"color\" style=\"background-color: " +
+					color + "\"></div>";
+			}).join("") + "</div>";
+		}).join("");
+		
+		this.element.appendChild(colorPicker);
+		
+		var eraser = document.createElement("span");
+		eraser.innerHTML = "";
+		
+		this.element.appendChild(eraser);
+	}
+	
+	
 });

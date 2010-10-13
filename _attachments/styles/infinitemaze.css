@@ -34,3 +34,51 @@ body {
 .help-window {
 	color: #7d7;
 }
+
+#editor-toolbox {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 108px; /* 120 total */
+	background-color: #ccc;
+	border-top: 2px solid black;
+	padding: 5px;
+	z-index: 5;
+}
+
+#rules {
+	width: 50%;
+	height: 100%;
+	float: left;
+	font-size: 14px;
+	border-right: 1px solid #888;
+	padding-right: 4px;
+	margin-right: 4px;
+}
+
+#rules h3 {
+	margin: 0;
+}
+
+#color-picker {
+	float: left;
+	border: 3px solid white;
+	background-color: #999;
+	font-size: 20px;
+	padding: 1px;
+}
+
+#color-picker .color-row {
+	line-height: .5;
+}
+
+
+
+#color-picker .color {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	background-color: #fff;
+	margin: 1px;
+	cursor: pointer;
+}

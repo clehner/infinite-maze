@@ -528,7 +528,7 @@ MazeViewer.prototype = {
 		}
 	},
 	
-	// directly set the position.
+	// directly set the player's position.
 	setPosition: function (x, y) {
 		this.x = x;
 		this.y = y;
