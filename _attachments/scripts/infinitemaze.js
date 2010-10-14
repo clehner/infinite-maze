@@ -1,4 +1,4 @@
-Couch.urlPrefix = "/couchdb";
+//Couch.urlPrefix = "/couchdb";
 var mazesDb = Couch.db("maze");//db");
 var maze;
 var container;

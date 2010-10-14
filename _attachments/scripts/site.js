@@ -1,4 +1,4 @@
-Couch.urlPrefix = "/couchdb";
+Couch.urlPrefix = ".";//couchdb";
 
 var supportsTouch = !!window.Touch;
 
@@ -70,7 +70,7 @@ var getSimplePage = function (id) {
 
 // Maze Controller
 
-var mazesDb = Couch.db("maze");//db");
+var mazesDb = Couch.db("db");//maze");
 
 var pageHandlers = {
 	"": getSimplePage.curry("home-page"),
