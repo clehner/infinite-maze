@@ -312,6 +312,7 @@ MazeViewer.prototype = {
 	playerMarker: HTMLDivElement,
 	tileSize: [256, 256],
 	startPos: [127, 127],
+	isInViewMode: true,
 	
 	load: function () {
 		window.addEventListener("resize", this.onResize, false);
@@ -459,6 +460,7 @@ MazeViewer.prototype = {
 	},
 	
 	onMouseMove: function (e) {
+		if (!this.isInViewMode) return;
 		this.moveToPixel(
 			e.pageX - this.offsetX,
 			e.pageY - this.offsetY

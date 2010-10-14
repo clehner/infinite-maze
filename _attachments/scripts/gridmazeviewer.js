@@ -176,16 +176,19 @@ var GridMazeViewer = Classy(MazeViewer, {
 	enterDrawTileMode: function (tile) {
 		if (this.drawingTile == tile) return;
 		this.drawingTile = tile;
+		this.isInViewMode = false;
 		
 		// the pixel leading into this cell.
 		var outerEntrancePixel = [this.x, this.y];
 		
 		//alert('Coming soon!');
 		
-		var editor = new GridMazeTileEditor(this, tile);
+		this.hideTileBoxes();
+		this.emptyTileBox.coverTile(tile);
+		
+		var editor = new GridMazeTileEditor(this, tile, this.emptyTileBox);
 		/* .element! */
 		this.element.appendChild(editor.element);
-		
 		
 		Transition(editor.element, {bottom: "-120px"}, 500);
 		Transition(this.element, {bottom: "120px"}, 500, function () {
@@ -193,13 +196,12 @@ var GridMazeViewer = Classy(MazeViewer, {
 			this.centerY -= 60;
 			this.updateViewport();
 		}.bind(this));
-		
-		
 	},
 	
 	exitDrawTileMode: function () {
 		if (!this.drawingTile) return;
 		this.drawingTile = null;
+		this.isInViewMode = true;
 		
 		Transition(editor.element, {bottom: "0px"}, 500);
 		Transition(this.element, {bottom: "0px"}, 500, function () {
@@ -221,11 +223,12 @@ var GridMazeTileEditor = Classy(Box, {
 	tileCoords: null,
 	tileCtx: null,
 	
-	constructor: function (maze, tile) {
+	constructor: function (maze, tile, tileBox) {
 		Box.call(this);
 
 		this.tileCoords = maze.mazeCanvas.getTileCoords(tile);
 		this.tileCtx = tile.ctx;
+		this.tileBox = tileBox;
 		
 		//console.log('drawing tile at', this.tileCoords);
 		
@@ -249,9 +252,15 @@ var GridMazeTileEditor = Classy(Box, {
 		this.element.appendChild(colorPicker);
 		
 		var eraser = document.createElement("span");
-		eraser.innerHTML = "";
+		eraser.innerHTML = "<br>Just so you know, drawing doesn't actually work yet.";
 		
 		this.element.appendChild(eraser);
+		
+		tileBox.element.addEventListener("mousedown", function (e) {
+			// Stop dragging the tile
+			e.stopPropagation();
+		}, false);
+		// todo: cursor
 	}
 	
 	
