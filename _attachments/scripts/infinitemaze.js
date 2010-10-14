@@ -1,5 +1,5 @@
 //Couch.urlPrefix = "/couchdb";
-var mazesDb = Couch.db("maze");//db");
+var mazesDb = Couch.db("db");//maze");
 var maze;
 var container;
 var mazeId = '1';
@@ -28,7 +28,7 @@ var tiles = [
 ];
 function getTileSrc(x, y) {
 	if ((tiles[x] || {})[y]) {
-		return '/couchdb/maze/independence-wizard/' +
+		return '/db/independence-wizard/' + //couchdb/maze
 			y + '_' + x + '.png';
 	}
 }
