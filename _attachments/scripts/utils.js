@@ -1,19 +1,18 @@
 // http://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
 function loadScript(url, callback){
-
     var script = document.createElement("script")
     script.type = "text/javascript";
 
-    if (script.readyState){ //IE
+    if (script.readyState){ // IE
         script.onreadystatechange = function(){
             if (script.readyState == "loaded" ||
-                    script.readyState == "complete"){
+                    script.readyState == "complete") {
                 script.onreadystatechange = null;
                 callback();
             }
         };
-    } else { //Others
-        script.onload = function(){
+    } else { // others
+        script.onload = function () {
             callback();
         };
     }
@@ -146,6 +145,8 @@ function line(x0, y0, x1, y1, point) {
 
 function Classy(d,e){var c,a,b;if(!e){a=d;d=null}else{function f(){}f.prototype=d.prototype;a=new f();for(b in e){a[b]=e[b]}}if(a.hasOwnProperty("constructor")){c=a.constructor}else{if(d){c=function(){d.apply(this,arguments)}}else{c=function(){}}a.constructor=c}c.prototype=a;/*@cc_on var g=["toString","toLocaleString","isPrototypeOf","propertyIsEnumerable","hasOwnProperty","valueOf"];while(b=g.pop()){if(e.hasOwnProperty(b)){a[b]=obj[b]}}@*/return c}
 
+
+// className manipulation
 var getClassRegex = function (className) {
 	return new RegExp(className + ' | ' + className, 'g');
 }.memoized();
@@ -159,4 +160,49 @@ function removeClass(element, className) {
 function addClass(element, className) {
 	if (!className) return;
 	element.className += ' ' + className;
+}
+
+function DragBehavior(options) {
+	var element = options.element;
+	if (!element) return null;
+	var onDragStart = options.onDragStart;
+	var onDrag = options.onDrag;
+	var onDragEnd = options.onDragEnd;
+	var context = options.context || window;
+	
+	var offsetX, offsetY;
+	function calculateOffsets() {
+		var x = 0, y = 0;
+		for (var el = element; el; el = el.offsetParent) {
+			x += el.offsetLeft;
+			y += el.offsetTop;
+		}
+		offsetX = x;
+		offsetY = y;
+	}
+	
+	// Add coords relative to element
+	function correctEvent(e) {
+		e._x = e.pageX - offsetX;
+		e._y = e.pageY - offsetY;
+	}
+	
+	function onMouseDown(e) {
+		calculateOffsets();
+		function onMouseMove(e) {
+			correctEvent(e);
+			onDrag && onDrag.call(context, e);
+		}
+		function onMouseUp() {
+			document.removeEventListener("mouseup", onMouseUp, false);
+			document.removeEventListener("mousemove", onMouseMove, true);
+			onDragEnd && onDragEnd.call(context, e);
+		}
+		document.addEventListener("mouseup", onMouseUp, false);
+		document.addEventListener("mousemove", onMouseMove, true);
+		
+		correctEvent(e);
+		onDragStart && onDragStart.call(context, e);
+	}
+	element.addEventListener("mousedown", onMouseDown, false);
 }

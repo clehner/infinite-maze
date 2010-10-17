@@ -9,12 +9,13 @@ body {
 }
 
 .maze {
-	background-color: #777;
+	background-color: black; /*#777;*/
 }
 
 .tile-box {
 	position: absolute;
 	border: 1px solid rgba(200, 200, 200, 0.4);
+	margin: -1px;
 	text-align: center;
 	z-index: 4;
 }
@@ -25,14 +26,20 @@ body {
 	padding: 100px 0;
 }
 .tile-box.get-here {
-	
+	color: white;
 }
 .tile-box.draw-here {
-	color: #00b;
+	color: #4d4; /*#00b*/
+}
+.tile-box.drawing {
+	cursor: crosshair;
+	border: 1px dotted rgba(200, 200, 200, 0.6);
 }
 
 .help-window {
-	color: #7d7;
+	background-color: #7d7;
+	border-color: #7d7;
+	color: #000; /*#7d7*/
 }
 
 #editor-toolbox {
@@ -60,25 +67,36 @@ body {
 	margin: 0;
 }
 
-#color-picker {
-	float: left;
-	border: 3px solid white;
-	background-color: #999;
-	font-size: 20px;
-	padding: 1px;
+.picker {
+	border: 3px solid #999;
+	background-color: black;
+	border-spacing: 1px;
 }
 
-#color-picker .color-row {
-	line-height: .5;
-}
-
-
-
-#color-picker .color {
-	display: inline-block;
+.picker td {
+	font-size: 18px;
 	width: 1em;
 	height: 1em;
 	background-color: #fff;
-	margin: 1px;
 	cursor: pointer;
+}
+
+.picker td.selected {
+	outline: 1px dotted white;
+}
+
+#color-picker {
+	
+}
+
+#size-picker td {
+	line-height: 1em;
+	vertical-align: middle;
+}
+
+#size-picker .circle {
+	display: block;
+	margin: auto;
+	background-color: black;
+	z-index: -1;
 }

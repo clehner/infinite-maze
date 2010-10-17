@@ -82,6 +82,13 @@ var GetHereTileBox = Classy(TileBox, {
 	}
 });
 
+var DrawingTileBox = Classy(TileBox, {
+	constructor: function () {
+		TileBox.apply(this, arguments);
+		addClass(this.element, "drawing");
+	}
+});
+
 
 var GridMazeViewer = Classy(MazeViewer, {
 
@@ -178,15 +185,17 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.drawingTile = tile;
 		this.isInViewMode = false;
 		
+		// turn off the cross-hairs cursor outside this tile.
+		removeClass(this.centerer, "in");
+		
 		// the pixel leading into this cell.
 		var outerEntrancePixel = [this.x, this.y];
 		
 		//alert('Coming soon!');
 		
 		this.hideTileBoxes();
-		this.emptyTileBox.coverTile(tile);
 		
-		var editor = new GridMazeTileEditor(this, tile, this.emptyTileBox);
+		var editor = this.editor = new GridMazeTileEditor(this, tile);
 		/* .element! */
 		this.element.appendChild(editor.element);
 		
@@ -202,19 +211,101 @@ var GridMazeViewer = Classy(MazeViewer, {
 		if (!this.drawingTile) return;
 		this.drawingTile = null;
 		this.isInViewMode = true;
+		addClass(this.centerer, "in");
 		
-		Transition(editor.element, {bottom: "0px"}, 500);
+		Transition(this.editor.element, {bottom: "0px"}, 500);
 		Transition(this.element, {bottom: "0px"}, 500, function () {
 			// adjust center. todo: get rid of jerk
 			this.centerY += 60;
 			this.updateViewport();
-			this.element.removeChild(editor.element);
+			this.element.removeChild(this.editor.element);
 		}.bind(this));
+	},
+	
+	publishTileDrawing: function (tile, onError, onSuccess) {
+		// TODO: save to server.
+		onSuccess();
 	}
 });
 
-var darkColors = "#000,#5e320b,#900000,#006000,#0000f0".split(",");
-var lightColors = "#fff,#fffa53,#ffd1f0,#8ffa8e,#80e9fd".split(",");
+var Picker = Classy(Box, {
+	tagName: "table",
+	
+	data: [], // rows/cells
+	selectedCell: null,
+	initCell: function () {}, // override
+	onSelect: null, // override
+	
+	constructor: function (data) {
+		Box.call(this);
+		var self = this;
+		var table = this.element;
+		addClass(table, "picker");
+		table.addEventListener("click", this.onClick.bind(this), false);
+		this.data = data;
+		data.forEach(function (dataRow, i) {
+			var row = table.insertRow(i);
+			dataRow.forEach(function (value, j) {
+				var cell = row.insertCell(j);
+				cell.row = i;
+				cell.col = j;
+				self.initCell(cell, value);
+			});
+		});
+		this.selectCoord(0, 0);
+	},
+	
+	onClick: function (e) {
+		if (e.target.nodeName == "TD") {
+			this.selectCell(e.target);
+		} else if (e.target.parentNode.nodeName == "TD") {
+			this.selectCell(e.target.parentNode);
+		}
+	},
+	
+	selectCell: function (cell) {
+		if (this.selectedCell) removeClass(this.selectedCell, "selected");
+		this.selectedCell = cell;
+		addClass(cell, "selected");
+		var value = this.data[cell.row][cell.col];
+		if (this.onSelect) this.onSelect(value);
+	},
+	
+	selectCoord: function (row, col) {
+		this.selectCell(this.element.rows[row].cells[col]);
+	}
+});
+
+var ColorPicker = Classy(Picker, {
+	constructor: function (colors) {
+		Picker.call(this, colors);
+		this.element.id = "color-picker";
+	},
+	
+	initCell: function (cell, color) {
+		cell.style.backgroundColor = color;
+	}
+});
+
+var SizePicker = Classy(Picker, {
+	constructor: function (sizes) {
+		Picker.call(this, [sizes]);
+		this.element.id = "size-picker";
+	},
+	
+	initCell: function (cell, size) {
+		var circle = document.createElement("div");
+		circle.className = "circle";
+		var s = circle.style;
+		s.width = s.height = size + "px";
+		s.borderRadius = s.MozBorderRadius = s.WebkitBorderRadius = size/2+"px";
+		cell.appendChild(circle);
+	},
+	
+	select: function (x) {
+		this.selectCoord(0, x);
+	}
+});
 
 
 var GridMazeTileEditor = Classy(Box, {
@@ -222,46 +313,128 @@ var GridMazeTileEditor = Classy(Box, {
 	tile: null,
 	tileCoords: null,
 	tileCtx: null,
+	tileBox: null,
 	
-	constructor: function (maze, tile, tileBox) {
+	rules: "<div id=\"rules\">" +
+		"<h3>Maze Rules</h3>" +
+		"You must allow a path from the entrance point of the square to go to at least two adjacent empty squares, if possible." +
+		"</div>",
+	
+	colors: ["#000,#5e320b,#900000,#006000,#0000f0".split(","),
+		"#fff,#fffa53,#ffd1f0,#8ffa8e,#80e9fd".split(",")],
+	pencilSizes: [18, 13, 8, 4, 1],
+	
+	constructor: function (maze, tile) {
 		Box.call(this);
 
-		this.tileCoords = maze.mazeCanvas.getTileCoords(tile);
+		this.maze = maze;
+		this.tile = tile;
 		this.tileCtx = tile.ctx;
-		this.tileBox = tileBox;
+		this.tileCoords = maze.mazeCanvas.getTileCoords(tile);
+		tile.isEmpty = false;
 		
-		//console.log('drawing tile at', this.tileCoords);
+		// Create a tile box.
+		this.tileBox = new DrawingTileBox(maze);
+		maze.centerer.appendChild(this.tileBox.element);		this.tileBox.coverTile(tile);
+		
+		// Mouse behavior
+		new DragBehavior({
+			element: this.tileBox.element,
+			onDragStart: this.onDragStart,
+			onDrag: this.onDrag,
+			onDragEnd: null,
+			context: this
+		});
 		
 		// Set up the editor toolbox.
 		this.element.id = "editor-toolbox";
-		this.element.innerHTML = "<div id=\"rules\">" +
-			"<h3>Maze Rules</h3>" +
-			"You must allow a path from the entrance point of the square to go to at least two adjacent empty squares, if possible." +
-			"</div>";
+		this.element.innerHTML = this.rules;
 			
-		// Build color picker.
-		var colorPicker = document.createElement("div");
-		colorPicker.id = "color-picker";
-		colorPicker.innerHTML = [darkColors,lightColors].map(function (colors) {
-			return "<div class=\"color-row\">" + colors.map(function (color) {
-				return "<div class=\"color\" style=\"background-color: " +
-					color + "\"></div>";
-			}).join("") + "</div>";
-		}).join("");
+		// Add the color picker.
+		var colorPicker = new ColorPicker(this.colors);
+		colorPicker.onSelect = this.setPencilColor.bind(this);
+		colorPicker.selectCoord(1, 0);
+		this.element.appendChild(colorPicker.element);
 		
-		this.element.appendChild(colorPicker);
+		var sizePicker = new SizePicker(this.pencilSizes);
+		sizePicker.onSelect = this.setPencilSize.bind(this);
+		sizePicker.select(0);
+		this.element.appendChild(sizePicker.element);
 		
-		var eraser = document.createElement("span");
-		eraser.innerHTML = "<br>Just so you know, drawing doesn't actually work yet.";
+		var saveButton = document.createElement("button");
+		saveButton.innerHTML = "Save";
+		saveButton.onclick = this.save.bind(this);
+		this.element.appendChild(saveButton);
 		
-		this.element.appendChild(eraser);
+		var discardButton = document.createElement("button");
+		discardButton.innerHTML = "Discard";
+		discardButton.onclick = this.discard.bind(this);
+		this.element.appendChild(discardButton);
+	},
+	
+	setPencilColor: function (color) {
+		this.tileCtx.strokeStyle = color;
+	},
+	
+	setPencilSize: function (size) {
+		this.tileCtx.lineWidth = +size;
+	},
+	
+	onDragStart: function (e) {
+		this.x = e._x;
+		this.y = e._y;
+		this.onDrag(e);
+	},
+	
+	onDrag: function (e) {
+		var offset = 0; // 0.5
+		var ctx = this.tileCtx;
+		ctx.beginPath();
+		ctx.moveTo(this.x + offset, this.y + offset);
+		this.x = e._x;
+		this.y = e._y;
+		ctx.lineTo(this.x + offset, this.y + offset);
+		ctx.stroke();
 		
-		tileBox.element.addEventListener("mousedown", function (e) {
-			// Stop dragging the tile
-			e.stopPropagation();
-		}, false);
-		// todo: cursor
+		// Stop dragging the tile
+		e.stopPropagation();
+	},
+	
+	onMouseUp: function (e) {
+		document.removeEventListener("mouseup", this.onMouseUp, false);
+		document.removeEventListener("mousemove", this.onMouseDrag, true);
+	},
+	
+	exit: function () {
+		this.maze.centerer.removeChild(this.tileBox.element);
+		this.maze.exitDrawTileMode();
+	},
+	
+	checkRules: function () {
+		// TODO
+		return true;
+	},
+	
+	save: function () {
+		if (!confirm("Are you sure you are ready to save?")) return;
+		if (!this.checkRules()) {
+			alert("You haven't followed all the rules! Fix your drawing and try again.");
+			return;
+		}
+		var self = this;
+		this.maze.publishTileDrawing(this.tile,
+			function onError(msg) {
+				alert("There was an error: " + msg);
+			},
+			function onSuccess() {
+				self.exit();
+			}
+		);
+	},
+	
+	discard: function () {
+		if (!confirm("You really want to discard your drawing?")) return;
+		this.tile.clear();
+		this.exit();
 	}
-	
-	
 });

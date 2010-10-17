@@ -28,7 +28,7 @@ var tiles = [
 ];
 function getTileSrc(x, y) {
 	if ((tiles[x] || {})[y]) {
-		return '/db/independence-wizard/' + //couchdb/maze
+		return 'db/independence-wizard/' + //couchdb/maze
 			y + '_' + x + '.png';
 	}
 }

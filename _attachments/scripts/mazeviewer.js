@@ -78,7 +78,6 @@ function Tile(x, y, w, h) {
 	el.style.top = y * h + "px";
 	el.className = "layer tile";
 	this.ctx = el.getContext("2d");
-	this.ctx.strokeStyle = "#0f0";
 	this.ctx.lineCap = this.ctx.lineJoin = "round";
 }
 Tile.prototype = {
@@ -88,8 +87,9 @@ Tile.prototype = {
 	ctx: null,
 	isEmpty: true,
 	
-	drawLine: function (x1, y1, x2, y2) {
+	drawLine: function (x1, y1, x2, y2, color) {
 		var ctx = this.ctx;
+		ctx.strokeStyle = "#0f0";
 		ctx.beginPath();
 		ctx.moveTo(x1 - this.offsetX, y1 - this.offsetY);
 		ctx.lineTo(x2 - this.offsetX, y2 - this.offsetY);
@@ -115,6 +115,12 @@ Tile.prototype = {
 	
 	empty: function () {
 		this.isEmpty = true;
+	},
+	
+	clear: function () {
+		this.empty();
+		this.ctx.clearRect(0, 0, this.element.width, this.element.height);
+		//this.element.width += 0;
 	},
 	
 	hide: function () {
@@ -170,12 +176,12 @@ TiledCanvas.prototype = {
 		return tile;
 	},
 	
-	drawLine: function (x0, y0, x1, y1) {
+	drawLine: function (x0, y0, x1, y1, color) {
 		var w = this.tileWidth;
 		var h = this.tileHeight;
 		var self = this;
 		line(x0 / w, y0 / h, x1 / w, y1 / h, function (x, y) {
-			self.getTile(x, y).drawLine(x0, y0, x1, y1);
+			self.getTile(x, y).drawLine(x0, y0, x1, y1, color);
 		});
 	},
 	
@@ -313,6 +319,7 @@ MazeViewer.prototype = {
 	tileSize: [256, 256],
 	startPos: [127, 127],
 	isInViewMode: true,
+	pathColor: "#0f0",
 	
 	load: function () {
 		window.addEventListener("resize", this.onResize, false);
@@ -561,7 +568,7 @@ MazeViewer.prototype = {
 		
 		this.setPosition(xEnd, yEnd);
 		
-		this.overlay.drawLine(xStart, yStart, xEnd, yEnd);
+		this.overlay.drawLine(xStart, yStart, xEnd, yEnd, this.pathColor);
 		
 		//this.onResize();
 	}
