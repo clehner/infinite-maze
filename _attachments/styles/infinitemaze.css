@@ -67,6 +67,11 @@ body {
 	margin: 0;
 }
 
+#toolbox-palettes {
+	float: left;
+	margin-right: 5px;
+}
+
 .picker {
 	border: 3px solid #999;
 	background-color: black;

@@ -1,0 +1,6 @@
+Welcome to the Infinite Maze!
+
+The red dot is you. 
+Move your mouse through the maze and it will follow.
+To scroll the page, click and drag.
+When you get to an empty square, you can draw in it.

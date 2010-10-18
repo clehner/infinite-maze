@@ -349,27 +349,37 @@ var GridMazeTileEditor = Classy(Box, {
 		// Set up the editor toolbox.
 		this.element.id = "editor-toolbox";
 		this.element.innerHTML = this.rules;
+		
+		var div = document.createElement("div");
+		div.id = "toolbox-palettes";
+		this.element.appendChild(div);
 			
 		// Add the color picker.
 		var colorPicker = new ColorPicker(this.colors);
 		colorPicker.onSelect = this.setPencilColor.bind(this);
 		colorPicker.selectCoord(1, 0);
-		this.element.appendChild(colorPicker.element);
+		div.appendChild(colorPicker.element);
 		
 		var sizePicker = new SizePicker(this.pencilSizes);
 		sizePicker.onSelect = this.setPencilSize.bind(this);
 		sizePicker.select(0);
-		this.element.appendChild(sizePicker.element);
+		div.appendChild(sizePicker.element);
 		
 		var saveButton = document.createElement("button");
 		saveButton.innerHTML = "Save";
 		saveButton.onclick = this.save.bind(this);
-		this.element.appendChild(saveButton);
+		div.appendChild(saveButton);
 		
 		var discardButton = document.createElement("button");
 		discardButton.innerHTML = "Discard";
 		discardButton.onclick = this.discard.bind(this);
-		this.element.appendChild(discardButton);
+		div.appendChild(discardButton);
+		
+		var msg = "Your drawing won't actually be saved for good in this version. Come back in a week or two!";
+		var sorry = document.createElement("div");
+		sorry.id = "sorry-message";
+		sorry.innerHTML = msg;
+		this.element.appendChild(sorry);
 	},
 	
 	setPencilColor: function (color) {
@@ -398,11 +408,6 @@ var GridMazeTileEditor = Classy(Box, {
 		
 		// Stop dragging the tile
 		e.stopPropagation();
-	},
-	
-	onMouseUp: function (e) {
-		document.removeEventListener("mouseup", this.onMouseUp, false);
-		document.removeEventListener("mousemove", this.onMouseDrag, true);
 	},
 	
 	exit: function () {
