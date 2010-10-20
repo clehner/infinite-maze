@@ -1,8 +1,25 @@
 //Couch.urlPrefix = "/couchdb";
+Couch.urlPrefix = ".";
 var mazesDb = Couch.db("db");//maze");
 var maze;
-var container;
-var mazeId = '1';
+
+// Dummy Infinite Maze Loader
+var dummyMazeDoc = {
+	_id: "dumdum",
+	start: [237, 600]
+};
+var loader = new MazeLoader(mazesDb, dummyMazeDoc);
+var tiles = [
+	[0,1,1],
+	[0,0,0],
+	[0,0,0]
+];
+loader.getTileSrc = function (x, y) {
+	if ((tiles[x] || {})[y]) {
+		return 'db/independence-wizard/' + y + '_' + x + '.png';
+	}
+}
+
 
 function init() {
 	if (!window.JSON) {
@@ -13,22 +30,8 @@ function init() {
 }
 
 function init2() {
-	container = document.getElementById("main");
 	maze = new GridMazeViewer({
-		container: container,
-		getTileSrc: getTileSrc,
-		startPos: [237, 600]
+		container: document.getElementById("main"),
+		loader: loader
 	});
-}
-
-var tiles = [
-	[0,1,1],
-	[0,0,0],
-	[0,0,0]
-];
-function getTileSrc(x, y) {
-	if ((tiles[x] || {})[y]) {
-		return 'db/independence-wizard/' + //couchdb/maze
-			y + '_' + x + '.png';
-	}
 }

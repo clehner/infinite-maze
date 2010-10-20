@@ -1,4 +1,25 @@
-[{"to": "index.html", "from": ""},
-{"to": "../../*", "from": "db/*"},
-{"to": "images/favicon.ico", "from": "favicon.ico"},
-{"to": "*", "from": "*"}]
+[
+	{
+		"from": "",
+		"to": "index.html"
+	},
+	{
+		"from": "db/*",
+		"to": "../../*"
+	},
+	{
+		"from": "mazes/:id",
+		"to": "_list/maze/maze_and_tiles",
+		"query": {
+			"id": ":id"
+		}
+	},
+	{
+		"from": "favicon.ico",
+		"to": "images/favicon.ico"
+	},
+	{
+		"from": "*",
+		"to": "*"
+	}
+]

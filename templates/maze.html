@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+	<head>
+		<title>The Infinite Maze</title>
+		<meta charset="utf-8">
+		
+		<meta name="viewport" content="width=device-width">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+		<link rel="shortcut icon" href="../images/favicon.ico">
+		
+		<link rel="stylesheet" type="text/css" href="../styles/maze.css">
+		<link rel="stylesheet" type="text/css" href="../styles/infinitemaze.css">
+		
+		<script src="../scripts/utils.js"></script>
+		<script src="../scripts/transitions.js"></script>
+		<script src="../scripts/couchdb.js"></script>
+		<script src="../scripts/mazeviewer.js"></script>
+		<script src="../scripts/gridmazeviewer.js"></script>
+		<script src="../scripts/infinitemaze.js"></script>
+	</head>
+	<body>
+		<div id="main" class="layer"></div>
+		
+		<script>
+		var data = {{DATA}};
+		
+		// this is hackish but it works.
+		Couch.urlPrefix = "../";
+		var mazesDb = Couch.db("db");
+		Couch.urlPrefix = "";
+		var maze;
+		
+		function init2() {
+			mazeLoader = new InfiniteMazeLoader(mazesDb, data.maze, data.tiles);
+			maze = new GridMazeViewer({
+				container: document.getElementById("main"),
+				loader: mazeLoader
+			});
+		}
+		
+		function init() {
+			if (!window.JSON) {
+				loadScript("../scripts/json2.js", init2);
+			} else {
+				init2();
+			}
+		}
+		init();
+		</script>
+	</body>
+</html>

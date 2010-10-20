@@ -185,8 +185,8 @@ function Site(dirHandlers, main, titleElement) {
 
 function MazePage(id, mazesDb, controller) {
 	this.controller = controller;
-	this.url = mazesDb.uri + Couch.encodeDocId(id) + "/";
 	this.element = document.createElement("div");
+	this.mazesDb = mazesDb;
 
 	window.maze = this;
 
@@ -198,8 +198,6 @@ function MazePage(id, mazesDb, controller) {
 MazePage.prototype = {
 	constructor: MazePage,
 	
-	doc: null,
-	url: "",
 	controller: null,
 	element: null,
 	title: "",
@@ -210,13 +208,13 @@ MazePage.prototype = {
 			alert('Error, no maze doc!');
 			return;
 		}
-		this.doc = doc;
+		if (doc.format != "tiled") {
+			alert("This maze is not in a format we can use here.");
+		}
 		this.title = doc.title;
 		this.controller && this.controller.updateTitle();
 		this.maze = new MazeViewer({
-			startPos: doc.start,
-			tileSize: doc.tile_size,
-			getTileSrc: this.getTileSrc.bind(this)
+			loader: new SingleDocTiledMazeLoader(this.mazesDb, doc)
 		});
 		this.element.appendChild(this.maze.element);
 		if (this.loaded) {
@@ -230,16 +228,6 @@ MazePage.prototype = {
 		this.controller && this.controller.updateTitle();
 	},
 	
-	getTileSrc: function (x, y) {
-		var tileSrc = (this.doc.tiles[y] || {})[x];
-		//var isAttached = (tileSrc in this.doc.attachments);
-		//var isAbsolute = (tileSrc[0] == "/") || (!tileSrc.indexOf("http:"));
-		//if (isAttached || isAbsolute) {
-		if (tileSrc && (tileSrc in this.doc._attachments)) {
-			return this.url + tileSrc;
-		}
-	},
-	
 	onLoad: function () {
 		if (this.maze) {
 			this.maze.load();
@@ -248,7 +236,23 @@ MazePage.prototype = {
 		}
 	},
 	
-	unUnload: function () {
+	onUnload: function () {
 		this.maze.unload();
 	}
 };
+
+var SingleDocTiledMazeLoader = Classy(MazeLoader, {
+	attachmentsPath: "",
+	
+	constructor: function (db, doc) {
+		MazeLoader.call(this, db, doc);
+		this.attachmentsPath = this.getDocAttachmentsPath(this.mazeId);
+	},
+	
+	getTileSrc: function (x, y) {
+		var tileSrc = (this.mazeDoc.tiles[y] || {})[x];
+		if (tileSrc && (tileSrc in this.mazeDoc._attachments)) {
+			return this.attachmentsPath + tileSrc;
+		}
+	}
+});

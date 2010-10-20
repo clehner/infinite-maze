@@ -222,9 +222,18 @@ var GridMazeViewer = Classy(MazeViewer, {
 		}.bind(this));
 	},
 	
-	publishTileDrawing: function (tile, onError, onSuccess) {
-		// TODO: save to server.
-		onSuccess();
+	publishTileDrawing: function (tile, tileCoords, onError, onSuccess) {
+		//return onSuccess();
+		this.loader.saveTileDrawing(tile, tileCoords,
+			function (status, error, reason) {
+				console.log(status, error, reason);
+				onError([status, error, reason]);
+			},
+			function (resp) {
+				console.log('success!');
+				onSuccess(resp);
+			}
+		);
 	}
 });
 
@@ -427,7 +436,7 @@ var GridMazeTileEditor = Classy(Box, {
 			return;
 		}
 		var self = this;
-		this.maze.publishTileDrawing(this.tile,
+		this.maze.publishTileDrawing(this.tile, this.tileCoords,
 			function onError(msg) {
 				alert("There was an error: " + msg);
 			},
@@ -441,5 +450,42 @@ var GridMazeTileEditor = Classy(Box, {
 		if (!confirm("You really want to discard your drawing?")) return;
 		this.tile.clear();
 		this.exit();
+	}
+});
+
+var InfiniteMazeLoader = Classy(MazeLoader, {
+	tilesInfo: null,
+	
+	constructor: function (db, doc, tiles) {
+		MazeLoader.call(this, db, doc);
+		this.tilesInfo = tiles;
+	},
+	
+	getTileSrc: function (x, y) {
+		var tileId = (this.tilesInfo[x] || {})[y];
+		if (tileId) {
+			return this.getDocAttachmentsPath(tileId) + 'tile.png';
+		}
+	},
+
+	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
+		this.db.saveDoc({
+			_id: Couch.newUUID(), // make this async?
+			creator: "cel",
+			created_at: Date.now(),
+			type: "tile",
+			maze_id: this.mazeId,
+			location: tileCoords,
+			
+			_attachments: {
+				"tile.png": {
+					content_type: "image/png",
+					data: tile.exportPNG()
+				}
+			}
+		}, {
+			error: onError,
+			success: onSuccess
+		});
 	}
 });

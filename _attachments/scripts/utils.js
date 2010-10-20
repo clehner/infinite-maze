@@ -206,3 +206,9 @@ function DragBehavior(options) {
 	}
 	element.addEventListener("mousedown", onMouseDown, false);
 }
+
+if (!Date.now) {
+	Date.now = function () {
+		return +new Date();
+	};
+}

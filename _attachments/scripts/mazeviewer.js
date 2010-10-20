@@ -133,6 +133,13 @@ Tile.prototype = {
 	
 	toString: function () {
 		return "[Tile " + this.offsetX + "," + this.offsetY + "]";
+	},
+	
+	// get PNG base64 data
+	exportPNG: function () {
+		var dataURL = this.element.toDataURL("image/png");
+		var imageData = dataURL.substr('data:image/png;base64,'.length);
+		return imageData;
 	}
 };
 Tile.hide = Tile.prototype.hide.unbind();
@@ -272,10 +279,15 @@ function MazeViewer(options) {
 	this.element.appendChild(this.centerer);
 	
 	if (options) {
-		if (options.tileSize) this.tileSize = options.tileSize;
-		if (options.startPos) this.startPos = options.startPos;
-		if (options.getTileSrc) this.getTileSrc = options.getTileSrc;
-		if (options.container) container.appendChild(this.element);
+		if (options.loader) {
+			this.loader = options.loader;
+			this.tileSize = this.loader.getTileSize();
+			this.startPos = this.loader.getStartPos();
+		}
+		//if (options.tileSize) this.tileSize = options.tileSize;
+		//if (options.startPos) this.startPos = options.startPos;
+		//if (options.getTileSrc) this.getTileSrc = options.getTileSrc;
+		if (options.container) options.container.appendChild(this.element);
 	}
 	
 	this.centerX = this.startPos[0];
@@ -320,6 +332,7 @@ MazeViewer.prototype = {
 	startPos: [127, 127],
 	isInViewMode: true,
 	pathColor: "#0f0",
+	loader: null, // MazeLoader, for saving and getting tiles
 	
 	load: function () {
 		window.addEventListener("resize", this.onResize, false);
@@ -344,11 +357,8 @@ MazeViewer.prototype = {
 		}
 	},
 	
-	// override in instances or subclasses
-	getTileSrc: function (x, y) {},
-	
 	initMazeTile: function (tile, x, y) {
-		var tileSrc = this.getTileSrc(x, y);
+		var tileSrc = this.loader.getTileSrc(x, y);
 		if (tileSrc) {
 			tile.loadImageSrc(tileSrc);
 		}
@@ -573,3 +583,31 @@ MazeViewer.prototype = {
 		//this.onResize();
 	}
 };
+
+var MazeLoader = Classy({
+	db: null,
+	mazeDoc: null,
+	mazeId: "",
+	
+	constructor: function (db, doc) {
+		this.db = db;
+		this.mazeDoc = doc;
+		this.mazeId = doc._id;
+	},
+	
+	getDocAttachmentsPath: function (id) {
+		return this.db.uri + Couch.encodeDocId(id) + "/";
+	},
+	
+	getStartPos: function () {
+		return this.mazeDoc.start || MazeViewer.prototype.startPos;
+	},
+	
+	getTileSize: function () {
+		return this.mazeDoc.tile_size || MazeViewer.prototype.tileSize;
+	},
+
+	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
+		onError(0, "Saving is not yet implemented.");
+	}
+});
