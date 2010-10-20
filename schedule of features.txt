@@ -6,7 +6,7 @@ Week 1 (12-19): You can draw and erase in the maze editor. You can also pick col
 Make the welcome screen bigger and more helpful, and put a link to it.
 Add a license to the code.
 Implement path-finding algorithm instead of straight lines for navigating through maze.
-Week 2 (19-26): The maze tile being edited can be saved/published, and is checked for following the rules.
+Week 2 (19-26): The maze tile being edited can be saved/published [done], and is checked for following the rules.
 The client updates in real time.
 When in edit mode, the tile is temporarily locked from other people editing it.
 Week 3 (26-2): A header bar has links to log in and sign up forms. Saving a tile drawing requires a login.

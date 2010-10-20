@@ -20,5 +20,5 @@ function(keys, values, rereduce) {
 			}
 		}
 	}
-	return {maze: maze, tiles: tiles};
+	return {maze: maze, tiles: tiles || {}};
 }
