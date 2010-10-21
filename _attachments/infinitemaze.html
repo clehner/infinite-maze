@@ -17,12 +17,35 @@
 		<script src="scripts/couchdb.js"></script>
 		<script src="scripts/mazeviewer.js"></script>
 		<script src="scripts/gridmazeviewer.js"></script>
-		<script src="scripts/infinitemaze.js"></script>
 	</head>
 	<body>
 		<div id="main" class="layer"></div>
+		
 		<script>
-			init();
+		var data = {"maze":{"_id":"1","type":"maze","created_at":1287528459951,"title":"The Infinite Maze","format":"infinite-tiled","tile_size":[256,256],"start":[120,96]},"tiles":{"1":{"-2":"f3628094ada3dde0848694d02b00eb24","-1":"d2e1055c256927758539bff12b071dc2"},"0":{"-1":"d2e1055c256927758539bff12b064a73","0":"91ceafb5136b418d88ab3012c0012642"}}};
+		
+		Couch.urlPrefix = ".";
+		var mazesDb = Couch.db("db");
+
+		function init2() {
+			mazeLoader = new InfiniteMazeLoader(mazesDb, data.maze, data.tiles);
+			mazeLoader.saveTileDrawing = function (a, b, error) {
+				error("Can't be done.");
+			};
+			maze = new GridMazeViewer({
+				container: document.getElementById("main"),
+				loader: mazeLoader
+			});
+		}
+		
+		function init() {
+			if (!window.JSON) {
+				loadScript("../scripts/json2.js", init2);
+			} else {
+				init2();
+			}
+		}
+		init();
 		</script>
 	</body>
 </html>

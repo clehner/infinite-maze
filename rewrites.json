@@ -1,7 +1,12 @@
 [
 	{
 		"from": "",
-		"to": "index.html"
+		"to": "_list/maze/maze_and_tiles",
+		"query": {
+			"currentdir": true,
+			"id": "1",
+			"key": "\"1\""
+		}
 	},
 	{
 		"from": "db/*",

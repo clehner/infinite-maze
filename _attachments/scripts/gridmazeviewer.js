@@ -384,11 +384,13 @@ var GridMazeTileEditor = Classy(Box, {
 		discardButton.onclick = this.discard.bind(this);
 		div.appendChild(discardButton);
 		
+		/*
 		var msg = "Your drawing won't actually be saved for good in this version. Come back in a week or two!";
 		var sorry = document.createElement("div");
 		sorry.id = "sorry-message";
 		sorry.innerHTML = msg;
 		this.element.appendChild(sorry);
+		*/
 	},
 	
 	setPencilColor: function (color) {

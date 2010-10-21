@@ -29,9 +29,14 @@ function (doc, oldDoc, userCtx) {
 	
 var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 
+	/*
+	TODO: Implement logins and then uncomment this.
 	if (!userCtx.name) {
 		throw {unauthorized: "You must be logged in."};
 	}
+	*/
+	
+	//if (isAdmin) return;
 	
 	if (doc._deleted) {
 		validate([

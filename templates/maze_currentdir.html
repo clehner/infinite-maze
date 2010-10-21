@@ -6,17 +6,17 @@
 		
 		<meta name="viewport" content="width=device-width">
 		<meta name="apple-mobile-web-app-capable" content="yes">
-		<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
-		<link rel="shortcut icon" href="../images/favicon.ico">
+		<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+		<link rel="shortcut icon" href="images/favicon.ico">
 		
-		<link rel="stylesheet" type="text/css" href="../styles/maze.css">
-		<link rel="stylesheet" type="text/css" href="../styles/infinitemaze.css">
+		<link rel="stylesheet" type="text/css" href="styles/maze.css">
+		<link rel="stylesheet" type="text/css" href="styles/infinitemaze.css">
 		
-		<script src="../scripts/utils.js"></script>
-		<script src="../scripts/transitions.js"></script>
-		<script src="../scripts/couchdb.js"></script>
-		<script src="../scripts/mazeviewer.js"></script>
-		<script src="../scripts/gridmazeviewer.js"></script>
+		<script src="scripts/utils.js"></script>
+		<script src="scripts/transitions.js"></script>
+		<script src="scripts/couchdb.js"></script>
+		<script src="scripts/mazeviewer.js"></script>
+		<script src="scripts/gridmazeviewer.js"></script>
 	</head>
 	<body>
 		<div id="main" class="layer"></div>
@@ -24,11 +24,9 @@
 		<script>
 		var data = {{DATA}};
 		
-		// this is hackish but it works.
-		Couch.urlPrefix = "../";
+		Couch.urlPrefix = ".";
 		var mazesDb = Couch.db("db");
-		Couch.urlPrefix = "";
-		
+
 		function init2() {
 			mazeLoader = new InfiniteMazeLoader(mazesDb, data.maze, data.tiles);
 			maze = new GridMazeViewer({

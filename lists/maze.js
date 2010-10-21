@@ -1,12 +1,13 @@
 function(head, req) {
 	// !json templates.maze
+	// !json templates.maze_currentdir
 	
 	//req.query
 	//var maze = row.value.maze;
 	//var tiles = row.value.tiles;
 	
 	function fail(a) {
-		send('nothing. '+a);
+		throw ['error', 'not_found', 'Maze not found. '+a];
 	}
 	
 	provides("html", function() {
@@ -20,6 +21,8 @@ function(head, req) {
 		} while (mazeId != queryId);
 		
 		var data = JSON.stringify(value);
-		return templates.maze.replace("{{DATA}}", data);
+		
+		var template = req.query.currentdir ? "maze_currentdir" : "maze";
+		return templates[template].replace("{{DATA}}", data);
 	});
 }
