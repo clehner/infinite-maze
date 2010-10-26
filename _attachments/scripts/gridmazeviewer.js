@@ -331,7 +331,7 @@ var GridMazeTileEditor = Classy(Box, {
 	
 	colors: ["#000,#5e320b,#900000,#006000,#0000f0".split(","),
 		"#fff,#fffa53,#ffd1f0,#8ffa8e,#80e9fd".split(",")],
-	pencilSizes: [18, 13, 8, 4, 1],
+	pencilSizes: [18, 13, 8, 4, 1.5],
 	
 	constructor: function (maze, tile) {
 		Box.call(this);

@@ -1,5 +1,9 @@
 [
 	{
+		"from": "db/*",
+		"to": "../../*"
+	},
+	{
 		"from": "",
 		"to": "_list/maze/maze_and_tiles",
 		"query": {
@@ -7,10 +11,6 @@
 			"id": "1",
 			"key": "\"1\""
 		}
-	},
-	{
-		"from": "db/*",
-		"to": "../../*"
 	},
 	{
 		"from": "mazes/:id",
