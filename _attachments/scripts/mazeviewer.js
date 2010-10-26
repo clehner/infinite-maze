@@ -574,7 +574,10 @@ MazeViewer.prototype = {
 			}
 		});
 		
-		//console.log(xStart, yStart, xTo, yTo);
+		if (xEnd == null && yEnd == null) {
+			// no passable pixels
+			return;
+		}
 		
 		this.setPosition(xEnd, yEnd);
 		

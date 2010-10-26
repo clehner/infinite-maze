@@ -50,17 +50,19 @@ var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 		"Document must be a valid type (maze or tile)."
 	]);
 	
-	if (oldDoc) {
+	if (oldDoc && !isAdmin) {
 		if (typeof oldDoc.created_at == "number") {
 			validate([
 				doc.created_at == oldDoc.created_at,
-				"Creation date can not be changed." // unless it is invalid
+				"Creation date can not be changed except by admin."
+				// unless it is invalid
 			]);
 		}
 		if (oldDoc.creator) {
 			validate([
 				doc.creator == oldDoc.creator,
-				"Maze creator cannot be changed." // unless it is not set
+				"Maze creator cannot be changed except by admin."
+				// unless it is not set
 			]);
 		}
 	}

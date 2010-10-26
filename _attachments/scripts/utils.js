@@ -65,18 +65,18 @@ Function.prototype.memoized = function () {
 		};
 	};
 	
-})();
-
-Function.prototype.unbind = function () {
-	var fn = this;
-	return function () {
-		var args = Array.prototype.slice.call(arguments);
-		var context = args.shift();
-		return fn.apply(context, args);
+	Function.prototype.unbind = function () {
+		var fn = this;
+		return function () {
+			var args = slice.call(arguments);
+			var context = args.shift();
+			return fn.apply(context, args);
+		};
+		// this is causing webkit nightlies to crash:
+		// return this.call.bind(this);
 	};
-	// this is causing webkit nightlies to crash:
-	// return this.call.bind(this);
-};
+	
+})();
 
 // http://gist.github.com/345486
 // Simulate onhashchange support in all browsers
