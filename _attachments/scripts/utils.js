@@ -219,3 +219,9 @@ if (!Date.now) {
 		return +new Date();
 	};
 }
+
+if (!window.console) {
+	console = {
+		log: function () {}
+	};
+}

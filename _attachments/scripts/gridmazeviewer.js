@@ -384,6 +384,10 @@ var GridMazeTileEditor = Classy(Box, {
 		discardButton.onclick = this.discard.bind(this);
 		div.appendChild(discardButton);
 		
+		var note = document.createElement("div");
+		note.innerHTML = "&larr; You can move through the light colors above<br> but not the dark colors below.";
+		this.element.appendChild(note);
+		
 		/*
 		var msg = "Your drawing won't actually be saved for good in this version. Come back in a week or two!";
 		var sorry = document.createElement("div");
