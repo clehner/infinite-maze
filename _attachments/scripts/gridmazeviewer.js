@@ -139,12 +139,12 @@ var GridMazeViewer = Classy(MazeViewer, {
 		var tileBox = this.drawHereTileBox;
 		if (xInTile == 0) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x - tileWidth, y));
-		} else if (xInTile == tileWidth - 1) {
+		} else if (xInTile == -1 || xInTile == tileWidth - 1) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x + tileWidth, y));
 		}
 		if (yInTile == 0) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x, y - tileHeight));
-		} else if (yInTile == tileHeight - 1) {
+		} else if (yInTile == -1 || yInTile == tileHeight - 1) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x, y + tileHeight));
 		}
 		
