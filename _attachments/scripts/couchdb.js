@@ -104,6 +104,11 @@ var Couch = (function() {
     }
     
     xhr.send(sendingData ? data : null);
+    
+    // for firefox, which does not sync right
+    if (!opt.async) {
+      opt.complete(xhr);
+    }
   }
 
   // Convert a options object to an url query string.
