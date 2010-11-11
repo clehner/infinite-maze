@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+	<title>The Infinite Maze: Static</title>
+	<meta charset="utf-8">
+	<link rel="shortcut icon" href="../images/favicon.ico">
+	<style type="text/css">
+	body {
+		margin: 0;
+		padding: 0;
+		background-color: black;
+	}
+	#maze {
+		border-spacing: 0;
+	}
+	#maze td {
+		padding: 0;
+		margin: 0;
+		line-height: 0;
+		width: {{TILE_WIDTH}}px;
+		height: {{TILE_HEIGHT}}px;
+	}
+	</style>
+</head>
+<body>
+<table id="maze">{{TBODY}}</table>
+<script>
+var startX = {{START_X}};
+var startY = {{START_Y}};
+scrollTo(startX - innerWidth / 2, startY - innerHeight / 2);
+</script>
+</body>
+</html>
