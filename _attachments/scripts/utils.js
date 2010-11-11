@@ -1,6 +1,6 @@
 if (!window.console) {
 	var console = window.console = {
-		log: function (){}
+		log: function () {}
 	};
 }
 
