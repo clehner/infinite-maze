@@ -12,3 +12,8 @@ When in edit mode, the tile is temporarily locked from other people editing it.
 Week 3 (26-2): A header bar has links to log in and sign up forms. Saving a tile drawing requires a login.
 Week 4 (2-9): Real time broadcasting of people's locations in the maze, with their username.
 Week 5 (9-16): Testing and stuff.
+
+
+Edit functionality
+Undo functionality
+Draw on click, not just drag

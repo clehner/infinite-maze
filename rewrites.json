@@ -20,6 +20,13 @@
 		}
 	},
 	{
+		"from": "mazes_static/:id",
+		"to": "_list/maze_static/maze_and_tiles",
+		"query": {
+			"id": ":id"
+		}
+	},
+	{
 		"from": "favicon.ico",
 		"to": "images/favicon.ico"
 	},
