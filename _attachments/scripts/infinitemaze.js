@@ -4,7 +4,7 @@ var Box = Classy({
 	visible: true,
 	
 	constructor: function () {
-		this.element = document.createElement(this.tagName);
+		this.element = this.element || document.createElement(this.tagName);
 	},
 	
 	hide: function () {
@@ -21,6 +21,20 @@ var Box = Classy({
 		}
 	}
 });
+
+// Make a box object out of an element.
+Box.ify = function (element /*, [args...] */) {
+	var args = [clone(this.prototype)];
+	args.push.apply(args, arguments);
+	return Box.ificate.apply(this, args);
+};
+
+// Instantiate a box object with an element.
+Box.ificate = function (obj, element /*, [args...] */) {
+	obj.element = element;
+	var ret = this.apply(obj, Array.prototype.slice.call(arguments, 2));
+	return ret instanceof Object ? ret : obj;
+}
 
 // A tile box is used to overlay a tile with a border and some html.
 var TileBox = Classy(Box, {
@@ -102,6 +116,8 @@ var GridMazeViewer = Classy(MazeViewer, {
 	// a tile in draw mode
 	drawingTile: null,
 	
+	editor: null,
+	
 	constructor: function (options) {
 		MazeViewer.call(this, options);
 		
@@ -116,6 +132,10 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.centerer.appendChild(this.drawHereTileBox.element);
 		
 		this.hideTileBoxes();
+	},
+	
+	setEditor: function (editor) {
+		this.editor = editor;
 	},
 	
 	moveToPixel: function (x, y) {
@@ -139,12 +159,12 @@ var GridMazeViewer = Classy(MazeViewer, {
 		var tileBox = this.drawHereTileBox;
 		if (xInTile == 0) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x - tileWidth, y));
-		} else if (xInTile == tileWidth - 1) {
+		} else if (xInTile == -1 || xInTile == tileWidth - 1) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x + tileWidth, y));
 		}
 		if (yInTile == 0) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x, y - tileHeight));
-		} else if (yInTile == tileHeight - 1) {
+		} else if (yInTile == -1 || yInTile == tileHeight - 1) {
 			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x, y + tileHeight));
 		}
 		
@@ -181,6 +201,11 @@ var GridMazeViewer = Classy(MazeViewer, {
 	
 	// the user has decided to draw this tile. enter tile drawing mode.
 	enterDrawTileMode: function (tile) {
+		if (!this.editor) {
+			alert("No editor!");
+			return;
+		}
+		
 		if (this.drawingTile == tile) return;
 		this.drawingTile = tile;
 		this.isInViewMode = false;
@@ -188,23 +213,10 @@ var GridMazeViewer = Classy(MazeViewer, {
 		// turn off the cross-hairs cursor outside this tile.
 		removeClass(this.centerer, "in");
 		
-		// the pixel leading into this cell.
-		var outerEntrancePixel = [this.x, this.y];
-		
-		//alert('Coming soon!');
-		
 		this.hideTileBoxes();
 		
-		var editor = this.editor = new GridMazeTileEditor(this, tile);
-		/* .element! */
-		this.element.appendChild(editor.element);
-		
-		Transition(editor.element, {bottom: "-120px"}, 500);
-		Transition(this.element, {bottom: "120px"}, 500, function () {
-			// adjust center. todo: get rid of jerk
-			this.centerY -= 60;
-			this.updateViewport();
-		}.bind(this));
+		// Open the editor toolbox.
+		this.editor.openForTile(tile);
 	},
 	
 	exitDrawTileMode: function () {
@@ -212,14 +224,6 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.drawingTile = null;
 		this.isInViewMode = true;
 		addClass(this.centerer, "in");
-		
-		Transition(this.editor.element, {bottom: "0px"}, 500);
-		Transition(this.element, {bottom: "0px"}, 500, function () {
-			// adjust center. todo: get rid of jerk
-			this.centerY += 60;
-			this.updateViewport();
-			this.element.removeChild(this.editor.element);
-		}.bind(this));
 	},
 	
 	publishTileDrawing: function (tile, tileCoords, onError, onSuccess) {
@@ -276,14 +280,19 @@ var Picker = Classy(Box, {
 		if (this.selectedCell) removeClass(this.selectedCell, "selected");
 		this.selectedCell = cell;
 		addClass(cell, "selected");
-		var value = this.data[cell.row][cell.col];
-		if (this.onSelect) this.onSelect(value);
+		this.value = this.data[cell.row][cell.col];
+		this.update();
 	},
 	
 	selectCoord: function (row, col) {
 		this.selectCell(this.element.rows[row].cells[col]);
+	},
+	
+	update: function () {
+		if (this.onSelect) this.onSelect(this.value);
 	}
 });
+Picker.ify = Box.ify; // todo: do this automatically
 
 var ColorPicker = Classy(Picker, {
 	constructor: function (colors) {
@@ -295,6 +304,7 @@ var ColorPicker = Classy(Picker, {
 		cell.style.backgroundColor = color;
 	}
 });
+ColorPicker.ify = Picker.ify;
 
 var SizePicker = Classy(Picker, {
 	constructor: function (sizes) {
@@ -315,101 +325,61 @@ var SizePicker = Classy(Picker, {
 		this.selectCoord(0, x);
 	}
 });
+SizePicker.ify = Picker.ify;
 
+function $(id) {
+	return document.getElementById(id);
+}
 
 var GridMazeTileEditor = Classy(Box, {
-	maze: null,
-	tile: null,
-	tileCoords: null,
-	tileCtx: null,
-	tileBox: null,
-	
-	rules: "<div id=\"rules\">" +
-		"<h3>Maze Rules</h3>" +
-		"You must allow a path from the entrance point of the square to go to at least two adjacent empty squares, if possible." +
-		"</div>",
-	
-	colors: ["#000,#5e320b,#900000,#006000,#0000f0".split(","),
-		"#fff,#fffa53,#ffd1f0,#8ffa8e,#80e9fd".split(",")],
-	pencilSizes: [18, 13, 8, 4, 1.5],
-	
-	constructor: function (maze, tile) {
-		Box.call(this);
+// Singleton.
+// Knows the DOM.
+constructor: function (viewer) {
+	var toolboxElement = $("editor-toolbox");
+	Box.ificate(this, toolboxElement);
 
-		this.maze = maze;
-		this.tile = tile;
-		this.tileCtx = tile.ctx;
-		this.tileCoords = maze.mazeCanvas.getTileCoords(tile);
-		tile.isEmpty = false;
-		
-		// Create a tile box.
-		this.tileBox = new DrawingTileBox(maze);
-		maze.centerer.appendChild(this.tileBox.element);		this.tileBox.coverTile(tile);
-		
-		// Mouse behavior
-		new DragBehavior({
-			element: this.tileBox.element,
-			onDragStart: this.onDragStart,
-			onDrag: this.onDrag,
-			onDragEnd: null,
-			context: this
-		});
-		
-		// Set up the editor toolbox.
-		this.element.id = "editor-toolbox";
-		this.element.innerHTML = this.rules;
-		
-		var div = document.createElement("div");
-		div.id = "toolbox-palettes";
-		this.element.appendChild(div);
-			
-		// Add the color picker.
-		var colorPicker = new ColorPicker(this.colors);
-		colorPicker.onSelect = this.setPencilColor.bind(this);
-		colorPicker.selectCoord(1, 0);
-		div.appendChild(colorPicker.element);
-		
-		var sizePicker = new SizePicker(this.pencilSizes);
-		sizePicker.onSelect = this.setPencilSize.bind(this);
-		sizePicker.select(0);
-		div.appendChild(sizePicker.element);
-		
-		var saveButton = document.createElement("button");
-		saveButton.innerHTML = "Save";
-		saveButton.onclick = this.save.bind(this);
-		div.appendChild(saveButton);
-		
-		var discardButton = document.createElement("button");
-		discardButton.innerHTML = "Discard";
-		discardButton.onclick = this.discard.bind(this);
-		div.appendChild(discardButton);
-		
-		/*
-		var msg = "Your drawing won't actually be saved for good in this version. Come back in a week or two!";
-		var sorry = document.createElement("div");
-		sorry.id = "sorry-message";
-		sorry.innerHTML = msg;
-		this.element.appendChild(sorry);
-		*/
-	},
+	var tile, tileCoords;
+	var tileBox = new DrawingTileBox(viewer);
 	
-	setPencilColor: function (color) {
-		this.tileCtx.strokeStyle = color;
-	},
+	// Init color picker
+	var colors = ["#000,#5e320b,#900000,#006000,#0000f0".split(","),
+		"#fff,#fffa53,#ffd1f0,#8ffa8e,#80e9fd".split(",")];
+	var colorPicker = ColorPicker.ify($("color-picker"), colors);
+	var pencilColor;
+	colorPicker.onSelect = function setPencilColor(color) {
+		pencilColor = color;
+		if (tile) {
+			tile.ctx.strokeStyle = color;
+		}
+	};
+	colorPicker.selectCoord(1, 0);
 	
-	setPencilSize: function (size) {
-		this.tileCtx.lineWidth = +size;
-	},
+	// Init size picker
+	var pencilSizes = [18, 13, 8, 4, 1.5];
+	var sizePicker = SizePicker.ify($("size-picker"), pencilSizes);
+	var pencilSize;
+	sizePicker.onSelect = function setPencilSize(size) {
+		pencilSize = +size;
+		if (tile) {
+			tile.ctx.lineWidth = pencilSize;
+		}
+	};
+	sizePicker.select(0);
 	
-	onDragStart: function (e) {
+	// Init buttons.
+	$("save-btn").onclick = save;
+	$("discard-btn").onclick = discard;
+	
+	this.onDragStart = function (e) {
+		// todo: make arguments x and y instead of e
 		this.x = e._x;
 		this.y = e._y;
 		this.onDrag(e);
-	},
+	};
 	
-	onDrag: function (e) {
+	this.onDrag = function (e) {
 		var offset = 0; // 0.5
-		var ctx = this.tileCtx;
+		var ctx = tile.ctx;
 		ctx.beginPath();
 		ctx.moveTo(this.x + offset, this.y + offset);
 		this.x = e._x;
@@ -417,42 +387,87 @@ var GridMazeTileEditor = Classy(Box, {
 		ctx.lineTo(this.x + offset, this.y + offset);
 		ctx.stroke();
 		
-		// Stop dragging the tile
+		// Stop dragging the tile or other funny stuff happening.
 		e.stopPropagation();
-	},
+		e.preventDefault();
+	};
 	
-	exit: function () {
-		this.maze.centerer.removeChild(this.tileBox.element);
-		this.maze.exitDrawTileMode();
-	},
+	// Mouse dragging behavior
+	new DragBehavior({
+		element: tileBox.element,
+		onDragStart: this.onDragStart,
+		onDrag: this.onDrag,
+		onDragEnd: null,
+		context: this
+	});
 	
-	checkRules: function () {
+
+
+	this.openForTile = function (t) {
+		tile = t;
+
+		tileCoords = viewer.mazeCanvas.getTileCoords(tile);
+		tile.isEmpty = false;
+
+		// Place the tile box over the tile.
+		viewer.centerer.appendChild(tileBox.element);
+		tileBox.coverTile(tile);
+		
+		colorPicker.update();
+		sizePicker.update();
+		
+		toolboxElement.style.bottom = "-120px";
+		removeClass(toolboxElement, "hidden");
+		setTimeout(function() {
+			Transition(toolboxElement, {bottom: "0px"}, 500);
+			Transition(viewer.element, {bottom: "120px"}, 500, function () {
+				viewer.updateViewport();
+			});
+		}, 0);
+	};
+	
+	function close() {
+		// remove the tile box
+		viewer.centerer.removeChild(tileBox.element);
+
+		Transition(toolboxElement, {bottom: "-120px"}, 500);
+		Transition(viewer.element, {bottom: "0px"}, 500, function () {
+			addClass(toolboxElement, "hidden");
+			viewer.updateViewport();
+		});
+
+		viewer.exitDrawTileMode();
+	};
+	this.close = close;
+	
+	function checkRules() {
 		// TODO
 		return true;
-	},
+	}
 	
-	save: function () {
+	function save() {
 		if (!confirm("Are you sure you are ready to save?")) return;
-		if (!this.checkRules()) {
+		if (!checkRules()) {
 			alert("You haven't followed all the rules! Fix your drawing and try again.");
 			return;
 		}
-		var self = this;
-		this.maze.publishTileDrawing(this.tile, this.tileCoords,
+		viewer.publishTileDrawing(tile, tileCoords,
 			function onError(msg) {
 				alert("There was an error: " + msg);
 			},
-			function onSuccess() {
-				self.exit();
-			}
+			close // success
 		);
-	},
+	};
+	this.save = save;
 	
-	discard: function () {
+	function discard() {
 		if (!confirm("You really want to discard your drawing?")) return;
-		this.tile.clear();
-		this.exit();
-	}
+		tile.clear();
+		close();
+	};
+	this.discard = discard;
+	
+}
 });
 
 var InfiniteMazeLoader = Classy(MazeLoader, {
@@ -473,7 +488,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
 		this.db.saveDoc({
 			_id: Couch.newUUID(), // make this async?
-			creator: "cel",
+			creator: "anonymous", // todo: users....
 			created_at: Date.now(),
 			type: "tile",
 			maze_id: this.mazeId,
@@ -491,3 +506,19 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		});
 	}
 });
+
+
+// The App
+
+var InfiniteMaze = {
+	init: function (mazesDb, mazeDoc, tiles) {
+		shim(window.JSON, "../scripts/json2.js", function () {
+			var viewer = new GridMazeViewer({
+				loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles),
+				container: $("maze")
+			});
+			var editor = new GridMazeTileEditor(viewer);
+			viewer.setEditor(editor);
+		});
+	}
+};

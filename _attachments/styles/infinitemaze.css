@@ -4,11 +4,12 @@ body {
 	font: 12pt Arial, sans-serif;
 }
 
-#main {
+#maze, #main, #app {
 	overflow: hidden;
 }
 
 .maze {
+	overflow: hidden;
 	background-color: black; /*#777;*/
 }
 
@@ -43,9 +44,7 @@ body {
 }
 
 #editor-toolbox {
-	position: absolute;
-	left: 0;
-	right: 0;
+	top: auto;
 	height: 108px; /* 120 total */
 	background-color: #ccc;
 	border-top: 2px solid black;

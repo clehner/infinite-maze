@@ -1,50 +1,65 @@
 <!doctype html>
 <html>
-	<head>
-		<title>The Infinite Maze</title>
-		<meta charset="utf-8">
+<head>
+	<title>The Infinite Maze</title>
+	<meta charset="utf-8">
+	
+	<meta name="viewport" content="width=device-width">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+	<link rel="shortcut icon" href="../images/favicon.ico">
+	
+	<link rel="stylesheet" type="text/css" href="../styles/maze.css">
+	<link rel="stylesheet" type="text/css" href="../styles/infinitemaze.css">
+	
+	<script src="../scripts/utils.js"></script>
+	<script src="../scripts/transitions.js"></script>
+	<script src="../scripts/couchdb.js"></script>
+	<script src="../scripts/mazeviewer.js"></script>
+	<script src="../scripts/infinitemaze.js"></script>
+</head>
+<body>
+	<div id="app" class="layer">
+		<div id="welcome">
+			<h1>TheInfiniteMaze.com</h1>
+			<div class="subtitle">massively multiplayer online maze</div>
+			<h2>How to Play</h2>
+			<ul>
+				<li>The red dot is you.</li>
+				<li>Move your mouse through the maze.</li>
+				<li>Click and drag to scroll the screen.</li>
+				<li>When you get to an empty square, you can draw in it.</li>
+			</ul>
+			<button id="enter-maze">Enter the Maze</button>
+		</div>
 		
-		<meta name="viewport" content="width=device-width">
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
-		<link rel="shortcut icon" href="../images/favicon.ico">
+		<div id="maze" class="layer"></div>
 		
-		<link rel="stylesheet" type="text/css" href="../styles/maze.css">
-		<link rel="stylesheet" type="text/css" href="../styles/infinitemaze.css">
-		
-		<script src="../scripts/utils.js"></script>
-		<script src="../scripts/transitions.js"></script>
-		<script src="../scripts/couchdb.js"></script>
-		<script src="../scripts/mazeviewer.js"></script>
-		<script src="../scripts/gridmazeviewer.js"></script>
-	</head>
-	<body>
-		<div id="main" class="layer"></div>
-		
-		<script>
-		var data = {{DATA}};
-		
-		// this is hackish but it works.
-		Couch.urlPrefix = "../";
-		var mazesDb = Couch.db("db");
-		Couch.urlPrefix = "";
-		
-		function init2() {
-			mazeLoader = new InfiniteMazeLoader(mazesDb, data.maze, data.tiles);
-			maze = new GridMazeViewer({
-				container: document.getElementById("main"),
-				loader: mazeLoader
-			});
-		}
-		
-		function init() {
-			if (!window.JSON) {
-				loadScript("../scripts/json2.js", init2);
-			} else {
-				init2();
-			}
-		}
-		init();
-		</script>
-	</body>
+		<div id="editor-toolbox" class="layer hidden">
+			<div id="rules">
+				<h3>Maze Rules</h3>
+				You must allow a path from the entrance point of the square to go to at least two adjacent empty squares, if possible.
+			</div>
+			<div id="toolbox-palettes">
+				<table class="picker" id="color-picker"></table>
+				<table class="picker" id="size-picker"></table>
+				<button id="save-btn">Save</button>
+				<button id="discard-btn">Discard</button>
+			</div>
+			<div>
+				&larr; You can move through the light colors above<br> but not the dark colors below.
+			</div>
+		</div>
+	</div>
+	
+	<script>
+	var data = {{DATA}};
+	
+	Couch.urlPrefix = "../";
+	var mazesDb = Couch.db("db");
+	Couch.urlPrefix = "";
+
+	InfiniteMaze.init(mazesDb, data.maze, data.tiles);
+	</script>
+</body>
 </html>

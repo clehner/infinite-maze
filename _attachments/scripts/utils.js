@@ -1,3 +1,9 @@
+if (!window.console) {
+	var console = window.console = {
+		log: function (){}
+	};
+}
+
 // http://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
 function loadScript(url, callback){
     var script = document.createElement("script")
@@ -22,6 +28,22 @@ function loadScript(url, callback){
     head.insertBefore(script, head.firstChild);
 }
 
+// Conditionally load a script
+function shim(feature, url, callback) {
+	if (feature) {
+		callback();
+	} else {
+		loadScript(url, callback);
+	}
+}
+
+var clone = (function () {
+	function Dummy() {}
+	return function (prototype) {
+		Dummy.prototype = prototype;
+		return new Dummy();
+	}
+})();
 
 Function.prototype.memoized = function () {
 	var fn = this, cache = {};
@@ -66,14 +88,9 @@ Function.prototype.memoized = function () {
 	};
 	
 	Function.prototype.unbind = function () {
-		var fn = this;
-		return function () {
-			var args = slice.call(arguments);
-			var context = args.shift();
-			return fn.apply(context, args);
-		};
-		// this is causing webkit nightlies to crash:
-		// return this.call.bind(this);
+		// this used to cause a crash but i reported it and it was fixed!
+		// https://bugs.webkit.org/show_bug.cgi?id=48485
+		return this.call.bind(this);
 	};
 	
 })();
