@@ -45,19 +45,28 @@ body {
 #welcome h2 {
 	font-size: 125%;
 }
+#welcome em {
+	font-style: normal;
+	color: #096;
+}
 #welcome h2, #welcome ul {
 	text-align: left;
 }
 #welcome #enter-btn {
-	background: yellow;
+	background: #ff0;
 	border: 1px solid #cc0;
 	font-size: 1em;
 	padding: 6px;
-	color: #660;
+	color: #330;
+	cursor: pointer;
+	border-radius: 6px;
 }
-#welcome em {
-	font-style: normal;
-	color: #096;
+#welcome #enter-btn:hover {
+	border-color: #990;
+}
+#welcome #enter-btn:active {
+	background: #fe0;
+	color: #110;
 }
 
 .tile-box {
