@@ -7,7 +7,8 @@ function(doc) {
 		var tiles = {};
 		var x = doc.location[0];
 		var y = doc.location[1];
-		(tiles[x] || (tiles[x] = {}))[y] = doc._id;
+		(tiles[x] || (tiles[x] = {}))[y] = true;
+		//doc._id not working anymore!
 		emit(doc.maze_id, {tiles: tiles});
 	}
 }

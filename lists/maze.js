@@ -26,7 +26,7 @@ function(head, req) {
 						tiles[x] = {};
 					}
 					for (var y in theseTiles[x]) {
-						tiles[x][y] = theseTiles[x][y];
+						tiles[x][y] = row.id; //theseTiles[x][y];
 					}
 				}
 			}
