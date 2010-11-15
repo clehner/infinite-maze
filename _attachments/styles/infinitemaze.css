@@ -53,20 +53,20 @@ body {
 	text-align: left;
 }
 #welcome #enter-btn {
-	background: #ff0;
-	border: 1px solid #cc0;
+	background: #9f6;
+	border: 1px solid #0c0;
 	font-size: 1em;
 	padding: 6px;
-	color: #330;
+	color: #030;
 	cursor: pointer;
 	border-radius: 6px;
 }
 #welcome #enter-btn:hover {
-	border-color: #990;
+	border-color: #090;
 }
 #welcome #enter-btn:active {
-	background: #fe0;
-	color: #110;
+	background: #0e0;
+	color: #010;
 }
 
 .tile-box {
