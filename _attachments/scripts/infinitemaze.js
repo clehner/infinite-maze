@@ -132,6 +132,8 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.centerer.appendChild(this.drawHereTileBox.element);
 		
 		this.hideTileBoxes();
+		
+		$("enter-btn").onclick = this.enterMaze.bind(this);
 	},
 	
 	setEditor: function (editor) {
@@ -238,6 +240,24 @@ var GridMazeViewer = Classy(MazeViewer, {
 				onSuccess(resp);
 			}
 		);
+	},
+
+	showHelpWindow: function () {
+		//this.helpWindow = $("welcome");
+		addClass($("app"), "in-welcome");
+	},
+	
+	hideHelpWindow: function () {
+		Transition($("welcome"), {opacity: 0}, 500);
+		Transition($("maze"), {opacity: 1}, 250, function () {
+			removeClass($("app"), "in-welcome");
+		});
+		/*var helpWindow = this.helpWindow;
+		if (helpWindow) {
+			Transition(helpWindow, {opacity: 0}, 250,
+				this.centerer.removeChild.bind(this.centerer, helpWindow));
+			delete this.helpWindow;
+		}*/
 	}
 });
 
