@@ -392,8 +392,8 @@ constructor: function (viewer) {
 	
 	this.onDragStart = function (e) {
 		// todo: make arguments x and y instead of e
-		this.x = e._x;
-		this.y = e._y;
+		this.x = e._x - .01;
+		this.y = e._y - .01;
 		this.onDrag(e);
 	};
 	

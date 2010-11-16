@@ -18,17 +18,10 @@ function(head, req) {
 			
 			if (!maze && value.maze) {
 				maze = value.maze;
-			}
-			if (value.tiles) {
-				var theseTiles = value.tiles;
-				for (var x in theseTiles) {
-					if (!tiles[x]) {
-						tiles[x] = {};
-					}
-					for (var y in theseTiles[x]) {
-						tiles[x][y] = row.id; //theseTiles[x][y];
-					}
-				}
+			} else if (value.length == 2) {
+				var x = value[0];
+				var y = value[1];
+				(tiles[x] || (tiles[x] = {}))[y] = row.id;
 			}
 		}
 		if (!maze) {
