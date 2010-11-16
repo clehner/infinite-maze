@@ -391,15 +391,15 @@ constructor: function (viewer) {
 	$("discard-btn").onclick = discard;
 	
 	this.onDragStart = function (e) {
-		// todo: make arguments x and y instead of e
 		this.x = e._x - .01;
 		this.y = e._y - .01;
 		this.onDrag(e);
 	};
 	
 	this.onDrag = function (e) {
-		var offset = 0; // 0.5
 		var ctx = tile.ctx;
+		// draw on pixels, not in between them.
+		var offset = 0.5;
 		ctx.beginPath();
 		ctx.moveTo(this.x + offset, this.y + offset);
 		this.x = e._x;
