@@ -9,9 +9,21 @@ body {
 	background-color: black; /*#777;*/
 }
 
-#app.in-welcome #maze, #app.in-welcome #editor-toolbox {
-	opacity: .3;
+#maze {
+	top: 25px; /* header height */
 }
+
+#overlay {
+	display: none;
+}
+#app.in-welcome #overlay {
+	display: block;
+	background: black;
+	opacity: .7;
+	z-index: 4;
+}
+
+/* Welcome screen (intro) */
 
 #welcome {
 	display: none;
@@ -29,14 +41,13 @@ body {
 	        box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	   -moz-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	-webkit-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
-	opacity: .9;
-	background: #fff;
+	background: white;
+	background: rgba(255, 255, 255, 0.9);
+	z-index: 5;
 }
-
 #app.in-welcome #welcome {
 	display: block;
 }
-
 #welcome h1 {
 	margin: 0 0 .25em;
 }
@@ -53,7 +64,7 @@ body {
 	text-align: left;
 }
 #welcome #enter-btn {
-	background: #9f6;
+	background: #9e6;
 	border: 1px solid #0c0;
 	font-size: 1em;
 	padding: 6px;
@@ -62,12 +73,50 @@ body {
 	border-radius: 6px;
 }
 #welcome #enter-btn:hover {
+	background: #9f6;
 	border-color: #090;
 }
 #welcome #enter-btn:active {
-	background: #0e0;
+	background: #3e3;
 	color: #010;
 }
+
+/* Header */
+
+#header {
+	bottom: auto;
+	background: #eee;
+	z-index: 3;
+	border-bottom: 3px solid #999;
+	padding: 2px 5px;
+	height: 18px;
+}
+.left {
+	float: left;
+}
+.right {
+	float: right;
+}
+#login-signup-link {
+	color: #06c;
+	text-decoration: none;
+}
+#login-signup-link:hover {
+	color: #09f;
+}
+#login-signup-btn {
+	/*border: 1px solid #0f0;
+	background: #cf3;
+	font-size: .9em;
+	padding: 1px;*/
+}
+#app.logged-in #login-signup-btn, #app:not(.logged-in) #login-text {
+	display: none;
+}
+#login-text {
+}
+
+/* Tile boxes */
 
 .tile-box {
 	position: absolute;
@@ -93,11 +142,7 @@ body {
 	border: 1px dotted rgba(200, 200, 200, 0.6);
 }
 
-.help-window {
-	background-color: #7d7;
-	border-color: #7d7;
-	color: #000; /*#7d7*/
-}
+/* Editor toolbox */
 
 #editor-toolbox {
 	top: auto;
@@ -105,7 +150,7 @@ body {
 	background-color: #ccc;
 	border-top: 2px solid black;
 	padding: 5px;
-	z-index: 5;
+	z-index: 4;
 }
 
 #rules {
@@ -143,10 +188,6 @@ body {
 
 .picker td.selected {
 	outline: 1px dotted white;
-}
-
-#color-picker {
-	
 }
 
 #size-picker td {

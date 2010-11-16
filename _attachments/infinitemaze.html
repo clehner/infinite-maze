@@ -20,8 +20,6 @@
 </head>
 <body>
 	<div id="app" class="layer in-welcome">
-		<div id="maze" class="layer"></div>
-		
 		<div id="welcome">
 			<h1>The<em>Infinite</em>Maze.com</h1>
 			<div class="subtitle">massively multiplayer online maze</div>
@@ -35,10 +33,23 @@
 			<button id="enter-btn">Enter the Maze</button>
 		</div>
 		
+		<div id="header" class="layer">
+			<div class="left">
+				The Infinite Maze
+			</div>
+			<div class="right">
+				<button id="login-signup-btn">Log in | Sign up</button>
+				<div id="login-text">
+					<a id="account-name-link" href=""></a>
+					<button id="logout-btn">Log out</button>
+				</div>
+			</div>
+		</div>
+		
 		<div id="editor-toolbox" class="layer hidden">
 			<div id="rules">
 				<h3>Maze Rules</h3>
-				You must allow a path from the entrance point of the square to go to at least two adjacent empty squares, if possible.
+				Please allow a path to go from the entrance point of your square to at least two empty adjacent squares.
 			</div>
 			<div id="toolbox-palettes">
 				<table class="picker" id="color-picker"></table>
@@ -50,6 +61,9 @@
 				&larr; You can move through the light colors above<br> but not the dark colors below.
 			</div>
 		</div>
+		
+		<div id="overlay" class="layer"></div>
+		<div id="maze" class="layer"></div>
 	</div>
 	
 	<script>

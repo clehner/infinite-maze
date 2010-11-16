@@ -249,7 +249,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 	
 	hideHelpWindow: function () {
 		Transition($("welcome"), {opacity: 0}, 500);
-		Transition($("maze"), {opacity: 1}, 250, function () {
+		Transition($("overlay"), {opacity: 0}, 250, function () {
 			removeClass($("app"), "in-welcome");
 		});
 		/*var helpWindow = this.helpWindow;
@@ -527,6 +527,13 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	}
 });
 
+var HeaderBar = Classy(Box, {
+// Singleton. Knows the DOM.
+constructor: function (viewer) {
+	var toolboxElement = $("login-signup-btn");
+	//Box.ificate(this, ?);
+}
+});
 
 // The App
 
