@@ -569,7 +569,7 @@ constructor: function () {
 		stopLoading();
 		loginForm.reset();
 		signupForm.reset();
-		alert("login success!");
+		alert("You have logged in successfully.");
 	}
 	
 	function onLoginError(msg) {

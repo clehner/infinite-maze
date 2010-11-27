@@ -6,7 +6,7 @@ Implement path-finding algorithm instead of straight lines for navigating throug
 Week 2 (19-26): The maze tile being edited can be saved/published [done], and is checked for following the rules.
 The client updates in real time.
 When in edit mode, the tile is temporarily locked from other people editing it.
-Week 3 (26-2): A header bar has links to log in and sign up forms. Saving a tile drawing requires a login.
+Week 3 (26-2): A header bar has links to log in and sign up forms [done]. Saving a tile drawing requires a login.
 Week 4 (2-9): Real time broadcasting of people's locations in the maze, with their username.
 Week 5 (9-16): Testing and stuff.
 
