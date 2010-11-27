@@ -18,11 +18,8 @@
 	<script src="scripts/mazeviewer.js"></script>
 	<script src="scripts/infinitemaze.js"></script>
 </head>
-<body>
 	<div id="app" class="layer in-welcome">
-		<div id="maze" class="layer"></div>
-		
-		<div id="welcome">
+		<div id="welcome" class="window">
 			<h1>The<em>Infinite</em>Maze.com</h1>
 			<div class="subtitle">massively multiplayer online maze</div>
 			<h2>How to Play</h2>
@@ -35,10 +32,46 @@
 			<button id="enter-btn">Enter the Maze</button>
 		</div>
 		
+		<div id="header" class="layer">
+			<div class="left">
+				The Infinite Maze
+			</div>
+			<div class="right">
+				<button id="login-signup-btn">Log in | Sign up</button>
+				<div id="login-text">
+					<a id="account-name-link" href=""></a>
+					<button id="logout-btn">Log out</button>
+				</div>
+			</div>
+		</div>
+		
+		<div id="login-signup-window" class="window hidden">
+			<!--<p>
+				Login or sign up for an account so you can save your drawings to the maze.
+			</p>-->
+			<form id="signup-form" class="left half">
+				<h2>Sign up</h2>
+				<p>Username: <input id="signup-username"></p>
+				<p>Password: <input id="signup-password" type="password"></p>
+				<p>Email: <input id="signup-email"></p>
+				<p><input type="submit" value="Sign up"></p>
+				<div id="signup-result" class="error"></div>
+			</form>
+			<hr>
+			<form id="login-form" class="right half">
+				<h2>Log in</h2>
+				<p>Username: <input id="login-username"></p>
+				<p>Password: <input id="login-password" type="password"></p>
+				<p><input type="submit" value="Log in">
+					<input type="reset" value="Cancel"></p>
+				<div id="login-result" class="error"></div>
+			</form>
+		</div>
+		
 		<div id="editor-toolbox" class="layer hidden">
 			<div id="rules">
 				<h3>Maze Rules</h3>
-				You must allow a path from the entrance point of the square to go to at least two adjacent empty squares, if possible.
+				Please allow a path to go from the entrance point of your square to at least two empty adjacent squares.
 			</div>
 			<div id="toolbox-palettes">
 				<table class="picker" id="color-picker"></table>
@@ -50,6 +83,9 @@
 				&larr; You can move through the light colors above<br> but not the dark colors below.
 			</div>
 		</div>
+		
+		<div id="overlay" class="layer"></div>
+		<div id="maze" class="layer"></div>
 	</div>
 	
 	<script>
@@ -57,8 +93,9 @@
 	
 	Couch.urlPrefix = ".";
 	var mazesDb = Couch.db("db");
+	Couch.urlPrefix = "";
 
-	InfiniteMaze.init(mazesDb, data.maze, data.tiles);
+	InfiniteMaze.init(mazesDb, data.maze, data.tiles, data.userCtx);
 	</script>
 </body>
 </html>

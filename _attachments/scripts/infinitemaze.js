@@ -133,11 +133,9 @@ var GridMazeViewer = Classy(MazeViewer, {
 		
 		this.hideTileBoxes();
 		
-		$("enter-btn").onclick = this.enterMaze.bind(this);
-	},
-	
-	setEditor: function (editor) {
-		this.editor = editor;
+		var enterButton = $("enter-btn");
+		enterButton.onclick = this.enterMaze.bind(this);
+		enterButton.focus();
 	},
 	
 	moveToPixel: function (x, y) {
@@ -203,11 +201,6 @@ var GridMazeViewer = Classy(MazeViewer, {
 	
 	// the user has decided to draw this tile. enter tile drawing mode.
 	enterDrawTileMode: function (tile) {
-		if (!this.editor) {
-			alert("No editor!");
-			return;
-		}
-		
 		if (this.drawingTile == tile) return;
 		this.drawingTile = tile;
 		this.isInViewMode = false;
@@ -218,7 +211,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.hideTileBoxes();
 		
 		// Open the editor toolbox.
-		this.editor.openForTile(tile);
+		InfiniteMaze.editor.openForTile(tile);
 	},
 	
 	exitDrawTileMode: function () {
@@ -346,6 +339,8 @@ var SizePicker = Classy(Picker, {
 	}
 });
 SizePicker.ify = Picker.ify;
+
+var InfiniteMaze = {};
 
 function $(id) {
 	return document.getElementById(id);
@@ -508,7 +503,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
 		this.db.saveDoc({
 			_id: Couch.newUUID(), // make this async?
-			creator: "anonymous", // todo: users....
+			creator: InfiniteMaze.username,
 			created_at: Date.now(),
 			type: "tile",
 			maze_id: this.mazeId,
@@ -527,25 +522,211 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	}
 });
 
-var HeaderBar = Classy(Box, {
-// Singleton. Knows the DOM.
-constructor: function (viewer) {
-	var toolboxElement = $("login-signup-btn");
-	//Box.ificate(this, ?);
+var HeaderBar = function () {
+	var header = $("header");
+	
+	var accountNameLink = $("account-name-link");
+	
+	function updateForUser() {
+		var user = InfiniteMaze.getUsername();
+		if (user) {
+			addClass($("app"), "logged-in");
+			accountNameLink.innerHTML = user;
+		} else {
+			removeClass($("app"), "logged-in");
+		}
+	}
+	
+	$("logout-btn").onclick = function () {
+		InfiniteMaze.sessionManager.logout(updateForUser);
+	};
+	$("login-signup-btn").onclick = function () {
+		InfiniteMaze.loginSignupWindow.show();
+	};
+	
+	this.updateForUser = updateForUser;
+};
+
+var LoginSignupWindow = Classy(Box, {
+constructor: function () {
+	var container = $("login-signup-window");
+	Box.ificate(this, container);
+	
+	this.show = function () {
+		Box.prototype.show.call(this);
+		$("login-username").focus();
+	};
+	
+	function startLoading() {
+		addClass(container, "loading");
+	}
+	
+	function stopLoading() {
+		removeClass(container, "loading");
+	}
+	
+	function onLogin(result) {
+		stopLoading();
+		loginForm.reset();
+		signupForm.reset();
+		alert("login success!");
+	}
+	
+	function onLoginError(msg) {
+		stopLoading();
+		$("login-result").innerHTML = msg;
+	}
+	
+	function onSignupError(msg) {
+		stopLoading();
+		$("signup-result").innerHTML = msg;
+	}
+	
+	var loginForm = $("login-form");
+	loginForm.onreset = this.hide.bind(this);
+	loginForm.onsubmit = function (e) {
+		e.preventDefault();
+		var username = $("login-username").value;
+		var password = $("login-password").value;
+		startLoading();
+		InfiniteMaze.sessionManager.login(username, password, onLogin, onLoginError);
+	};
+	
+	var signupForm = $("signup-form");
+	signupForm.onsubmit = function (e) {
+		e.preventDefault();
+		var username = $("signup-username").value;
+		var password = $("signup-password").value;
+		var email = $("signup-email").value;
+		startLoading();
+		InfiniteMaze.sessionManager.signup(username, password, email, onLogin, onSignupError);
+	};
 }
 });
 
+function validateEmailAddress(email, isGood, isBad) {
+	var valid = typeof email == "string" && email.split('@').length == 2;
+	(valid ? isGood : isBad)();
+	// todo: Sophisticate this
+	// http://www.webdigi.co.uk/blog/2009/how-to-check-if-an-email-address-exists-without-sending-an-email/
+}
+
+// Deals with signup, login, logout, and userCtx.
+function SessionManager(userCtx) {
+	var self = this;
+	if (userCtx) {
+		self.userCtx = userCtx;
+	}
+	
+	function setUserCtx(ctx) {
+		var oldUsername = self.userCtx.name;
+		if (ctx) {
+			self.userCtx = ctx;
+		} else {
+			// use prototypal value
+			delete self.userCtx;
+			ctx = self.userCtx;
+		}
+		if (ctx.name != oldUsername) {
+			// Deal with new user
+			InfiniteMaze.headerBar.updateForUser();
+		}
+	};
+	
+	this.refreshUserCtx = function (done) {
+		Couch.session({
+			success: function (session) {
+				setUserCtx(session.userCtx);
+				done();
+			},
+			error: function (a, b, c) {
+				alert("Error getting session. " + a + ", " + b + ", " + c);
+				setUserCtx(null);
+				done();
+			}
+		});
+	};
+	
+	this.logout = function (done) {
+		Couch.logout({
+			success: function (resp) {
+				setUserCtx(null);
+				done(resp);
+			},
+			error: function (status, error, reason) {
+				alert("Error logging out. " + reason);
+				done();
+			}
+		});
+	};
+	
+	this.login = function (username, password, onSuccess, onError) {
+		if (!username) return onError("You need to enter a username.");
+		
+		Couch.login({
+			name: username,
+			password: password,
+			success: function success(ctx) {
+				self.refreshUserCtx(function () {
+					onSuccess(ctx);
+				});
+			},
+			error: function (status, error, reason) {
+				onError(reason);
+			}
+		});
+	};
+	
+	this.signup = function (username, password, email, onSuccess, onError) {
+		if (!username) return onError("Username is required.",
+			"Please choose a username.");
+		if (!email) return onError("Email is required.",
+			"Please enter your email address to sign up.");
+		
+		validateEmailAddress(email,
+			function goodEmail() {
+				// need SHA1 for signup
+				shim(window.hex_sha1, "../scripts/sha1.js", function () {
+					Couch.signup({
+						name: username,
+						signup_date: Date.now(),
+						email: email,
+					}, password, {
+						success: function () {
+							self.login(username, password, onSuccess, onError);
+						},
+						error: function (a, b, c) {
+							onError("Sorry, something went wrong in the signup process: " + a + ", " + b + ", " + c);
+						}
+					});
+				});
+			},
+			function badEmail(valid) {
+				onError("Bad email. Try a different one.");
+			}
+		);
+	};
+}
+SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
+
+
 // The App
 
-var InfiniteMaze = {
-	init: function (mazesDb, mazeDoc, tiles) {
-		shim(window.JSON, "../scripts/json2.js", function () {
-			var viewer = new GridMazeViewer({
-				loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles),
-				container: $("maze")
-			});
-			var editor = new GridMazeTileEditor(viewer);
-			viewer.setEditor(editor);
+InfiniteMaze.init = function (mazesDb, mazeDoc, tiles, userCtx) {
+	shim(window.JSON, "../scripts/json2.js", function () {
+		this.sessionManager = new SessionManager(userCtx);
+		this.viewer = new GridMazeViewer({
+			loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles),
+			container: $("maze")
 		});
-	}
+		this.editor = new GridMazeTileEditor(this.viewer);
+		this.loginSignupWindow = new LoginSignupWindow();
+		this.loginSignupWindow.hide();
+		this.headerBar = new HeaderBar();
+		this.headerBar.updateForUser();
+	}.bind(this));
+};
+
+InfiniteMaze.getUsername = function () {
+	return this.sessionManager.userCtx.name;
 };

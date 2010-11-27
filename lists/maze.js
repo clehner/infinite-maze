@@ -28,7 +28,7 @@ function(head, req) {
 			return mazeNotFound(mazeId);
 		}
 		
-		var data = {maze: maze, tiles: tiles};
+		var data = {maze: maze, tiles: tiles, userCtx: req.userCtx};
 		
 		var template = req.query.currentdir ? "maze_currentdir" : "maze";
 		return templates[template].replace("{{DATA}}", JSON.stringify(data));

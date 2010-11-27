@@ -23,10 +23,9 @@ body {
 	z-index: 4;
 }
 
-/* Welcome screen (intro) */
+/* Windows (modal dialogues) */
 
-#welcome {
-	display: none;
+.window {
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -36,7 +35,7 @@ body {
 	margin-top: -137px;
 	padding: 24px 36px;
 	overflow: auto;
-	text-align: center;
+	border: 1px solid #999;
 	border-radius: 1em;
 	        box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	   -moz-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
@@ -45,16 +44,29 @@ body {
 	background: rgba(255, 255, 255, 0.9);
 	z-index: 5;
 }
+
+.window h1 {
+	margin: .25em 0;
+}
+
+.window h2 {
+	font-size: 125%;
+}
+
+.window h1:first-child, .window h2:first-child {
+	margin-top: 0;
+}
+
+/* Welcome window */
+
+#welcome {
+	display: none;
+	text-align: center;
+}
 #app.in-welcome #welcome {
 	display: block;
 }
-#welcome h1 {
-	margin: 0 0 .25em;
-}
 #welcome .subtitle {
-}
-#welcome h2 {
-	font-size: 125%;
 }
 #welcome em {
 	font-style: normal;
@@ -71,6 +83,7 @@ body {
 	color: #030;
 	cursor: pointer;
 	border-radius: 6px;
+	outline: none;
 }
 #welcome #enter-btn:hover {
 	background: #9f6;
@@ -114,6 +127,43 @@ body {
 	display: none;
 }
 #login-text {
+}
+
+/* Login/Signup window */
+
+#login-signup-window {
+	/* display: none; */
+	background-color: white;
+	background-color: rgba(255, 255, 255, 0.96);
+}
+#login-signup-window .left {
+	width: 50%;
+	float: left;
+}
+#login-signup-window .right {
+	position: absolute;
+	left: 50%;
+	right: 0px;
+	padding-left: 1em;
+}
+#login-signup-window hr {
+	border: none;
+	border-right: 2px solid #ccc;
+	top: 1.5em;
+	bottom: 1.5em;
+	left: 50%;
+	position: absolute;
+}
+#login-signup-window p {
+	margin: .5em 0;
+}
+.error {
+	color: #c40;
+}
+.loading {
+	background-image: url(../images/loading.gif);
+	background-repeat: no-repeat;
+	background-position: 98% 4%;
 }
 
 /* Tile boxes */
