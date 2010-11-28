@@ -304,7 +304,7 @@ function MazeViewer(options) {
 	this.setPosition(this.startPos[0], this.startPos[1]);
 	
 	this.showStartMarker();
-	this.showHelpWindow();
+	//this.showHelpWindow();
 	
 	this.updateViewport();
 	this.updateOffset();

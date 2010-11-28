@@ -172,18 +172,23 @@ function Classy(d,e){var c,a,b;if(!e){a=d;d=null}else{function f(){}f.prototype=
 
 // className manipulation
 var getClassRegex = function (className) {
-	return new RegExp(className + ' | ' + className, 'g');
+	return new RegExp('(\\s|^)' + className + '(\\s|$)');
 }.memoized();
+
+function hasClass(element, className) {
+	if (element.className) {
+		return element.className.match(getClassRegex(className));
+	}
+}
+function addClass(element, className) {
+	if (!className) return;
+	element.className += ' ' + className;
+}
 
 function removeClass(element, className) {
 	var old = element.className;
 	element.className = (old == className) ? '' :
 		old.replace(getClassRegex(className), '');
-}
-
-function addClass(element, className) {
-	if (!className) return;
-	element.className += ' ' + className;
 }
 
 function DragBehavior(options) {

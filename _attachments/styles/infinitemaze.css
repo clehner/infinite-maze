@@ -14,10 +14,6 @@ body {
 }
 
 #overlay {
-	display: none;
-}
-#app.in-welcome #overlay {
-	display: block;
 	background: black;
 	opacity: .7;
 	z-index: 4;
@@ -60,11 +56,7 @@ body {
 /* Welcome window */
 
 #welcome {
-	display: none;
 	text-align: center;
-}
-#app.in-welcome #welcome {
-	display: block;
 }
 #welcome .subtitle {
 }

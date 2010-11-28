@@ -4,7 +4,13 @@ var Box = Classy({
 	visible: true,
 	
 	constructor: function () {
-		this.element = this.element || document.createElement(this.tagName);
+		if (this.element) {
+			if (hasClass(this.element, "hidden")) {
+				this.visible = false;
+			}
+		} else {
+			this.element = document.createElement(this.tagName);
+		}
 	},
 	
 	hide: function () {
@@ -32,6 +38,7 @@ Box.ify = function (element /*, [args...] */) {
 // Instantiate a box object with an element.
 Box.ificate = function (obj, element /*, [args...] */) {
 	obj.element = element;
+	
 	var ret = this.apply(obj, Array.prototype.slice.call(arguments, 2));
 	return ret instanceof Object ? ret : obj;
 }
@@ -132,10 +139,6 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.centerer.appendChild(this.drawHereTileBox.element);
 		
 		this.hideTileBoxes();
-		
-		var enterButton = $("enter-btn");
-		enterButton.onclick = this.enterMaze.bind(this);
-		enterButton.focus();
 	},
 	
 	moveToPixel: function (x, y) {
@@ -236,16 +239,14 @@ var GridMazeViewer = Classy(MazeViewer, {
 	},
 
 	showHelpWindow: function () {
-		//this.helpWindow = $("welcome");
-		addClass($("app"), "in-welcome");
 	},
 	
 	hideHelpWindow: function () {
-		Transition($("welcome"), {opacity: 0}, 500);
+		/*Transition($("welcome"), {opacity: 0}, 500);
 		Transition($("overlay"), {opacity: 0}, 250, function () {
 			removeClass($("app"), "in-welcome");
 		});
-		/*var helpWindow = this.helpWindow;
+		var helpWindow = this.helpWindow;
 		if (helpWindow) {
 			Transition(helpWindow, {opacity: 0}, 250,
 				this.centerer.removeChild.bind(this.centerer, helpWindow));
@@ -543,9 +544,46 @@ var HeaderBar = function () {
 	$("login-signup-btn").onclick = function () {
 		InfiniteMaze.loginSignupWindow.show();
 	};
+	$("help-link").onclick = function () {
+		InfiniteMaze.welcomeWindow.show();
+	};
 	
 	this.updateForUser = updateForUser;
 };
+
+var WelcomeWindow = Classy(Box, {
+constructor: function () {
+	var self = this;
+	var container = $("welcome");
+	Box.ificate(this, container);
+
+	// dark overlay over maze, behind welcome window
+	var overlay = Box.ify($("overlay"));
+	
+	var enterButton = $("enter-btn");
+	
+	this.show = function () {
+		Box.prototype.show.call(self);
+		overlay.show();
+		setTimeout(function () {
+			Transition(container, {opacity: 1}, 500);
+			Transition(overlay.element, {opacity: 0.7}, 250);
+		});
+		enterButton.focus();
+	};
+	
+	function fullyHide() {
+		Box.prototype.hide.call(self);
+		overlay.hide();
+	}
+	this.hide = function () {
+		Transition(container, {opacity: 0}, 500);
+		Transition(overlay.element, {opacity: 0}, 250, fullyHide);
+	};
+
+	enterButton.onclick = this.hide;
+}
+});
 
 var LoginSignupWindow = Classy(Box, {
 constructor: function () {
@@ -710,6 +748,7 @@ function SessionManager(userCtx) {
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
 
+
 // The App
 
 InfiniteMaze.init = function (mazesDb, mazeDoc, tiles, userCtx) {
@@ -719,11 +758,16 @@ InfiniteMaze.init = function (mazesDb, mazeDoc, tiles, userCtx) {
 			loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles),
 			container: $("maze")
 		});
+		this.viewer.enterMaze();
 		this.editor = new GridMazeTileEditor(this.viewer);
 		this.loginSignupWindow = new LoginSignupWindow();
 		this.loginSignupWindow.hide();
 		this.headerBar = new HeaderBar();
 		this.headerBar.updateForUser();
+		
+		this.welcomeWindow = new WelcomeWindow();
+		this.welcomeWindow.show();
+		//this.welcomeWindow.
 	}.bind(this));
 };
 
