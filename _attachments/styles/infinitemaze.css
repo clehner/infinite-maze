@@ -89,12 +89,14 @@ body {
 /* Header */
 
 #header {
-	bottom: auto;
+	position: absolute;
+	top: 0;
+	right: 0;
 	background: #eee;
 	z-index: 3;
-	border-bottom: 3px solid #999;
+	border: 3px #999;
+	border-style: none none solid solid;
 	padding: 2px 5px;
-	height: 18px;
 }
 .left {
 	float: left;
@@ -177,6 +179,9 @@ body {
 .tile-box.drawing {
 	cursor: crosshair;
 	border: 1px dotted rgba(200, 200, 200, 0.6);
+}
+.tile-box.drawing:hover {
+	opacity: .3;
 }
 
 /* Editor toolbox */
