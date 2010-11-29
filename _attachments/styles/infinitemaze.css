@@ -40,17 +40,17 @@ body {
 	background: rgba(255, 255, 255, 0.9);
 	z-index: 5;
 }
-
 .window h1 {
 	margin: .25em 0;
 }
-
 .window h2 {
 	font-size: 125%;
 }
-
 .window h1:first-child, .window h2:first-child {
 	margin-top: 0;
+}
+.window p {
+	margin: .5em 0;
 }
 
 /* Welcome window */
@@ -118,8 +118,6 @@ body {
 #app.logged-in #login-signup-btn, #app:not(.logged-in) #login-text {
 	display: none;
 }
-#login-text {
-}
 
 /* Login/Signup window */
 
@@ -145,9 +143,6 @@ body {
 	bottom: 1.5em;
 	left: 50%;
 	position: absolute;
-}
-#login-signup-window p {
-	margin: .5em 0;
 }
 .error {
 	color: #c40;
@@ -242,4 +237,22 @@ body {
 	margin: auto;
 	background-color: black;
 	z-index: -1;
+}
+
+/* Account Settings Window */
+
+#settings-form {
+	float: left;
+	text-align: right;
+}
+#settings-username {
+	text-decoration: underline;
+	display: inline-block;
+	text-align: left;
+}
+#settings-window .field {
+	width: 150px;
+}
+#settings-form + * {
+	clear: both;
 }

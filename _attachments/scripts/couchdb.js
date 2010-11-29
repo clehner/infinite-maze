@@ -63,7 +63,7 @@ var Couch = (function() {
       }
     };
     for (var i in obj) opt[i] = obj[i];
-    for (var i in ajaxOptions) opt[i] = ajaxOptions[i];
+    if (ajaxOptions) for (var i in ajaxOptions) opt[i] = ajaxOptions[i];
     //$.ajax(opt);
     /*
     url, type, data(object||string), contentType, processData(bool),
@@ -208,26 +208,11 @@ var Couch = (function() {
         options,
         "An error occurred getting session info: "
       );
-      /*
-      options = options || {};
-      $.ajax({
-        type: "GET", url: this.urlPrefix + "/_session",
-        complete: function(req) {
-          var resp = JSON.parse(req);
-          if (req.status == 200) {
-            if (options.success) options.success(resp);
-          } else if (options.error) {
-            options.error(req.status, resp.error, resp.reason);
-          } else {
-            alert("An error occurred getting session info: " + resp.reason);
-          }
-        }
-      });*/
     },
 
-    userDb : function(callback) {
+    userDb: function(callback) {
       Couch.session({
-        success : function(resp) {
+        success: function(resp) {
           var userDb = Couch.db(resp.info.authentication_db);
           callback(userDb);
         }
@@ -250,21 +235,6 @@ var Couch = (function() {
         options,
         "An error occurred logging in: "
       );
-      /*options = options || {};
-      $.ajax({
-        type: "POST", url: this.urlPrefix + "/_session", dataType: "json",
-        data: {name: options.name, password: options.password},
-        complete: function(req) {
-          var resp = JSON.parse(req);
-          if (req.status == 200) {
-            if (options.success) options.success(resp);
-          } else if (options.error) {
-            options.error(req.status, resp.error, resp.reason);
-          } else {
-            alert("An error occurred logging in: " + resp.reason);
-          }
-        }
-      });*/
     },
     logout: function(options) {
       ajax({
@@ -273,21 +243,6 @@ var Couch = (function() {
         options,
         "An error occurred logging out: "
       );
-      /*options = options || {};
-      $.ajax({
-        type: "DELETE", url: this.urlPrefix + "/_session", dataType: "json",
-        username : "_", password : "_",
-        complete: function(req) {
-          var resp = JSON.parse(req);
-          if (req.status == 200) {
-            if (options.success) options.success(resp);
-          } else if (options.error) {
-            options.error(req.status, resp.error, resp.reason);
-          } else {
-            alert("An error occurred logging out: " + resp.reason);
-          }
-        }
-      });*/
     },
 
     db: function(name) {

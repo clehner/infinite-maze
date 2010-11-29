@@ -238,21 +238,8 @@ var GridMazeViewer = Classy(MazeViewer, {
 		);
 	},
 
-	showHelpWindow: function () {
-	},
-	
-	hideHelpWindow: function () {
-		/*Transition($("welcome"), {opacity: 0}, 500);
-		Transition($("overlay"), {opacity: 0}, 250, function () {
-			removeClass($("app"), "in-welcome");
-		});
-		var helpWindow = this.helpWindow;
-		if (helpWindow) {
-			Transition(helpWindow, {opacity: 0}, 250,
-				this.centerer.removeChild.bind(this.centerer, helpWindow));
-			delete this.helpWindow;
-		}*/
-	}
+	showHelpWindow: function () {},
+	hideHelpWindow: function () {}
 });
 
 var Picker = Classy(Box, {
@@ -340,6 +327,19 @@ var SizePicker = Classy(Picker, {
 	}
 });
 SizePicker.ify = Picker.ify;
+
+// a loader image thing
+function Loader(element) {
+	this.element = element;
+}
+Loader.prototype = {
+	start: function () {
+		addClass(this.element, "loading");
+	},
+	stop: function () {
+		removeClass(this.element, "loading");
+	}
+};
 
 var InfiniteMaze = {};
 
@@ -524,9 +524,13 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 });
 
 var HeaderBar = function () {
-	var header = $("header");
+	var container = $("header");
 	
 	var accountNameLink = $("account-name-link");
+	accountNameLink.onclick = function (e) {
+		e.preventDefault();
+		InfiniteMaze.accountSettingsWindow.show();
+	};
 	
 	function updateForUser() {
 		var user = InfiniteMaze.getUsername();
@@ -551,6 +555,74 @@ var HeaderBar = function () {
 	this.updateForUser = updateForUser;
 };
 
+var AccountSettingsWindow = Classy(Box, {
+constructor: function () {
+	var self = this;
+	var container = $("settings-window");
+	Box.ificate(this, container);
+	
+	var userDoc;
+	
+	function error(msg) {
+		$("settings-result").innerHTML = msg;
+	}
+	
+	// save changes
+	function save() {
+		Couch.userDb(function (db) {
+			
+		});
+	}
+	
+	var form = $("settings-form");
+	var loader = new Loader(container);
+	
+	this.show = function () {
+		$("settings-username").innerHTML = InfiniteMaze.getUsername();
+		loader.start();
+		InfiniteMaze.sessionManager.userDoc(function (userDoc) {
+			$("settings-email").value = userDoc.email;
+			loader.stop();
+		});
+		Box.prototype.show.call(this);
+	};
+	
+	form.onsubmit = function (e) {
+		e.preventDefault();
+		alert("Not working yet. Sorry!");
+		/*loader.start();
+		
+		var currentPass = $("settings-password-current").value;
+		var newPass = $("settings-password-new").value;
+		var confirmNewPass = $("settings-password-confirm").value;
+		var email = $("settings-email").value;
+		
+		if (confirmNewPass != newPass) {
+			return error("You must retype your new password the same way to confirm it.");
+		}
+		
+		save({
+			currentPass: currentPass,
+			newPass: newPass,
+			email: email,
+			success: function () {
+				loader.stop();
+				self.hide();
+			},
+			error: function (msg) {
+				loader.stop();
+				error(msg);
+			}
+		});*/
+	};
+	
+	form.onreset = function (e) {
+		e.preventDefault();
+		self.hide();
+	};
+}
+});
+
 var WelcomeWindow = Classy(Box, {
 constructor: function () {
 	var self = this;
@@ -561,6 +633,7 @@ constructor: function () {
 	var overlay = Box.ify($("overlay"));
 	
 	var enterButton = $("enter-btn");
+	enterButton.focus();
 	
 	this.show = function () {
 		Box.prototype.show.call(self);
@@ -595,28 +668,22 @@ constructor: function () {
 		$("login-username").focus();
 	};
 	
-	function startLoading() {
-		addClass(container, "loading");
-	}
-	
-	function stopLoading() {
-		removeClass(container, "loading");
-	}
+	var loader = new Loader(container);
 	
 	function onLogin(result) {
-		stopLoading();
+		loader.stop();
 		loginForm.reset();
 		signupForm.reset();
 		alert("You have logged in successfully.");
 	}
 	
 	function onLoginError(msg) {
-		stopLoading();
+		loader.stop();
 		$("login-result").innerHTML = msg;
 	}
 	
 	function onSignupError(msg) {
-		stopLoading();
+		loader.stop();
 		$("signup-result").innerHTML = msg;
 	}
 	
@@ -626,7 +693,7 @@ constructor: function () {
 		e.preventDefault();
 		var username = $("login-username").value;
 		var password = $("login-password").value;
-		startLoading();
+		loader.start();
 		InfiniteMaze.sessionManager.login(username, password, onLogin, onLoginError);
 	};
 	
@@ -636,7 +703,7 @@ constructor: function () {
 		var username = $("signup-username").value;
 		var password = $("signup-password").value;
 		var email = $("signup-email").value;
-		startLoading();
+		loader.start();
 		InfiniteMaze.sessionManager.signup(username, password, email, onLogin, onSignupError);
 	};
 }
@@ -744,6 +811,23 @@ function SessionManager(userCtx) {
 			}
 		);
 	};
+	
+	var getUserDb = Couch.userDb.memoized();
+	
+	this.userDoc = function (cb) {
+		cb({
+			email: '?',
+			name: InfiniteMaze.getUsername()
+		});
+		/*
+		getUserDb(function (db) {
+			var userPrefix = "org.couchdb.user:";
+			var id = userPrefix + userName;
+			//db.openDoc(id);
+			cb(db);
+		});
+		*/
+	};
 }
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
@@ -754,23 +838,30 @@ SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 InfiniteMaze.init = function (mazesDb, mazeDoc, tiles, userCtx) {
 	shim(window.JSON, "../scripts/json2.js", function () {
 		this.sessionManager = new SessionManager(userCtx);
+		
 		this.viewer = new GridMazeViewer({
 			loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles),
 			container: $("maze")
 		});
 		this.viewer.enterMaze();
+		
 		this.editor = new GridMazeTileEditor(this.viewer);
-		this.loginSignupWindow = new LoginSignupWindow();
-		this.loginSignupWindow.hide();
+		
 		this.headerBar = new HeaderBar();
 		this.headerBar.updateForUser();
 		
 		this.welcomeWindow = new WelcomeWindow();
-		this.welcomeWindow.show();
-		//this.welcomeWindow.
+		
+		this.loginSignupWindow = new LoginSignupWindow();
+		
+		this.accountSettingsWindow = new AccountSettingsWindow();
 	}.bind(this));
 };
 
 InfiniteMaze.getUsername = function () {
 	return this.sessionManager.userCtx.name;
+};
+
+InfiniteMaze.getUserEmail = function () {
+	return 'asdf@asdf';
 };

@@ -70,6 +70,20 @@
 			</form>
 		</div>
 		
+		<div id="settings-window" class="window hidden">
+			<h2>Your account</h2>
+			<div class="error">This area is not working yet.</div>
+			<form id="settings-form">
+				<p>Username: <span id="settings-username" class="field"></span></p>
+				<p>Current password to change: <input type="password" id="settings-password-current" class="field"></p>
+				<p>New password: <input type="password" id="settings-password-new" class="field"></p>
+				<p>Confirm new password: <input type="password" id="settings-password-confirm" class="field"></p>
+				<p>Email: <input id="settings-email" class="field"></p>
+				<p><input type="reset" value="Cancel"> <input type="submit" value="Update"></p>
+			</form>
+			<div id="settings-result" class="error"></div>
+		</div>
+		
 		<div id="editor-toolbox" class="layer hidden">
 			<div id="rules">
 				<h3>Maze Rules</h3>
@@ -91,7 +105,7 @@
 	</div>
 	
 	<script>
-	var data = {"maze":{"_id":"1","type":"maze","created_at":1287528459951,"title":"The Infinite Maze","format":"infinite-tiled","tile_size":[256,256],"start":[120,96]},"tiles":{"0":{"0":"91ceafb5136b418d88ab3012c0012642","-1":"d2e1055c256927758539bff12b064a73"},"1":{"-1":"d2e1055c256927758539bff12b071dc2","-2":"f3628094ada3dde0848694d02b00eb24","-3":"f3628094ada3dde0848694d02b02ae04","0":"f3628094ada3dde0848694d02b02eb76"},"-1":{"-1":"f3628094ada3dde0848694d02b02a33d","0":"f3628094ada3dde0848694d02b031d5d","1":"f3628094ada3dde0848694d02b046dab"},"2":{"-2":"f3628094ada3dde0848694d02b02c734"}},"userCtx":{"db":"maze","name":"anonymous","roles":[]}};
+	var data = {"maze":{"_id":"1","type":"maze","created_at":1287528459951,"title":"The Infinite Maze","format":"infinite-tiled","tile_size":[256,256],"start":[120,96]},"tiles":{"0":{"0":"91ceafb5136b418d88ab3012c0012642","-1":"d2e1055c256927758539bff12b064a73"},"1":{"-1":"d2e1055c256927758539bff12b071dc2","-2":"f3628094ada3dde0848694d02b00eb24","-3":"f3628094ada3dde0848694d02b02ae04","0":"f3628094ada3dde0848694d02b02eb76"},"-1":{"-1":"f3628094ada3dde0848694d02b02a33d","0":"f3628094ada3dde0848694d02b031d5d","1":"f3628094ada3dde0848694d02b046dab"},"2":{"-2":"f3628094ada3dde0848694d02b02c734"}},"userCtx":{"db":"maze","name":"","roles":[]}};
 	
 	Couch.urlPrefix = ".";
 	var mazesDb = Couch.db("db");
