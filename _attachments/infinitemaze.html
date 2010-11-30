@@ -35,8 +35,8 @@
 		
 		<div id="header">
 			<div class="right">
-				<button id="login-signup-btn">Log in | Sign up</button>
-				<span id="login-text">
+				<button id="login-signup-btn" class="logout-only">Log in | Sign up</button>
+				<span class="login-only">
 					<a id="account-name-link" href=""></a>
 					<button id="logout-btn">Log out</button>
 				</span>
@@ -87,13 +87,26 @@
 				Please allow a path to go from the entrance point of your square to at least two empty adjacent squares.
 			</div>
 			<div id="toolbox-palettes">
-				<table class="picker" id="color-picker"></table>
-				<table class="picker" id="size-picker"></table>
-				<button id="save-btn">Save</button>
-				<button id="discard-btn">Discard</button>
-			</div>
-			<div>
-				&larr; You can move through the light colors above<br> but not the dark colors below.
+				<div class="toolbox-palette">
+					<table class="picker" id="color-picker-light"></table>
+					Paths
+				</div>
+				<div class="toolbox-palette">
+					<table class="picker" id="color-picker-dark"></table>
+					Walls
+				</div>
+				<div class="toolbox-palette">
+					<table class="picker" id="size-picker"></table>
+					&nbsp;
+				</div>
+				<div id="save-btns">
+					<button id="save-btn" class="login-only">Save</button>
+					<button disabled class="logout-only">Save</button>
+					<button id="discard-btn">Discard</button>
+					<span class="logout-only">
+						<a href="" id="login-signup-link">Login or sign up</a> to save your drawing!
+					</span>
+				</div>
 			</div>
 		</div>
 		
@@ -108,6 +121,10 @@
 	var mazesDb = Couch.db("db");
 
 	InfiniteMaze.init(mazesDb, data.maze, data.tiles, data.userCtx);
+	setTimeout(function () {
+		InfiniteMaze.viewer.enterDrawTileMode(InfiniteMaze.viewer.mazeCanvas.getTile(0, 1));
+		InfiniteMaze.welcomeWindow.hide();
+	});
 	</script>
 </body>
 </html>

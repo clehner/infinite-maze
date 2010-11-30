@@ -252,11 +252,18 @@ var Picker = Classy(Box, {
 	
 	constructor: function (data) {
 		Box.call(this);
+		this.data = [];
+		this.extend(this.element, data);
+		this.selectCoord(0, 0);
+	},
+	
+	extend: function (table, data) {
 		var self = this;
-		var table = this.element;
 		addClass(table, "picker");
 		table.addEventListener("click", this.onClick.bind(this), false);
-		this.data = data;
+		if (!isArray(data)) throw new Error("Data must be an array.");
+		if (data.length && !isArray(data[0])) data = [data];
+		this.data = this.data.concat(data);
 		data.forEach(function (dataRow, i) {
 			var row = table.insertRow(i);
 			dataRow.forEach(function (value, j) {
@@ -266,7 +273,6 @@ var Picker = Classy(Box, {
 				self.initCell(cell, value);
 			});
 		});
-		this.selectCoord(0, 0);
 	},
 	
 	onClick: function (e) {
@@ -358,17 +364,23 @@ constructor: function (viewer) {
 	var tileBox = new DrawingTileBox(viewer);
 	
 	// Init color picker
-	var colors = ["#000,#5e320b,#900000,#006000,#0000f0".split(","),
-		"#fff,#fffa53,#ffd1f0,#8ffa8e,#80e9fd".split(",")];
-	var colorPicker = ColorPicker.ify($("color-picker"), colors);
-	var pencilColor;
+	function hexToColor(hexInt) {
+		var hex = hexInt.toString(16);
+		return '#' + ('00000' + hex).substr(-6);
+	}
+	
+	var colors = {
+		light: [0xffffff, 0xfffa53, 0xffd1f0, 0x8ffa8e, 0x80e9fd],
+		dark: [0x000000, 0x5e320b, 0x900000, 0x006000, 0x0000f0]
+	};
+	var colorPicker = ColorPicker.ify($("color-picker-light"), colors.light.map(hexToColor));
+	colorPicker.extend($("color-picker-dark"), colors.dark.map(hexToColor));
 	colorPicker.onSelect = function setPencilColor(color) {
-		pencilColor = color;
 		if (tile) {
 			tile.ctx.strokeStyle = color;
 		}
 	};
-	colorPicker.selectCoord(1, 0);
+	colorPicker.selectCoord(0, 0);
 	
 	// Init size picker
 	var pencilSizes = [18, 13, 8, 4, 1.5];
@@ -385,6 +397,10 @@ constructor: function (viewer) {
 	// Init buttons.
 	$("save-btn").onclick = save;
 	$("discard-btn").onclick = discard;
+	$("login-signup-link").onclick = function (e) {
+		e.preventDefault();
+		InfiniteMaze.loginSignupWindow.show();
+	};
 	
 	this.onDragStart = function (e) {
 		this.x = e._x - .01;
@@ -416,7 +432,6 @@ constructor: function (viewer) {
 		onDragEnd: null,
 		context: this
 	});
-	
 
 
 	this.openForTile = function (t) {
@@ -462,6 +477,10 @@ constructor: function (viewer) {
 	}
 	
 	function save() {
+		if (!InfiniteMaze.getUsername()) {
+			alert("You must be logged in to save your drawing.");
+			return;
+		}
 		if (!confirm("Are you sure you are ready to save?")) return;
 		if (!checkRules()) {
 			alert("You haven't followed all the rules! Fix your drawing and try again.");

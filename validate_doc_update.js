@@ -29,12 +29,9 @@ function (doc, oldDoc, userCtx) {
 	
 var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 
-	/*
-	TODO: Implement logins and then uncomment this.
 	if (!userCtx.name) {
 		throw {unauthorized: "You must be logged in."};
 	}
-	*/
 	
 	//if (isAdmin) return;
 	
@@ -78,8 +75,7 @@ var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 		
 		validate([
 			doc.creator == userCtx.name || isAdmin,
-				"Maze can only be changed by its creator" +
-				" or an admin.",
+				"Maze can only be changed by its creator or an admin.",
 			
 			doc.title, "Maze must have a title.",
 

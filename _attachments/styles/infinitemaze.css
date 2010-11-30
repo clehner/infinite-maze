@@ -9,14 +9,10 @@ body {
 	background-color: black; /*#777;*/
 }
 
-#maze {
-	top: 25px; /* header height */
-}
-
 #overlay {
 	background: black;
 	opacity: .7;
-	z-index: 4;
+	z-index: 6;
 }
 
 /* Windows (modal dialogues) */
@@ -38,7 +34,7 @@ body {
 	-webkit-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	background: white;
 	background: rgba(255, 255, 255, 0.9);
-	z-index: 5;
+	z-index: 7;
 }
 .window h1 {
 	margin: .25em 0;
@@ -93,7 +89,7 @@ body {
 	top: 0;
 	right: 0;
 	background: #eee;
-	z-index: 3;
+	z-index: 5;
 	border: 3px #999;
 	border-style: none none solid solid;
 	padding: 2px 5px;
@@ -117,7 +113,7 @@ body {
 	font-size: .9em;
 	padding: 1px;*/
 }
-#app.logged-in #login-signup-btn, #app:not(.logged-in) #login-text {
+#app.logged-in .logout-only, #app:not(.logged-in) .login-only {
 	display: none;
 }
 
@@ -192,11 +188,11 @@ body {
 	background-color: #ccc;
 	border-top: 2px solid black;
 	padding: 5px;
-	z-index: 4;
+	z-index: 5;
 }
 
 #rules {
-	width: 50%;
+	width: 45%;
 	height: 100%;
 	float: left;
 	/*font-size: 16px;*/
@@ -211,7 +207,19 @@ body {
 
 #toolbox-palettes {
 	float: left;
-	margin-right: 5px;
+}
+
+.toolbox-palette {
+	display: inline-block;
+	text-align: center;
+}
+
+.toolbox-palette .picker {
+	margin: 4px 2px 4px 4px;
+}
+
+#save-btns {
+	margin-top: 8px;
 }
 
 .picker {
