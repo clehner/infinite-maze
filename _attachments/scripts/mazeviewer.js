@@ -86,6 +86,7 @@ Tile.prototype = {
 	element: null,
 	ctx: null,
 	isEmpty: true,
+	info: {},
 	
 	drawLine: function (x1, y1, x2, y2, color) {
 		var ctx = this.ctx;
@@ -284,9 +285,6 @@ function MazeViewer(options) {
 			this.tileSize = this.loader.getTileSize();
 			this.startPos = this.loader.getStartPos();
 		}
-		//if (options.tileSize) this.tileSize = options.tileSize;
-		//if (options.startPos) this.startPos = options.startPos;
-		//if (options.getTileSrc) this.getTileSrc = options.getTileSrc;
 		if (options.container) options.container.appendChild(this.element);
 	}
 	
@@ -361,6 +359,11 @@ MazeViewer.prototype = {
 		var tileSrc = this.loader.getTileSrc(x, y);
 		if (tileSrc) {
 			tile.loadImageSrc(tileSrc);
+		}
+		// add creator info, and other stuff
+		var tileInfo = this.loader.getTileInfo(x, y);
+		if (tileInfo) {
+			tile.info = tileInfo;
 		}
 	},
 	
@@ -485,6 +488,9 @@ MazeViewer.prototype = {
 	},
 	
 	onMouseDown: function (e) {
+		// ignore right click
+		if (e.which == 2 || e.button == 2) return;
+		
 		this.prevPageX = e.pageX;
 		this.prevPageY = e.pageY;
 		e.preventDefault();
@@ -596,6 +602,12 @@ var MazeLoader = Classy({
 		this.db = db;
 		this.mazeDoc = doc;
 		this.mazeId = doc._id;
+	},
+	
+	getTileSrc: function (x, y) {},
+	
+	getTileInfo: function (x, y) {
+		return {};
 	},
 	
 	getDocAttachmentsPath: function (id) {

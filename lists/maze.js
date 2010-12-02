@@ -11,17 +11,20 @@ function(head, req) {
 		var mazeId = req.query.id;
 		var maze;
 		var tiles = {};
-		var row;
+		var row, location;
 		while (row = getRow()) {
 			if (row.key != mazeId) continue;
 			var value = row.value;
 			
 			if (!maze && value.maze) {
 				maze = value.maze;
-			} else if (value.length == 2) {
-				var x = value[0];
-				var y = value[1];
-				(tiles[x] || (tiles[x] = {}))[y] = row.id;
+			} else if (location = value.location) {
+				var x = location[0];
+				var y = location[1];
+				(tiles[x] || (tiles[x] = {}))[y] = {
+					id: row.id,
+					creator: value.creator
+				};
 			}
 		}
 		if (!maze) {

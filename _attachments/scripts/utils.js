@@ -172,7 +172,7 @@ function Classy(d,e){var c,a,b;if(!e){a=d;d=null}else{function f(){}f.prototype=
 
 // className manipulation
 var getClassRegex = function (className) {
-	return new RegExp('(\\s|^)' + className + '(\\s|$)');
+	return new RegExp('(\\s|^)' + className + '(\\s|$)', 'g');
 }.memoized();
 
 function hasClass(element, className) {
@@ -182,13 +182,26 @@ function hasClass(element, className) {
 }
 function addClass(element, className) {
 	if (!className) return;
-	element.className += ' ' + className;
+	if (!hasClass(element, className)) {
+		element.className += ' ' + className;
+	}
 }
 
 function removeClass(element, className) {
 	var old = element.className;
 	element.className = (old == className) ? '' :
 		old.replace(getClassRegex(className), '');
+}
+
+function toggleClass(element, className, on) {
+	if (arguments.length == 2) {
+		on = hasClass(element, className);
+	}
+	if (!on) {
+		removeClass(element, className)
+	} else {
+		addClass(element, className);
+	}
 }
 
 function DragBehavior(options) {
@@ -217,6 +230,7 @@ function DragBehavior(options) {
 	}
 	
 	function onMouseDown(e) {
+		// ignore right click
 		calculateOffsets();
 		function onMouseMove(e) {
 			correctEvent(e);

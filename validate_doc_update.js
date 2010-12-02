@@ -48,13 +48,13 @@ var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 	]);
 	
 	if (oldDoc && !isAdmin) {
-		if (typeof oldDoc.created_at == "number") {
+		/*if (typeof oldDoc.created_at == "number") {
 			validate([
 				doc.created_at == oldDoc.created_at,
 				"Creation date can not be changed except by admin."
 				// unless it is invalid
 			]);
-		}
+		}*/
 		if (oldDoc.creator) {
 			validate([
 				doc.creator == oldDoc.creator,

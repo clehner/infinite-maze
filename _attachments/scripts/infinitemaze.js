@@ -47,18 +47,20 @@ Box.ificate = function (obj, element /*, [args...] */) {
 var TileBox = Classy(Box, {
 	maze: null,
 	tile: null,
-	child: null,
+	inner: null,
 	
 	constructor: function (maze) {
 		Box.call(this);
 		this.maze = maze;
 		addClass(this.element, "tile-box");
-		this.child = document.createElement("div");
-		this.element.appendChild(this.child);
+		this.inner = document.createElement("div");
+		this.element.appendChild(this.inner);
+		this.inner.className = "inner";
 	},
 	
 	// move the tile box to a tile's position
 	coverTile: function (tile) {
+		this.tile = tile;
 		this.show();
 		var s1 = this.element.style;
 		var s2 = tile.element.style;
@@ -66,43 +68,80 @@ var TileBox = Classy(Box, {
 		s1.top    = s2.top;
 		s1.width  = s2.width;
 		s1.height = s2.height;
-		this.tile = tile;
 	}
 });
 
+// placed over drawn tiles
 var EmptyTileBox = Classy(TileBox, {
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "empty");
+		
+		this.tileInfoEl = document.createElement("div");
+		this.tileInfoEl.className = "tile-info";
+		this.element.appendChild(this.tileInfoEl);
+		
+		this.tileInfoToggle = document.createElement("span");
+		this.tileInfoToggle.className = "tile-info-toggle";
+		this.tileInfoToggle.innerHTML = "? ";
+		this.tileInfoToggle.onclick = this.toggleInfo.bind(this);
+		this.tileInfoEl.appendChild(this.tileInfoToggle);
+		
+		this.innerTileInfo = document.createElement("span");
+		this.innerTileInfo.className = "tile-info-inner";
+		this.tileInfoEl.appendChild(this.innerTileInfo);
+		
+		this.nameElement = document.createElement("span");
+		this.nameElement.className = "name";
+		this.innerTileInfo.appendChild(this.nameElement);
+		
+		this.nameText = document.createTextNode("");
+		this.nameElement.appendChild(this.nameText);
+	},
+	toggleInfo: function () {
+		toggleClass(this.element, "show-info");
+	},
+	coverTile: function (tile) {
+		TileBox.prototype.coverTile.call(this, tile);
+		this.markTileCreator();
+	},
+	// put the creators name on the tile
+	markTileCreator: function () {
+		var name = this.tile.info.creator || "anonymous";
+		this.nameText.nodeValue = name;
+		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
 	}
 });
 
+// placed over empty tiles near adjacent to
 var DrawHereTileBox = Classy(TileBox, {
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "draw-here");
-		this.child.innerHTML =
+		this.inner.innerHTML =
 			"<p>Now that you have made it to this square, " +
 			"you can draw in it!</p>";
 		var button = document.createElement("button");
 		button.innerHTML = "Draw";
 		button.onclick = this.onButtonClick.bind(this);
-		this.child.appendChild(button);
+		this.inner.appendChild(button);
 	},
 	onButtonClick: function () {
 		this.maze.enterDrawTileMode(this.tile);
 	}
 });
 
+// placed over empty tiles
 var GetHereTileBox = Classy(TileBox, {
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "get-here");
-		this.child.innerHTML =
+		this.inner.innerHTML =
 			"If you can get to this square, you can draw it.";
 	}
 });
 
+// placed over a tile being edited
 var DrawingTileBox = Classy(TileBox, {
 	constructor: function () {
 		TileBox.apply(this, arguments);
@@ -225,14 +264,11 @@ var GridMazeViewer = Classy(MazeViewer, {
 	},
 	
 	publishTileDrawing: function (tile, tileCoords, onError, onSuccess) {
-		//return onSuccess();
 		this.loader.saveTileDrawing(tile, tileCoords,
 			function (status, error, reason) {
-				console.log(status, error, reason);
 				onError([status, error, reason]);
 			},
 			function (resp) {
-				console.log('success!');
 				onSuccess(resp);
 			}
 		);
@@ -257,6 +293,7 @@ var Picker = Classy(Box, {
 		this.selectCoord(0, 0);
 	},
 	
+	// Connect the picker to a table with some data.
 	extend: function (table, data) {
 		var self = this;
 		addClass(table, "picker");
@@ -513,10 +550,15 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		this.tilesInfo = tiles;
 	},
 	
+	// {location: [x, y], id: "#"}
+	getTileInfo: function (x, y) {
+		return (this.tilesInfo[x] || {})[y];
+	},
+	
 	getTileSrc: function (x, y) {
-		var tileId = (this.tilesInfo[x] || {})[y];
-		if (tileId) {
-			return this.getDocAttachmentsPath(tileId) + 'tile.png';
+		var tileInfo = this.getTileInfo(x, y);
+		if (tileInfo) {
+			return this.getDocAttachmentsPath(tileInfo.id) + 'tile.png';
 		}
 	},
 
