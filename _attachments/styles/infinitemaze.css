@@ -195,7 +195,7 @@ body {
 	opacity: 0.25;
 }
 
-.tile-box:not(.show-info) .tile-info-inner {
+.tile-box:not(.can-edit) .edit-link {
 	display: none;
 }
 

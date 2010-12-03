@@ -81,12 +81,6 @@ var EmptyTileBox = Classy(TileBox, {
 		this.tileInfoEl.className = "tile-info";
 		this.element.appendChild(this.tileInfoEl);
 		
-		this.tileInfoToggle = document.createElement("span");
-		this.tileInfoToggle.className = "tile-info-toggle";
-		this.tileInfoToggle.innerHTML = "? ";
-		this.tileInfoToggle.onclick = this.toggleInfo.bind(this);
-		this.tileInfoEl.appendChild(this.tileInfoToggle);
-		
 		this.innerTileInfo = document.createElement("span");
 		this.innerTileInfo.className = "tile-info-inner";
 		this.tileInfoEl.appendChild(this.innerTileInfo);
@@ -97,13 +91,34 @@ var EmptyTileBox = Classy(TileBox, {
 		
 		this.nameText = document.createTextNode("");
 		this.nameElement.appendChild(this.nameText);
+		
+		var editLink = document.createElement("a");
+		editLink.className = "edit-link";
+		editLink.href = "";
+		editLink.onclick = this.onEditLinkClick.bind(this);
+		editLink.innerHTML = "Edit";
+		this.innerTileInfo.appendChild(document.createTextNode(" "));
+		this.innerTileInfo.appendChild(editLink);
 	},
-	toggleInfo: function () {
-		toggleClass(this.element, "show-info");
+	onEditLinkClick: function (e) {
+		e.preventDefault();
+		if (this.canEditThisTile()) {
+			InfiniteMaze.viewer.enterDrawTileMode(this.tile);
+		}
 	},
 	coverTile: function (tile) {
 		TileBox.prototype.coverTile.call(this, tile);
 		this.markTileCreator();
+		this.markTileEditLink();
+	},
+	canEditThisTile: function () {
+		var loggedInUser = InfiniteMaze.getUsername();
+		var isAdmin = InfiniteMaze.sessionManager.isAdmin();
+		return loggedInUser &&
+			isAdmin || (this.tile.info.creator == loggedInUser);
+	},
+	markTileEditLink: function () {
+		toggleClass(this.element, "can-edit", this.canEditThisTile());
 	},
 	// put the creators name on the tile
 	markTileCreator: function () {
@@ -300,11 +315,13 @@ var Picker = Classy(Box, {
 		table.addEventListener("click", this.onClick.bind(this), false);
 		if (!isArray(data)) throw new Error("Data must be an array.");
 		if (data.length && !isArray(data[0])) data = [data];
-		this.data = this.data.concat(data);
+		var tableId = this.data.length;
+		this.data[tableId] = data;
 		data.forEach(function (dataRow, i) {
 			var row = table.insertRow(i);
 			dataRow.forEach(function (value, j) {
 				var cell = row.insertCell(j);
+				cell.tableId = tableId;
 				cell.row = i;
 				cell.col = j;
 				self.initCell(cell, value);
@@ -324,7 +341,7 @@ var Picker = Classy(Box, {
 		if (this.selectedCell) removeClass(this.selectedCell, "selected");
 		this.selectedCell = cell;
 		addClass(cell, "selected");
-		this.value = this.data[cell.row][cell.col];
+		this.value = this.data[cell.tableId][cell.row][cell.col];
 		this.update();
 	},
 	
@@ -399,6 +416,9 @@ constructor: function (viewer) {
 
 	var tile, tileCoords;
 	var tileBox = new DrawingTileBox(viewer);
+	
+	// Allow edits to be undone if the user discards them.
+	var restore = function () {};
 	
 	// Init color picker
 	function hexToColor(hexInt) {
@@ -492,6 +512,8 @@ constructor: function (viewer) {
 				viewer.updateViewport();
 			});
 		}, 0);
+		
+		restore = makeRestore();
 	};
 	
 	function close() {
@@ -507,6 +529,22 @@ constructor: function (viewer) {
 		viewer.exitDrawTileMode();
 	};
 	this.close = close;
+	
+	// Make a function to restore the tile to its current state.
+	function makeRestore() {
+		if (tile.isEmpty) {
+			return function () {
+				tile.clear();
+			};
+		} else {
+			var w = tile.element.width;
+			var h = tile.element.height;
+			var imageData = tile.ctx.getImageData(0, 0, w, h);
+			return function () {
+				tile.ctx.putImageData(imageData, 0, 0);
+			};
+		}
+	}
 	
 	function checkRules() {
 		// TODO
@@ -534,11 +572,10 @@ constructor: function (viewer) {
 	
 	function discard() {
 		if (!confirm("You really want to discard your drawing?")) return;
-		tile.clear();
+		restore();
 		close();
 	};
 	this.discard = discard;
-	
 }
 });
 
@@ -561,25 +598,51 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			return this.getDocAttachmentsPath(tileInfo.id) + 'tile.png';
 		}
 	},
-
-	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
-		this.db.saveDoc({
-			_id: Couch.newUUID(), // make this async?
-			creator: InfiniteMaze.username,
-			created_at: Date.now(),
+	
+	makeTileDoc: function (cb) {
+		cb({
+			_id: Couch.newUUID(),
 			type: "tile",
 			maze_id: this.mazeId,
-			location: tileCoords,
-			
-			_attachments: {
+			creator: InfiniteMaze.getUsername()
+		});
+	},
+	
+	getTileDoc: function (tile, cb) {
+		var id = tile.info.id;
+		if (id) {
+			this.db.openDoc(id, {
+				success: cb,
+				error: function (status, error, reason) {
+					alert(":( Error saving drawing: " + reason);
+				}
+			});
+		} else {
+			this.makeTileDoc(cb);
+		}
+	},
+
+	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
+		var self = this;
+		this.getTileDoc(tile, function (doc) {
+			doc.location = tileCoords;
+			doc.created_at = Date.now();
+			doc._attachments = {
 				"tile.png": {
 					content_type: "image/png",
 					data: tile.exportPNG()
 				}
-			}
-		}, {
-			error: onError,
-			success: onSuccess
+			};
+			self.db.saveDoc(doc, {
+				error: onError,
+				success: function () {
+					tile.info = {
+						creator: doc.creator,
+						id: doc._id
+					};
+					onSuccess.apply(this, arguments);
+				}
+			});
 		});
 	}
 });
@@ -888,6 +951,10 @@ function SessionManager(userCtx) {
 			cb(db);
 		});
 		*/
+	};
+	
+	this.isAdmin = function () {
+		return self.userCtx.roles.indexOf("_admin") != -1;
 	};
 }
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
