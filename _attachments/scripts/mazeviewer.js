@@ -98,9 +98,14 @@ Tile.prototype = {
 	},
 	
 	loadImageSrc: function (src) {
+		var clearFirst = !this.isEmpty;
+		var self = this;
 		var img = new Image();
 		// Draw the image once it is loaded.
-		img.onload = this.drawImage.bind(this, img);
+		img.onload = function () {
+			if (clearFirst) self.clear();
+			self.drawImage(img);
+		};
 		// We can't say the image is empty until it has loaded,
 		// but if it is a 404, then it is empty.
 		img.onerror = this.empty.bind(this);

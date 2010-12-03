@@ -115,13 +115,11 @@
 	</div>
 	
 	<script>
-	var data = {{DATA}};
-	
 	Couch.urlPrefix = ".";
 	var mazesDb = Couch.db("db");
 	Couch.urlPrefix = "";
 
-	InfiniteMaze.init(mazesDb, data.maze, data.tiles, data.userCtx);
+	InfiniteMaze.init(mazesDb, {{DATA}});
 	</script>
 </body>
 </html>

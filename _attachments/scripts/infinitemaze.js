@@ -495,7 +495,7 @@ constructor: function (viewer) {
 		tile = t;
 
 		tileCoords = viewer.mazeCanvas.getTileCoords(tile);
-		tile.isEmpty = false;
+		restore = makeRestore();
 
 		// Place the tile box over the tile.
 		viewer.centerer.appendChild(tileBox.element);
@@ -512,8 +512,6 @@ constructor: function (viewer) {
 				viewer.updateViewport();
 			});
 		}, 0);
-		
-		restore = makeRestore();
 	};
 	
 	function close() {
@@ -582,9 +580,43 @@ constructor: function (viewer) {
 var InfiniteMazeLoader = Classy(MazeLoader, {
 	tilesInfo: null,
 	
-	constructor: function (db, doc, tiles) {
+	constructor: function (db, doc, tilesInfo, update_seq) {
 		MazeLoader.call(this, db, doc);
-		this.tilesInfo = tiles;
+		
+		// {0:{0:tileinfo}}
+		this.tilesInfo = tilesInfo;
+		
+		// Start listening for tile changes
+		var promise = mazesDb.changes(update_seq, {
+			filter: "maze/tiles",
+			maze_id: this.mazeId
+		});
+		promise.onChange(function (changes) {
+			var docsToUpdate = {};
+			changes.results.forEach(function (change) {
+				docsToUpdate[change.id] = true;
+			});
+			// todo: combine these requests
+			for (var id in docsToUpdate) {
+				db.openDoc(id, {
+					success: function (doc) {
+						// new tile doc
+						var x = doc.location[0];
+						var y = doc.location[1];
+						var tile = InfiniteMaze.viewer.mazeCanvas.getTile(x, y);
+						(tilesInfo[x] || (tilesInfo[x] = {}))[y] = {
+							id: id,
+							creator: doc.creator,
+							nocache: !tile.isEmpty
+						};
+						// update the tile with the new doc
+						InfiniteMaze.viewer.initMazeTile(tile, x, y);
+					}
+				});
+			}
+		});
+		window.addEventListener("online", promise.start, false);
+		window.addEventListener("offline", promise.stop, false);
 	},
 	
 	// {location: [x, y], id: "#"}
@@ -595,7 +627,8 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	getTileSrc: function (x, y) {
 		var tileInfo = this.getTileInfo(x, y);
 		if (tileInfo) {
-			return this.getDocAttachmentsPath(tileInfo.id) + 'tile.png';
+			return this.getDocAttachmentsPath(tileInfo.id) + 'tile.png' +
+				(tileInfo.nocache ? '?' + Math.random() : '');
 		}
 	},
 	
@@ -963,12 +996,16 @@ SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
 // The App
 
-InfiniteMaze.init = function (mazesDb, mazeDoc, tiles, userCtx) {
+InfiniteMaze.init = function (mazesDb, info) {
+	var mazeDoc = info.maze;
+	var tiles = info.tiles;
+	var userCtx = info.userCtx;
+	var update_seq = info.update_seq;
 	shim(window.JSON, "../scripts/json2.js", function () {
 		this.sessionManager = new SessionManager(userCtx);
 		
 		this.viewer = new GridMazeViewer({
-			loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles),
+			loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles, update_seq),
 			container: $("maze")
 		});
 		this.viewer.enterMaze();

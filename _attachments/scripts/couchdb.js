@@ -1,7 +1,7 @@
 //
 // couchdb.js
-// jquery.couch.js (v0.11.0) without jQuery
-// http://svn.apache.org/viewvc/couchdb/trunk/share/www/script/jquery.couch.js?revision=961854&view=co
+// based on jquery.couch.js (v0.11.0)
+// de-jQuerying by CEL
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
 // use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,7 @@ var Couch = (function() {
           if (req.status == options.successStatus) {
             if (options.success) options.success(resp);
           } else if (options.error) {
-            options.error(req.status, resp.error, resp.reason);
+            options.error(req.status, resp && resp.error || errorMessage, resp && resp.reason || "no response");
           } else {
             alert(errorMessage + ": " + resp.reason);
           }
@@ -64,7 +64,6 @@ var Couch = (function() {
     };
     for (var i in obj) opt[i] = obj[i];
     if (ajaxOptions) for (var i in ajaxOptions) opt[i] = ajaxOptions[i];
-    //$.ajax(opt);
     /*
     url, type, data(object||string), contentType, processData(bool),
     dataType("json"), async
@@ -108,6 +107,17 @@ var Couch = (function() {
     // for firefox, which does not sync right
     if (!opt.async) {
       opt.complete(xhr);
+    }
+  }
+
+  function fullCommit(options) {
+    var options = options || {};
+    if (typeof options.ensure_full_commit !== "undefined") {
+      var commit = options.ensure_full_commit;
+      delete options.ensure_full_commit;
+      return function(xhr) {
+        xhr.setRequestHeader("X-Couch-Full-Commit", commit.toString());
+      };
     }
   }
 
@@ -245,7 +255,25 @@ var Couch = (function() {
       );
     },
 
-    db: function(name) {
+    db: function(name, db_opts) {
+      db_opts = db_opts || {};
+      var rawDocs = {};
+      function maybeApplyVersion(doc) {
+        if (doc._id && doc._rev && rawDocs[doc._id] && rawDocs[doc._id].rev == doc._rev) {
+          // todo: can we use commonjs require here?
+          if (typeof Base64 == "undefined") {
+            alert("please include /_utils/script/base64.js in the page for base64 support");
+            return false;
+          } else {
+            doc._attachments = doc._attachments || {};
+            doc._attachments["rev-"+doc._rev.split("-")[0]] = {
+              content_type :"application/json",
+              data : Base64.encode(rawDocs[doc._id].raw)
+            }
+            return true;
+          }
+        }
+      };
       return {
         name: name,
         uri: this.urlPrefix + "/" + encodeURIComponent(name) + "/",
@@ -304,6 +332,76 @@ var Couch = (function() {
             "Database information could not be retrieved"
           );
         },
+        changes: function(since, options) {
+          options = options || {};
+          // set up the promise object within a closure for this handler
+          var timeout = 100, db = this, active = true,
+            inProgress = false,
+            listeners = [],
+            promise = {
+            onChange : function(fun) {
+              listeners.push(fun);
+            },
+            stop : function() {
+              active = false;
+            },
+            start : function() { // added by cel
+              if (!active) {
+                active = true;
+                if (!inProgress) {
+                  getChangesSince();
+                }
+              }
+            }
+          };
+          // call each listener when there is a change
+          function triggerListeners(resp) {
+            listeners.forEach(function(listener) {
+              listener(resp);
+            });
+          }
+          // when there is a change, call any listeners, then check for another change
+          options.success = function(resp) {
+            inProgress = false;
+            timeout = 100;
+            if (active) {
+              since = resp.last_seq;
+              triggerListeners(resp);
+              getChangesSince();
+            };
+          };
+          options.error = function() {
+            inProgress = false;
+            if (active) {
+              setTimeout(getChangesSince, timeout);
+              timeout *= 2;
+            }
+          };
+          // actually make the changes request
+          function getChangesSince() {
+            inProgress = true;
+            options.feed = "longpoll";
+            options.since = since;
+            options.heartbeat = options.heartbeat || 10 * 1000;
+            ajax(
+              {url: db.uri + "_changes"+encodeOptions(options)},
+              options,
+              "Error connecting to "+db.uri+"/_changes."
+            );
+          }
+          // start the first request
+          if (since) {
+            getChangesSince();
+          } else {
+            db.info({
+              success : function(info) {
+                since = info.update_seq;
+                getChangesSince();
+              }
+            });
+          }
+          return promise;
+        },
         allDocs: function(options) {
           ajax(
             {url: this.uri + "_all_docs" + encodeOptions(options)},
@@ -346,6 +444,31 @@ var Couch = (function() {
           }
         },
         openDoc: function(docId, options, ajaxOptions) {
+          options = options || {};
+          if (db_opts.attachPrevRev || options.attachPrevRev) {
+            options.beforeSuccess = function(req, doc) {
+              rawDocs[doc._id] = {
+                rev : doc._rev,
+                raw : req.responseText
+              };
+            };
+          } else {
+            options.beforeSuccess = function(req, doc) {
+              if (doc["jquery.couch.attachPrevRev"]) {
+                rawDocs[doc._id] = {
+                  rev : doc._rev,
+                  raw : req.responseText
+                };
+              }
+            };
+          }
+          ajax({url: this.uri + encodeDocId(docId) + encodeOptions(options)},
+            options,
+            "The document could not be retrieved",
+            ajaxOptions
+          );
+        },
+        openDoc: function(docId, options, ajaxOptions) {
           ajax({url: this.uri + encodeDocId(docId) + encodeOptions(options)},
             options,
             "The document could not be retrieved",
@@ -354,6 +477,8 @@ var Couch = (function() {
         },
         saveDoc: function(doc, options) {
           options = options || {};
+          var db = this;
+          var beforeSend = fullCommit(options);
           if (doc._id === undefined) {
             var method = "POST";
             var uri = this.uri;
@@ -361,41 +486,46 @@ var Couch = (function() {
             var method = "PUT";
             var uri = this.uri + encodeDocId(doc._id);
           }
-          options.successStatus = 201;
-          var success = options.success;
-          options.success = function(resp) {
-            doc._id = resp.id;
-            doc._rev = resp.rev;
-            if (success) success(resp);
-          };
           
+          var versioned = maybeApplyVersion(doc);
           ajax({
-            type: method, url: uri + encodeOptions(options),
-            contentType: "application/json",
-            dataType: "json", data: toJSON(doc)},
-            options,
-            "The document could not be saved: "
-          );
-          /*$.ajax({
             type: method, url: uri + encodeOptions(options),
             contentType: "application/json",
             dataType: "json", data: toJSON(doc),
             complete: function(req) {
-              var resp = JSON.parse(req);
-              if (req.status == 201) {
-                doc._id = resp.id;
-                doc._rev = resp.rev;
-                if (options.success) options.success(resp);
-              } else if (options.error) {
-                options.error(req.status, resp.error, resp.reason);
-              } else {
-                alert("The document could not be saved: " + resp.reason);
+              try {
+                var resp = JSON.parse(req.responseText);
+              } catch (e) {
+                resp = {error: "JSON error", reason: e.message};
+              } finally {
+                if (req.status == 200 || req.status == 201 || req.status==202) {
+                  doc._id = resp.id;
+                  doc._rev = resp.rev;
+                  if (versioned) {
+                    db.openDoc(doc._id, {
+                      attachPrevRev : true,
+                      success : function(d) {
+                        doc._attachments = d._attachments;
+                        if (options.success) options.success(resp);
+                      }
+                    });
+                  } else {
+                    if (options.success) options.success(resp);
+                  }
+                } else if (options.error) {
+                  options.error(req.status, resp.error, resp.reason);
+                } else {
+                  alert("The document could not be saved: " + resp.reason);
+                }
               }
-            }
-          });*/
+            }},
+            options,
+            "The document could not be saved: "
+          );
         },
         bulkSave: function(docs, options) {
           options.successStatus = 201;
+          options.beforeSend = fullCommit(options);
           ajax({
               type: "POST",
               url: this.uri + "_bulk_docs" + encodeOptions(options),
@@ -414,6 +544,20 @@ var Couch = (function() {
             },
             options,
             "The document could not be deleted"
+          );
+        },
+        bulkRemove: function(docs, options){
+          docs.docs.forEach(function (doc) {
+            doc._deleted = true;
+          });
+          options.successStatus = 201;
+          ajax({
+              type: "POST",
+              url: this.uri + "_bulk_docs" + encodeOptions(options),
+              data: toJSON(docs)
+            },
+            options,
+            "The documents could not be deleted"
           );
         },
         copyDoc: function(doc, options, ajaxOptions) {
@@ -459,6 +603,26 @@ var Couch = (function() {
             },
             options,
             "An error occurred querying the database"
+          );
+        },
+        list: function(list, view, options) {
+          var list = list.split('/');
+          var options = options || {};
+          var type = 'GET';
+          var data = null;
+          if (options['keys']) {
+            type = 'POST';
+            var keys = options['keys'];
+            delete options['keys'];
+            data = toJSON({'keys': keys });
+          }
+          ajax({
+              type: type,
+              data: data,
+              url: this.uri + '_design/' + list[0] +
+                   '/_list/' + list[1] + '/' + view + encodeOptions(options)
+              },
+              options, 'An error occured accessing the list'
           );
         },
         view: function(name, options) {
@@ -513,13 +677,18 @@ var Couch = (function() {
       );
     },
 
-    replicate: function(source, target, options) {
+    replicate: function(source, target, ajaxOptions, repOpts) {
+      repOpts.source = source;
+      repOpts.target = target;
+      if (repOpts.continuous) {
+        ajaxOptions.successStatus = 202;
+      }
       ajax({
           type: "POST", url: this.urlPrefix + "/_replicate",
-          data: JSON.stringify({source: source, target: target}),
+          data: JSON.stringify(repOpts),
           contentType: "application/json"
         },
-        options,
+        ajaxOptions,
         "Replication failed"
       );
     },

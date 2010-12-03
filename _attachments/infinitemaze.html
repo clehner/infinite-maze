@@ -120,7 +120,7 @@
 	Couch.urlPrefix = ".";
 	var mazesDb = Couch.db("db");
 
-	InfiniteMaze.init(mazesDb, data.maze, data.tiles, data.userCtx);
+	InfiniteMaze.init(mazesDb, data);
 	setTimeout(function () {
 		//InfiniteMaze.viewer.enterDrawTileMode(InfiniteMaze.viewer.mazeCanvas.getTile(0, 1));
 		InfiniteMaze.welcomeWindow.hide();
