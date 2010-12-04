@@ -2,7 +2,6 @@ Make the account settings window work.
 Make tiled layered canvas.
 Make hash navigation (partial, i.e. coordinates and page, #12,53;login)
 Add a license to the code.
-Implement path-finding algorithm instead of straight lines for navigating through maze.
 Check maze tiles for following rules.
 When in edit mode, the tile is temporarily locked from other people editing it.
 Real time broadcasting of people's locations in the maze, with their username.
