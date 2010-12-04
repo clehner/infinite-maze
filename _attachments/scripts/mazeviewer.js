@@ -275,7 +275,7 @@ TiledCanvas.prototype = {
 function MazeViewer(options) {
 	this.bindMethods(this.onResize, this.onMouseDown, this.onMouseDrag,
 		this.onMouseMove, this.onMouseUp, this.onTouchStart, this.onTouchMove,
-		this.onTouchEnd);
+		this.onTouchEnd, this.possibleDirections);
 
 	this.element = document.createElement("div");
 	this.element.className = "layer maze";
@@ -569,32 +569,32 @@ MazeViewer.prototype = {
 	
 	// move toward a pixel
 	moveToPixel: function (xTo, yTo) {
-		var xStart = this.x;
-		var yStart = this.y;
-		var xEnd, yEnd;
-		if (xTo == xStart && yTo == yStart) { return; }
-		
-		var self = this;
-		var mazeCanvas = this.mazeCanvas;
-		line(xStart, yStart, xTo, yTo, function (x, y) {
-			if (mazeCanvas.isPixelPassable(x, y)) {
-				xEnd = x;
-				yEnd = y;
-			} else {
-				return false;
+		var route = findRoute(point(this.x, this.y), point(xTo, yTo),
+			this.possibleDirections, 10);
+		this.setPosition(route.point.x, route.point.y);
+		while (route) {
+			var prev = route.from;
+			if (prev) {
+				this.overlay.drawLine(prev.point.x, prev.point.y,
+					route.point.x, route.point.y, this.pathColor);
 			}
-		});
-		
-		if (xEnd == null && yEnd == null) {
-			// no passable pixels
-			return;
+			route = prev;
 		}
-		
-		this.setPosition(xEnd, yEnd);
-		
-		this.overlay.drawLine(xStart, yStart, xEnd, yEnd, this.pathColor);
-		
-		//this.onResize();
+	},
+	
+	// get passable neighboring points
+	possibleDirections: function (from) {
+		var x = from.x;
+		var y = from.y;
+		var mazeCanvas = this.mazeCanvas;
+		return [
+			point(x, y + 1),
+			point(x, y - 1),
+			point(x + 1, y),
+			point(x - 1, y),
+		].filter(function (p) {
+			return mazeCanvas.isPixelPassable(p.x, p.y);
+		});
 	}
 };
 
