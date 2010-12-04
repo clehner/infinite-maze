@@ -73,6 +73,13 @@ var TileBox = Classy(Box, {
 
 // placed over drawn tiles
 var EmptyTileBox = Classy(TileBox, {
+	tileInfoEl: null,
+	innerTileInfo: null,
+	nameElement: null,
+	nameText: null,
+	editLink: null,
+	claimLink: null,
+	
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "empty");
@@ -92,13 +99,33 @@ var EmptyTileBox = Classy(TileBox, {
 		this.nameText = document.createTextNode("");
 		this.nameElement.appendChild(this.nameText);
 		
-		var editLink = document.createElement("a");
-		editLink.className = "edit-link";
-		editLink.href = "";
-		editLink.onclick = this.onEditLinkClick.bind(this);
-		editLink.innerHTML = "Edit";
+		this.editLink = document.createElement("a");
+		this.editLink.href = "";
+		this.editLink.onclick = this.onEditLinkClick.bind(this);
+		this.editLink.innerHTML = "Edit";
 		this.innerTileInfo.appendChild(document.createTextNode(" "));
-		this.innerTileInfo.appendChild(editLink);
+		this.innerTileInfo.appendChild(this.editLink);
+		
+		this.claimLink = document.createElement("a");
+		this.claimLink.href = "";
+		this.claimLink.onclick = this.onClaimLinkClick.bind(this);
+		this.claimLink.innerHTML = "Claim";
+		this.innerTileInfo.appendChild(document.createTextNode(" "));
+		this.innerTileInfo.appendChild(this.claimLink);
+	},
+	coverTile: function (tile) {
+		TileBox.prototype.coverTile.call(this, tile);
+
+		// put the creators name on the tile
+		var name = tile.info.creator || "anonymous";
+		this.nameText.nodeValue = name;
+		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
+		
+		// show or hide the edit link
+		toggleClass(this.editLink, "hidden", !this.canEditThisTile());
+		
+		// show or hide the claim link
+		toggleClass(this.claimLink, "hidden", !this.canClaimThisTile());
 	},
 	onEditLinkClick: function (e) {
 		e.preventDefault();
@@ -106,25 +133,22 @@ var EmptyTileBox = Classy(TileBox, {
 			InfiniteMaze.viewer.enterDrawTileMode(this.tile);
 		}
 	},
-	coverTile: function (tile) {
-		TileBox.prototype.coverTile.call(this, tile);
-		this.markTileCreator();
-		this.markTileEditLink();
+	onClaimLinkClick: function (e) {
+		e.preventDefault();
+		if (this.canClaimThisTile()) {
+			//InfiniteMaze.claim
+		}
 	},
 	canEditThisTile: function () {
 		var loggedInUser = InfiniteMaze.getUsername();
 		var isAdmin = InfiniteMaze.sessionManager.isAdmin();
 		return loggedInUser &&
-			isAdmin || (this.tile.info.creator == loggedInUser);
+			(isAdmin || (this.tile.info.creator == loggedInUser));
 	},
-	markTileEditLink: function () {
-		toggleClass(this.element, "can-edit", this.canEditThisTile());
-	},
-	// put the creators name on the tile
-	markTileCreator: function () {
-		var name = this.tile.info.creator || "anonymous";
-		this.nameText.nodeValue = name;
-		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
+	canClaimThisTile: function () {
+		return false; //*
+		var loggedIn = InfiniteMaze.getUsername();
+		return loggedIn && !this.tile.info.creator;
 	}
 });
 
@@ -579,21 +603,26 @@ constructor: function (viewer) {
 
 var InfiniteMazeLoader = Classy(MazeLoader, {
 	tilesInfo: null,
+	changesPromise: null,
 	
 	constructor: function (db, doc, tilesInfo, update_seq) {
 		MazeLoader.call(this, db, doc);
-		
 		// {0:{0:tileinfo}}
 		this.tilesInfo = tilesInfo;
-		
+		this.update_seq = update_seq;
+	},
+	
+	listenForChanges: function () {
+		var tilesInfo = this.tilesInfo;
 		// Start listening for tile changes
-		var promise = mazesDb.changes(update_seq, {
+		var promise = this.changesPromise = this.db.changes(this.update_seq, {
 			filter: "maze/tiles",
 			maze_id: this.mazeId
 		});
-		promise.onChange(function (changes) {
+		promise.onChange(function (resp) {
 			var docsToUpdate = {};
-			changes.results.forEach(function (change) {
+			this.update_seq = resp.last_seq;
+			resp.results.forEach(function (change) {
 				docsToUpdate[change.id] = true;
 			});
 			// todo: combine these requests
@@ -617,6 +646,13 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		});
 		window.addEventListener("online", promise.start, false);
 		window.addEventListener("offline", promise.stop, false);
+	},
+	
+	stopListeningForChanges: function () {
+		var promise = this.changesPromise;
+		promise.stop();
+		window.removeEventListener("online", promise.start, false);
+		window.removeEventListener("offline", promise.stop, false);
 	},
 	
 	// {location: [x, y], id: "#"}
@@ -996,30 +1032,33 @@ SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
 // The App
 
-InfiniteMaze.init = function (mazesDb, info) {
+InfiniteMaze.init = function (db, info, cb) {
 	var mazeDoc = info.maze;
 	var tiles = info.tiles;
 	var userCtx = info.userCtx;
 	var update_seq = info.update_seq;
 	shim(window.JSON, "../scripts/json2.js", function () {
 		this.sessionManager = new SessionManager(userCtx);
-		
+		this.loader = new InfiniteMazeLoader(db, mazeDoc, tiles, update_seq);
 		this.viewer = new GridMazeViewer({
-			loader: new InfiniteMazeLoader(mazesDb, mazeDoc, tiles, update_seq),
+			loader: this.loader,
 			container: $("maze")
 		});
 		this.viewer.enterMaze();
-		
 		this.editor = new GridMazeTileEditor(this.viewer);
-		
 		this.headerBar = new HeaderBar();
 		this.headerBar.updateForUser();
-		
 		this.welcomeWindow = new WelcomeWindow();
-		
 		this.loginSignupWindow = new LoginSignupWindow();
-		
 		this.accountSettingsWindow = new AccountSettingsWindow();
+		if (info.listen_changes !== false) {
+			window.addEventListener("load", function () {
+				this.loader.listenForChanges();
+			}.bind(this), false);
+		}
+		if (cb) {
+			cb.call(this);
+		}
 	}.bind(this));
 };
 

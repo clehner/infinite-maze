@@ -46,13 +46,21 @@ var Couch = (function() {
       async: true,
       contentType: "application/x-www-form-urlencoded",
       processData: true,
+      beforeSend: function(xhr){
+        if(ajaxOptions && ajaxOptions.headers){
+          for (var header in ajaxOptions.headers){
+            xhr.setRequestHeader(header, ajaxOptions.headers[header]);
+          }
+        }
+      },
       complete: function(req) {
         try {
-          var resp = JSON.parse(req.responseText);
+          var resp = fromJSON(req.responseText);
         } catch (e) {
           resp = {error: "JSON error", reason: e.message};
         } finally {
           if (req.status == options.successStatus) {
+            if (options.beforeSuccess) options.beforeSuccess(req, resp);
             if (options.success) options.success(resp);
           } else if (options.error) {
             options.error(req.status, resp && resp.error || errorMessage, resp && resp.reason || "no response");
@@ -141,6 +149,10 @@ var Couch = (function() {
 
   function toJSON(obj) {
     return obj !== null ? JSON.stringify(obj) : null;
+  }
+
+  function fromJSON(str) {
+    return str ? JSON.parse(str) : null;
   }
 
   function encodeDocId(docID) {
@@ -494,7 +506,7 @@ var Couch = (function() {
             dataType: "json", data: toJSON(doc),
             complete: function(req) {
               try {
-                var resp = JSON.parse(req.responseText);
+                var resp = fromJSON(req.responseText);
               } catch (e) {
                 resp = {error: "JSON error", reason: e.message};
               } finally {
@@ -561,18 +573,10 @@ var Couch = (function() {
           );
         },
         copyDoc: function(doc, options, ajaxOptions) {
-          ajaxOptions = ajaxOptions || {};
-          ajaxOptions.complete = function(req) {
-            var resp = JSON.parse(req);
-            if (req.status == 201) {
-              doc._id = resp.id;
-              doc._rev = resp.rev;
-              if (options.success) options.success(resp);
-            } else if (options.error) {
-              options.error(req.status, resp.error, resp.reason);
-            } else {
-              alert("The document could not be copied: " + resp.reason);
-            }
+          options.successStatus = 201,
+          options.beforeSuccess = function (req, resp) {
+            doc._id = resp.id;
+            doc._rev = resp.rev;
           };
           ajax({
               type: "COPY",

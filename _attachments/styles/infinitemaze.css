@@ -195,10 +195,6 @@ body {
 	opacity: 0.25;
 }
 
-.tile-box:not(.can-edit) .edit-link {
-	display: none;
-}
-
 .tile-info .name {
 	text-decoration: underline;
 }
