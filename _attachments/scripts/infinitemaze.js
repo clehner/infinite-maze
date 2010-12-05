@@ -883,11 +883,11 @@ constructor: function () {
 	var loginForm = $("login-form");
 	loginForm.onreset = this.hide.bind(this);
 	loginForm.onsubmit = function (e) {
-		e.preventDefault();
 		var username = $("login-username").value;
 		var password = $("login-password").value;
 		loader.start();
 		InfiniteMaze.sessionManager.login(username, password, onLogin, onLoginError);
+		// This form must be allowed to submit for some browsers to remember the login.
 	};
 	
 	var signupForm = $("signup-form");
@@ -1033,6 +1033,7 @@ SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 // The App
 
 InfiniteMaze.init = function (db, info, cb) {
+	var self = this;
 	var mazeDoc = info.maze;
 	var tiles = info.tiles;
 	var userCtx = info.userCtx;
@@ -1053,8 +1054,10 @@ InfiniteMaze.init = function (db, info, cb) {
 		this.accountSettingsWindow = new AccountSettingsWindow();
 		if (info.listen_changes !== false) {
 			window.addEventListener("load", function () {
-				this.loader.listenForChanges();
-			}.bind(this), false);
+				setTimeout(function () {
+					self.loader.listenForChanges();
+				}, 100);
+			}, false);
 		}
 		if (cb) {
 			cb.call(this);

@@ -120,9 +120,14 @@ body {
 /* Login/Signup window */
 
 #login-signup-window {
-	/* display: none; */
 	background-color: white;
 	background-color: rgba(255, 255, 255, 0.96);
+}
+#login-signup-window.hidden {
+	/* this allows the login form to be autofilled. */
+	display: block;
+	opacity: 0;
+	z-index: -1;
 }
 #login-signup-window .left {
 	width: 50%;
@@ -149,6 +154,9 @@ body {
 	background-image: url(../images/loading.gif);
 	background-repeat: no-repeat;
 	background-position: 98% 4%;
+}
+#dummy-frame {
+	display: none;
 }
 
 /* Tile boxes */

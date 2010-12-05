@@ -57,10 +57,11 @@
 				<div id="signup-result" class="error"></div>
 			</form>
 			<hr>
-			<form id="login-form" class="right half">
+			<iframe id="dummy-frame"></iframe>
+			<form id="login-form" class="right half" target="dummy-frame" action="about:blank">
 				<h2>Log in</h2>
-				<p>Username: <input id="login-username"></p>
-				<p>Password: <input id="login-password" type="password"></p>
+				<p>Username: <input id="login-username" name="username"></p>
+				<p>Password: <input id="login-password" type="password" name="password"></p>
 				<p><input type="submit" value="Log in">
 					<input type="reset" value="Cancel"></p>
 				<div id="login-result" class="error"></div>
@@ -115,13 +116,14 @@
 	</div>
 	
 	<script>
-	var data = {"maze":{"_id":{"id":"1"},"type":{"id":"maze"},"created_at":1287528459951,"title":"The Infinite Maze","format":"infinite-tiled","tile_size":[256,256],"start":[120,96]},"tiles":{"0":{"0":{"id":"91ceafb5136b418d88ab3012c0012642","creator":"cel"},"-1":{"id":"d2e1055c256927758539bff12b064a73"}},"1":{"-1":{"id":"d2e1055c256927758539bff12b071dc2"},"-2":{"id":"f3628094ada3dde0848694d02b00eb24"},"-3":{"id":"f3628094ada3dde0848694d02b02ae04"},"0":{"id":"f3628094ada3dde0848694d02b02eb76"}},"-1":{"-1":{"id":"f3628094ada3dde0848694d02b02a33d"},"0":{"id":"f3628094ada3dde0848694d02b031d5d"},"1":{"id":"f3628094ada3dde0848694d02b046dab"}},"2":{"-2":{"id":"f3628094ada3dde0848694d02b02c734"}}},"userCtx":{"db":"maze","name":"cel","roles":[]},"listen_changes":false};
+	var data = {"maze":{"_id":{"id":"1"},"type":{"id":"maze"},"created_at":1287528459951,"title":"The Infinite Maze","format":"infinite-tiled","tile_size":[256,256],"start":[120,96]},"tiles":{"0":{"0":{"id":"91ceafb5136b418d88ab3012c0012642","creator":"cel"},"-1":{"id":"d2e1055c256927758539bff12b064a73"}},"1":{"-1":{"id":"d2e1055c256927758539bff12b071dc2"},"-2":{"id":"f3628094ada3dde0848694d02b00eb24"},"-3":{"id":"f3628094ada3dde0848694d02b02ae04"},"0":{"id":"f3628094ada3dde0848694d02b02eb76"}},"-1":{"-1":{"id":"f3628094ada3dde0848694d02b02a33d"},"0":{"id":"f3628094ada3dde0848694d02b031d5d"},"1":{"id":"f3628094ada3dde0848694d02b046dab"}},"2":{"-2":{"id":"f3628094ada3dde0848694d02b02c734"}}},"userCtx":{"db":"maze","name":"","roles":[]},"listen_changes":false};
 	
 	Couch.urlPrefix = ".";
 	var mazesDb = Couch.db("db");
 
 	InfiniteMaze.init(mazesDb, data, function () {
-		this.welcomeWindow.hide();
+		//this.welcomeWindow.hide();
+		//this.loginSignupWindow.show();
 	});
 	</script>
 </body>

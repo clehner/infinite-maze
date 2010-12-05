@@ -18,6 +18,7 @@
 	<script src="../scripts/mazeviewer.js"></script>
 	<script src="../scripts/infinitemaze.js"></script>
 </head>
+<body>
 	<div id="app" class="layer">
 		<div id="welcome" class="window">
 			<h1>The<em>Infinite</em>Maze.com</h1>
@@ -56,10 +57,11 @@
 				<div id="signup-result" class="error"></div>
 			</form>
 			<hr>
-			<form id="login-form" class="right half">
+			<iframe id="dummy-frame"></iframe>
+			<form id="login-form" class="right half" target="dummy-frame" action="about:blank">
 				<h2>Log in</h2>
-				<p>Username: <input id="login-username"></p>
-				<p>Password: <input id="login-password" type="password"></p>
+				<p>Username: <input id="login-username" name="username"></p>
+				<p>Password: <input id="login-password" type="password" name="password"></p>
 				<p><input type="submit" value="Log in">
 					<input type="reset" value="Cancel"></p>
 				<div id="login-result" class="error"></div>
