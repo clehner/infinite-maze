@@ -308,18 +308,17 @@ PointMap.prototype = {
 
 // heuristic (optimistic)
 function estimatedDistance(pointA, pointB) {
-	var dx = Math.abs(pointA.x - pointB.x);
-	var dy = Math.abs(pointA.y - pointB.y);
-	return dx + dy;
+	var dx = Math.abs(pointA.x - pointB.x),
+		dy = Math.abs(pointA.y - pointB.y);
+	return (dx > dy) ?
+		(dx - dy) * 1 + dy * Math.SQRT2:
+		(dy - dx) * 1 + dx * Math.SQRT2;
 }
 /*
 function estimatedDistance(pointA, pointB) {
-  var dx = Math.abs(pointA.x - pointB.x),
-      dy = Math.abs(pointA.y - pointB.y);
-  if (dx > dy)
-    return (dx - dy) * 1 + dy * Math.SQRT2;
-  else
-    return (dy - dx) * 1 + dx * Math.SQRT2;
+	var dx = Math.abs(pointA.x - pointB.x);
+	var dy = Math.abs(pointA.y - pointB.y);
+	return dx + dy;
 }
 function estimatedDistance(pointA, pointB) {
 	var dx = pointA.x - pointB.x;

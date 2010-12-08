@@ -627,7 +627,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			});
 			// todo: combine these requests
 			for (var id in docsToUpdate) {
-				db.openDoc(id, {
+				this.db.openDoc(id, {
 					success: function (doc) {
 						// new tile doc
 						var x = doc.location[0];

@@ -159,7 +159,6 @@ function TiledCanvas(tileWidth, tileHeight) {
 	this.tiles = [];
 	this.element = document.createElement("div");
 	this.element.className = "layer";
-	//this.element.style.position = "absolute";
 }
 TiledCanvas.prototype = {
 	element: null,
@@ -198,30 +197,43 @@ TiledCanvas.prototype = {
 		});
 	},
 	
-	/*getPassableNeighboringPixels: function (x, y, z) {
-		var tile = this.getTileAtPixel(x, y);
-		var data = tile.ctx.getImageData(
-			x - tile.offsetX - 1, y - tile.offsetY - 1, 3, 3).data;
-		var pixels = [];
-		if (this.isPixelDataPassable(data, 1, z)) pixels.push([x, y - 1]);
-		if (this.isPixelDataPassable(data, 3, z)) pixels.push([x - 1, y]);
-		if (this.isPixelDataPassable(data, 5, z)) pixels.push([x + 1, y]);
-		if (this.isPixelDataPassable(data, 7, z)) pixels.push([x, y + 1]);
-		return pixels;
-	},*/
-	
-	getPixelValue: function (x, y) {
-		var tile = this.getTileAtPixel(x, y);
-		return tile.ctx.getImageData(
-			x - tile.offsetX, y - tile.offsetY, 1, 1).data;
+	getImageData: function (x, y, w, h) {
+		var tiles = this.getTilesInRect(x, y, x + w, y + h);
+		if (tiles.length == 1) {
+			var tile = tiles[0];
+			return tile.ctx.getImageData(x-tile.offsetX, y-tile.offsetY, w, h);
+		}
+		var buffer = document.createElement("canvas").getContext("2d");
+		tiles.forEach(function (tile) {
+			var dx = x - tile.offsetX;
+			if (dx < 0) {
+				tileX = 0; // where in the tile to start the getimagedata rect
+				offsetX = -dx; // where in the buffer to place it
+			} else {
+				tileX = dx;
+				offsetX = 0;
+			}
+			var dy = y - tile.offsetY;
+			if (dy < 0) {
+				tileY = 0;
+				offsetY = -dy;
+			} else {
+				tileY = dy;
+				offsetY = 0;
+			}
+			var data = tile.ctx.getImageData(
+				x - tile.offsetX, y - tile.offsetY, w, h);
+			buffer.putImageData(data, offsetX, offsetY);
+		});
+		return buffer.getImageData(0, 0, w, h);
 	},
 	
-	isPixelPassable: function (x, y) {
-		var pixel = this.getPixelValue(x, y);
-		var fg = (pixel[0] + pixel[1] + pixel[2]) * pixel[3];
-		// change 0 to 765 for passable bg
-		var bg = 0 * (255 - pixel[3]);
-		return fg + bg > 97537;
+	putImageData: function (imageData, x, y) {
+		var tiles = this.getTilesInRect(x, y, x + imageData.width,
+			y + imageData.height);
+		tiles.forEach(function (tile) {
+			tile.ctx.putImageData(imageData, x-tile.offsetX, y-tile.offsetY);
+		});
 	},
 	
 	getAllTiles: function () {
@@ -336,6 +348,7 @@ MazeViewer.prototype = {
 	isInViewMode: true,
 	pathColor: "#0f0",
 	loader: null, // MazeLoader, for saving and getting tiles
+	correctionAmount: 5,
 	
 	load: function () {
 		window.addEventListener("resize", this.onResize, false);
@@ -570,7 +583,7 @@ MazeViewer.prototype = {
 	// move toward a pixel
 	moveToPixel: function (xTo, yTo) {
 		var route = findRoute(point(this.x, this.y), point(xTo, yTo),
-			this.possibleDirections, 10);
+			this.possibleDirections, this.correctionAmount);
 		this.setPosition(route.point.x, route.point.y);
 		while (route) {
 			var prev = route.from;
@@ -583,18 +596,34 @@ MazeViewer.prototype = {
 	},
 	
 	// get passable neighboring points
+	isColorPassable: function (r, g, b, a) {
+		var fg = (r + g + b) * a;
+		// change 0 to 765 for passable bg
+		var bg = 0 * (255 - a);
+		return fg + bg > 82000; //97537;
+	},
+
+	// get passable neighboring points
 	possibleDirections: function (from) {
 		var x = from.x;
 		var y = from.y;
-		var mazeCanvas = this.mazeCanvas;
-		return [
-			point(x, y + 1),
-			point(x, y - 1),
-			point(x + 1, y),
-			point(x - 1, y),
-		].filter(function (p) {
-			return mazeCanvas.isPixelPassable(p.x, p.y);
-		});
+		var data = this.mazeCanvas.getImageData(x - 1, y - 1, 3, 3).data;
+
+		var isColorPassable = this.isColorPassable;
+		function isPassable(x, y) {
+			var i = 4 * (y * 3 + x);
+			return isColorPassable(data[i++], data[i++], data[i++], data[i]);
+		}
+		
+		var n = isPassable(1, 0) && point(x, y - 1);
+		var s = isPassable(1, 2) && point(x, y + 1);
+		var w = isPassable(0, 1) && point(x - 1, y);
+		var e = isPassable(2, 1) && point(x + 1, y);
+		var ne = (n || e) && isPassable(2, 0) && point(x + 1, y - 1);
+		var se = (s || e) && isPassable(2, 2) && point(x + 1, y + 1);
+		var sw = (s || w) && isPassable(0, 2) && point(x - 1, y + 1);
+		var nw = (n || w) && isPassable(0, 0) && point(x - 1, y - 1);
+		return [n, ne, e, se, s, sw, w, nw].filter(Boolean);
 	}
 };
 
