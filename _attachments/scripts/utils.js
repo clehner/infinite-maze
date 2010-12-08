@@ -335,6 +335,7 @@ function findRoute(from, to, possibleDirections, maxLength) {
   var closestRoute = firstRoute;
   var firstScore = routeScore(closestRoute);
   var minDistanceLeft = firstScore;
+  var maxScore = maxLength + firstScore;
 
   function routeScore(route) {
     if (route.score == undefined)
@@ -362,16 +363,16 @@ function findRoute(from, to, possibleDirections, maxLength) {
     possibleDirections(route.point).forEach(function(direction) {
       var known = reached.get(direction);
       var newLength = route.length + 1;
-                      //weightedDistance(route.point, direction);
       if (!known || known.length > newLength) {
         var newRoute = {point: direction,
                         from: route,
                         length: newLength};
-        if (known)
-          open.remove(known);
-        else if (routeScore(newRoute) - firstScore > maxLength)
-          return;
-        addOpenRoute(newRoute);
+        if (routeScore(newRoute) <= maxScore) {
+          if (known) {
+            open.remove(known);
+          }
+          addOpenRoute(newRoute);
+        }
       }
     });
   }

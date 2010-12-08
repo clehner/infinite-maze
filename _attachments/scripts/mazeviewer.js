@@ -197,13 +197,24 @@ TiledCanvas.prototype = {
 		});
 	},
 	
+	// useful buffer
+	_getBufferCtx: (function () {
+		var bufferCanvas = document.createElement("canvas");
+		var bufferCtx = bufferCanvas.getContext("2d");
+		return function (w, h) {
+			bufferCanvas.height = h;
+			bufferCanvas.width = w;
+			return bufferCtx;
+		};
+	})(),
+	
 	getImageData: function (x, y, w, h) {
 		var tiles = this.getTilesInRect(x, y, x + w, y + h);
 		if (tiles.length == 1) {
 			var tile = tiles[0];
 			return tile.ctx.getImageData(x-tile.offsetX, y-tile.offsetY, w, h);
 		}
-		var buffer = document.createElement("canvas").getContext("2d");
+		var buffer = this._getBufferCtx(w, h);
 		tiles.forEach(function (tile) {
 			var dx = x - tile.offsetX;
 			if (dx < 0) {
@@ -221,8 +232,7 @@ TiledCanvas.prototype = {
 				tileY = dy;
 				offsetY = 0;
 			}
-			var data = tile.ctx.getImageData(
-				x - tile.offsetX, y - tile.offsetY, w, h);
+			var data = tile.ctx.getImageData(tileX, tileY, w, h);
 			buffer.putImageData(data, offsetX, offsetY);
 		});
 		return buffer.getImageData(0, 0, w, h);
@@ -619,11 +629,11 @@ MazeViewer.prototype = {
 		var s = isPassable(1, 2) && point(x, y + 1);
 		var w = isPassable(0, 1) && point(x - 1, y);
 		var e = isPassable(2, 1) && point(x + 1, y);
-		var ne = (n || e) && isPassable(2, 0) && point(x + 1, y - 1);
+		/*var ne = (n || e) && isPassable(2, 0) && point(x + 1, y - 1);
 		var se = (s || e) && isPassable(2, 2) && point(x + 1, y + 1);
 		var sw = (s || w) && isPassable(0, 2) && point(x - 1, y + 1);
-		var nw = (n || w) && isPassable(0, 0) && point(x - 1, y - 1);
-		return [n, ne, e, se, s, sw, w, nw].filter(Boolean);
+		var nw = (n || w) && isPassable(0, 0) && point(x - 1, y - 1);*/
+		return [n, s, e, w /*, ne, se, sw, nw */].filter(Boolean);
 	}
 };
 
