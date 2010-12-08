@@ -215,24 +215,21 @@ TiledCanvas.prototype = {
 			return tile.ctx.getImageData(x-tile.offsetX, y-tile.offsetY, w, h);
 		}
 		var buffer = this._getBufferCtx(w, h);
+		var tW = this.tileWidth;
+		var tH = this.tileHeight;
 		tiles.forEach(function (tile) {
 			var dx = x - tile.offsetX;
-			if (dx < 0) {
-				tileX = 0; // where in the tile to start the getimagedata rect
-				offsetX = -dx; // where in the buffer to place it
-			} else {
-				tileX = dx;
-				offsetX = 0;
-			}
 			var dy = y - tile.offsetY;
-			if (dy < 0) {
-				tileY = 0;
-				offsetY = -dy;
-			} else {
-				tileY = dy;
-				offsetY = 0;
-			}
-			var data = tile.ctx.getImageData(tileX, tileY, w, h);
+			// where in the tile to start the getimagedata rect
+			var tileX = Math.max(0, dx);
+			var tileY = Math.max(0, dy);
+			// where in the buffer to place it
+			var offsetX = Math.max(0, -dx);
+			var offsetY = Math.max(0, -dy);
+			// size of the getimagedata rect in the tile
+			var getW = Math.min(256, dx + w, tW - dx, w);
+			var getH = Math.min(256, dy + h, tH - dy, h);
+			var data = tile.ctx.getImageData(tileX, tileY, getW, getH);
 			buffer.putImageData(data, offsetX, offsetY);
 		});
 		return buffer.getImageData(0, 0, w, h);
