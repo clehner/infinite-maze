@@ -20,6 +20,15 @@
 		}
 	},
 	{
+		"from": "mazes/:id/tiles.xml",
+		"to": "_list/tiles_rss/tiles_by_creation",
+		"query": {
+			"id": ":id",
+			"limit": 10,
+			"descending": true
+		}
+	},
+	{
 		"from": "mazes_static/:id",
 		"to": "_list/maze_static/maze_and_tiles",
 		"query": {
