@@ -613,6 +613,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	},
 	
 	listenForChanges: function () {
+		var self = this;
 		var tilesInfo = this.tilesInfo;
 		// Start listening for tile changes
 		var promise = this.changesPromise = this.db.changes(this.update_seq, {
@@ -621,13 +622,13 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		});
 		promise.onChange(function (resp) {
 			var docsToUpdate = {};
-			this.update_seq = resp.last_seq;
+			self.update_seq = resp.last_seq;
 			resp.results.forEach(function (change) {
 				docsToUpdate[change.id] = true;
 			});
 			// todo: combine these requests
 			for (var id in docsToUpdate) {
-				this.db.openDoc(id, {
+				self.db.openDoc(id, {
 					success: function (doc) {
 						// new tile doc
 						var x = doc.location[0];
