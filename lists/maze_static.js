@@ -17,6 +17,7 @@ function(head, req) {
 		var row;
 		var xMin = Infinity;
 		var yMin = Infinity;
+		var a = '';
 		while (row = getRow()) {
 			if (row.key != mazeId) continue;
 			var value = row.value;
@@ -24,18 +25,14 @@ function(head, req) {
 			if (!maze && value.maze) {
 				maze = value.maze;
 			}
-			if (value.tiles) {
-				var theseTiles = value.tiles;
-				for (var x in theseTiles) {
-					if (+x < xMin) xMin = +x;
-					for (var y in theseTiles[x]) {
-						if (+y < yMin) yMin = +y;
-						(tiles[y] || (tiles[y] = {}))[x] = theseTiles[x][y];
-					}
-				}
+			if (value.location) {
+				var x = value.location[0];
+				var y = value.location[1];
+				if (+x < xMin) xMin = +x;
+				if (+y < yMin) yMin = +y;
+				(tiles[y] || (tiles[y] = {}))[x] = row.id;
 			}
 		}
-		
 		
 		if (!maze) {
 			return mazeNotFound(mazeId);
@@ -69,7 +66,7 @@ function(head, req) {
 		var tileWidth = maze.tile_size[0];
 		var tileHeight = maze.tile_size[1];
 		var replacements = [
-			["{{TBODY}}", tableHtml],
+			["{{TBODY}}", a+tableHtml],
 			["{{TILE_WIDTH}}", tileWidth],
 			["{{TILE_HEIGHT}}", tileHeight],
 			["{{START_X}}", tileWidth * xOffset + maze.start[0]],

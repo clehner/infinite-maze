@@ -32,7 +32,8 @@
 		"from": "mazes_static/:id",
 		"to": "_list/maze_static/maze_and_tiles",
 		"query": {
-			"id": ":id"
+			"id": ":id",
+			"descending": true
 		}
 	},
 	{

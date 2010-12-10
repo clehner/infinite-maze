@@ -35,13 +35,15 @@ function(head, req) {
 			var coords = "(" + value.location.join(", ") + ")";
 			var creator = value.creator;
 			var src = '../../db/' + row.id + '/tile.png';
+			var title = "Tile at " + coords + " by " + creator + " on " +
+				date.toLocaleString();
 			var entry = <entry>
 				<id>urn:uuid:{row.id}</id>
 				<title>{coords}</title>
 				<updated>{date.toISOString()}</updated>
 				<content type="xhtml">
 					<div xmlns="http://www.w3.org/1999/xhtml">
-						<img src={src} title="Tile at {coords} by {creator} on {date.toLocaleString()}"/>
+						<img src={src} alt={title}/>
 					</div>
 				</content>
 			</entry>;
