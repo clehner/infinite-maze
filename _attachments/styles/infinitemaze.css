@@ -180,12 +180,21 @@ body {
 .tile-box.draw-here {
 	color: #4d4; /*#00b*/
 }
+
 .tile-box.drawing {
-	cursor: crosshair;
+	cursor: url(../images/blank.cur), none;
 	border: 1px dotted rgba(200, 200, 200, 0.6);
 }
 .tile-box.drawing:hover {
-	opacity: .3;
+	border: 1px dotted rgba(200, 200, 200, 0.18);
+}
+
+#drawing-cursor {
+	position: absolute;
+	width: 12px;
+	height: 12px;
+	border: 1px solid white;
+	background: rgba(127, 127, 127, 0.6);
 }
 
 .tile-info {

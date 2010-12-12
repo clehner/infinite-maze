@@ -182,9 +182,20 @@ var GetHereTileBox = Classy(TileBox, {
 
 // placed over a tile being edited
 var DrawingTileBox = Classy(TileBox, {
+	cursor: null,
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "drawing");
+		
+		var cursor = this.cursor = document.createElement("div");
+		cursor.id = "drawing-cursor";
+		
+		this.element.addEventListener("mouseover", function () {
+			document.body.appendChild(cursor);
+		}, false);
+		this.element.addEventListener("mouseout", function () {
+			document.body.removeChild(cursor);
+		}, false);
 	}
 });
 
@@ -391,14 +402,20 @@ var SizePicker = Classy(Picker, {
 	initCell: function (cell, size) {
 		var circle = document.createElement("div");
 		circle.className = "circle";
-		var s = circle.style;
-		s.width = s.height = size + "px";
-		s.borderRadius = s.MozBorderRadius = s.WebkitBorderRadius = size/2+"px";
+		this.resizeCircle(circle, size);
 		cell.appendChild(circle);
 	},
 	
 	select: function (x) {
 		this.selectCoord(0, x);
+	},
+	
+	resizeCircle: function (element, size) {
+		var s = element.style;
+		s.width = s.height = Math.max(size, 1) + "px";
+		s.borderRadius =
+			s.MozBorderRadius =
+			s.WebkitBorderRadius = Math.max(size / 2, 1) + "px";
 	}
 });
 SizePicker.ify = Picker.ify;
@@ -431,6 +448,8 @@ constructor: function (viewer) {
 
 	var tile, tileCoords;
 	var tileBox = new DrawingTileBox(viewer);
+	var cursor = tileBox.cursor;
+	var cursorStyle = cursor.style;
 	
 	// entrance pixel to the tile
 	var entrance;
@@ -454,6 +473,7 @@ constructor: function (viewer) {
 		if (tile) {
 			tile.ctx.strokeStyle = color;
 		}
+		cursorStyle.borderColor = color;
 	};
 	colorPicker.selectCoord(0, 0);
 	
@@ -466,6 +486,7 @@ constructor: function (viewer) {
 		if (tile) {
 			tile.ctx.lineWidth = pencilSize;
 		}
+		sizePicker.resizeCircle(cursor, size - 3);
 	};
 	sizePicker.select(0);
 	
@@ -497,6 +518,8 @@ constructor: function (viewer) {
 		// Stop dragging the tile or other funny stuff happening.
 		e.stopPropagation();
 		e.preventDefault();
+		// but still allow the fake cursor to move
+		onMouseMove(e);
 	};
 	
 	// Mouse dragging behavior
@@ -507,6 +530,14 @@ constructor: function (viewer) {
 		onDragEnd: null,
 		context: this
 	});
+	
+	function onMouseMove(e) {
+		var s = pencilSize / 2 - 2;
+		cursorStyle.left = e.clientX - s + "px";
+		cursorStyle.top = e.clientY - s + "px";
+	}
+	
+	tileBox.element.addEventListener("mousemove", onMouseMove, false);
 
 	// returns a point within a tile that is closest to another point
 	function nearestPointInTile(tile, adjacentPoint) {
