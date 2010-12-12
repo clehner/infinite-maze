@@ -205,6 +205,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 	
 	constructor: function (options) {
 		MazeViewer.call(this, options);
+		this.load();
 		
 		// initialize tile boxes.
 		this.emptyTileBox = new EmptyTileBox(this);
@@ -229,31 +230,29 @@ var GridMazeViewer = Classy(MazeViewer, {
 	setPosition: function (x, y) {
 		// Highlight tile adjacent to the current location, if the current
 		// location is on its border.
-		var mazeCanvas = this.mazeCanvas;
-		var currentTile = mazeCanvas.getTileAtPixel(x, y);
 		var tileWidth = this.tileSize[0];
 		var tileHeight = this.tileSize[1];
 		var xInTile = x % tileWidth;
 		var yInTile = y % tileHeight;
 		
 		// Find any adjacent tiles, and hover them.
-		var tileBox = this.drawHereTileBox;
 		if (xInTile == 0) {
-			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x - tileWidth, y));
+			this._onTileAdjacent(x - tileWidth, y);
 		} else if (xInTile == -1 || xInTile == tileWidth - 1) {
-			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x + tileWidth, y));
+			this._onTileAdjacent(x + tileWidth, y);
 		}
 		if (yInTile == 0) {
-			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x, y - tileHeight));
+			this._onTileAdjacent(x, y - tileHeight);
 		} else if (yInTile == -1 || yInTile == tileHeight - 1) {
-			this.onTileAdjacent(mazeCanvas.getTileAtPixel(x, y + tileHeight));
+			this._onTileAdjacent(x, y + tileHeight);
 		}
 		
 		MazeViewer.prototype.setPosition.call(this, x, y);
 	},
 	
 	// called when the player's location is one pixel away from an adjacent tile
-	onTileAdjacent: function (tile) {
+	_onTileAdjacent: function (x, y) {
+		var tile = this.mazeCanvas.getTileAtPixel(x, y);
 		if (tile.isEmpty) {
 			var box = this.drawHereTileBox;
 			box.coverTile(tile);
@@ -288,11 +287,14 @@ var GridMazeViewer = Classy(MazeViewer, {
 		
 		// turn off the cross-hairs cursor outside this tile.
 		removeClass(this.centerer, "in");
-		
+
 		this.hideTileBoxes();
 		
+		// the pixel leading into this cell.
+		var entrance = [this.x, this.y];
+		
 		// Open the editor toolbox.
-		InfiniteMaze.editor.openForTile(tile);
+		InfiniteMaze.editor.openForTile(tile, entrance);
 	},
 	
 	exitDrawTileMode: function () {
@@ -300,17 +302,6 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.drawingTile = null;
 		this.isInViewMode = true;
 		addClass(this.centerer, "in");
-	},
-	
-	publishTileDrawing: function (tile, tileCoords, onError, onSuccess) {
-		this.loader.saveTileDrawing(tile, tileCoords,
-			function (status, error, reason) {
-				onError([status, error, reason]);
-			},
-			function (resp) {
-				onSuccess(resp);
-			}
-		);
 	},
 
 	showHelpWindow: function () {},
@@ -441,6 +432,9 @@ constructor: function (viewer) {
 	var tile, tileCoords;
 	var tileBox = new DrawingTileBox(viewer);
 	
+	// entrance pixel to the tile
+	var entrance;
+	
 	// Allow edits to be undone if the user discards them.
 	var restore = function () {};
 	
@@ -514,9 +508,20 @@ constructor: function (viewer) {
 		context: this
 	});
 
+	// returns a point within a tile that is closest to another point
+	function nearestPointInTile(tile, adjacentPoint) {
+		var el = tile.element;
+		return [
+			Math.max(tile.offsetX,
+				Math.min(tile.offsetX + el.width, adjacentPoint[0])),
+			Math.max(tile.offsetY,
+				Math.min(tile.offsetY + el.height, adjacentPoint[1]))
+		];
+	}
 
-	this.openForTile = function (t) {
+	this.openForTile = function (t, adjacentPoint) {
 		tile = t;
+		entrance = nearestPointInTile(tile, adjacentPoint);
 
 		tileCoords = viewer.mazeCanvas.getTileCoords(tile);
 		restore = makeRestore();
@@ -552,7 +557,7 @@ constructor: function (viewer) {
 	};
 	this.close = close;
 	
-	// Make a function to restore the tile to its current state.
+	// Make a function to restore the tile to its pre-edit state.
 	function makeRestore() {
 		if (tile.isEmpty) {
 			return function () {
@@ -583,9 +588,9 @@ constructor: function (viewer) {
 			alert("You haven't followed all the rules! Fix your drawing and try again.");
 			return;
 		}
-		viewer.publishTileDrawing(tile, tileCoords,
-			function onError(msg) {
-				alert("There was an error: " + msg);
+		InfiniteMaze.loader.saveTileDrawing(tile, tileCoords,
+			function onError(status, error, reason) {
+				alert("There was an error: " + reason);
 			},
 			close // success
 		);
@@ -598,6 +603,10 @@ constructor: function (viewer) {
 		close();
 	};
 	this.discard = discard;
+	
+	this.getTileEntrance = function () {
+		return entrance;
+	};
 }
 });
 
@@ -697,6 +706,9 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		this.getTileDoc(tile, function (doc) {
 			doc.location = tileCoords;
 			doc.created_at = Date.now();
+			if (!doc.start) {
+				doc.start = InfiniteMaze.editor.getTileEntrance();
+			}
 			doc._attachments = {
 				"tile.png": {
 					content_type: "image/png",
@@ -710,6 +722,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 						creator: doc.creator,
 						id: doc._id
 					};
+					tile.isEmpty = false;
 					onSuccess.apply(this, arguments);
 				}
 			});
