@@ -135,8 +135,17 @@ var EmptyTileBox = Classy(TileBox, {
 	},
 	onClaimLinkClick: function (e) {
 		e.preventDefault();
-		if (this.canClaimThisTile()) {
-			//InfiniteMaze.claim
+		var loggedIn = InfiniteMaze.getUsername();
+		if (loggedIn) {
+			if (confirm("Did you draw this tile?")) {
+				InfiniteMaze.claimer.claimTile(this.tile);
+				this.tile.claimSubmitted = true;
+				alert("Thank you. Your claim has been submitted.");
+			}
+		} else {
+			if (confirm("Did you draw this tile? If so, log in to claim it.")) {
+				InfiniteMaze.loginSignupWindow.show();
+			}
 		}
 	},
 	canEditThisTile: function () {
@@ -146,9 +155,10 @@ var EmptyTileBox = Classy(TileBox, {
 			(isAdmin || (this.tile.info.creator == loggedInUser));
 	},
 	canClaimThisTile: function () {
-		return false; //*
-		var loggedIn = InfiniteMaze.getUsername();
-		return loggedIn && !this.tile.info.creator;
+		var hasCreator = this.tile.info.creator;
+		return !hasCreator && !this.tile.claimSubmitted;
+		//var loggedIn = !!InfiniteMaze.getUsername();
+		//return loggedIn && !hasCreator;
 	}
 });
 
@@ -1073,6 +1083,26 @@ function SessionManager(userCtx) {
 }
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
+// A way for users to claim old anonymous tiles.
+function TileClaimer(db) {
+	this.claimTile = function (tile) {
+		var user = InfiniteMaze.getUsername();
+		if (tile.info.creator || !user) {
+			return false;
+		}
+		db.saveDoc({
+			type: "claim",
+			claim_type: "tile",
+			tile_id: tile.info.id,
+			user: user,
+			created_at: Date.now()
+		}, {
+			error: function (status, error, reason) {
+				alert("There was an error claiming that tile: " + reason);
+			}
+		});
+	};
+}
 
 
 // The App
@@ -1097,6 +1127,7 @@ InfiniteMaze.init = function (db, info, cb) {
 		this.welcomeWindow = new WelcomeWindow();
 		this.loginSignupWindow = new LoginSignupWindow();
 		this.accountSettingsWindow = new AccountSettingsWindow();
+		this.claimer = new TileClaimer(db);
 		if (info.listen_changes !== false) {
 			window.addEventListener("load", function () {
 				setTimeout(function () {

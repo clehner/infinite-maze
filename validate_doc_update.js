@@ -27,7 +27,7 @@ function isPointRadius(obj) {
 function (doc, oldDoc, userCtx) {
 	// Generic validation
 	
-var isAdmin = userCtx.roles.indexOf('_admin') != -1;
+	var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 
 	if (!userCtx.name) {
 		throw {unauthorized: "You must be logged in."};
@@ -43,8 +43,8 @@ var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 	}
 	
 	validate([
-		doc.type in {"maze":1, "tile": 1},
-		"Document must be a valid type (maze or tile)."
+		doc.type in {"maze":1, "tile": 1, "claim": 1},
+		"Document must be a valid type (maze, tile, or claim)."
 	]);
 	
 	if (oldDoc && !isAdmin) {
@@ -134,6 +134,18 @@ var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 			
 			doc._attachments && doc._attachments['tile.png'],
 				"Tile must have an attachment called 'tile.png'."
+		]);
+	} else if (doc.type == "claim") {
+		// Claim validation
+		validate([
+			doc.claim_type,
+				"Claim type must be tile.",
+			
+			doc.tile_id,
+				"Claim must have a tile_id.",
+			
+			doc.user == userCtx.name || isAdmin,
+				"Claim must be for your own account."
 		]);
 	}
 }

@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+	<title>Tile Claims</title>
+	<meta charset="utf-8">
+	<style type="text/css">
+	body {
+		font-family: sans-serif;
+	}
+	img {
+		background: black;
+	}
+	</style>
+	<script src="scripts/couchdb.js"></script>
+</head>
+<body>
+<h1>Tile Claims</h1>
+<ul id="claims"></ul>
+<script typ="text/javascript">
+Couch.urlPrefix = "./";
+var db = Couch.db("db");
+
+function create(tagName, parent) {
+	var el = document.createElement(tagName);
+	if (parent) {
+		parent.appendChild(el);
+	}
+	return el;
+}
+
+function Claim(doc) {
+	var self = this;
+	this.doc = doc;
+	var el = this.element = create("li");
+	create("em", el).innerHTML = doc.user;
+	create("div", el).innerHTML = new Date(doc.created_at).toLocaleString();
+	
+	var acceptBtn = create("button", el);
+	acceptBtn.innerHTML = "Accept";
+	acceptBtn.onclick = function () { self.accept() };
+	
+	var rejectBtn = create("button", el);
+	rejectBtn.innerHTML = "Reject";
+	rejectBtn.onclick = function () { self.reject() };
+	
+	create("img", create("div", el)).src = "db/" + doc.tile_id + "/tile.png";
+}
+Claim.prototype = {
+	show: function () {
+		document.getElementById("claims").appendChild(this.element);
+	},
+	hide: function () {
+		document.getElementById("claims").removeChild(this.element);
+	},
+	accept: function () {
+		var self = this;
+		db.openDoc(this.doc.tile_id, {success: function (tileDoc) {
+			tileDoc.creator = self.doc.user;
+			db.saveDoc(tileDoc, {success: function () {
+				self.reject();
+			}});
+		}});
+	},
+	reject: function () {
+		var self = this;
+		db.removeDoc(this.doc, {success: function () {
+			self.hide();
+		}});
+	}
+};
+
+db.view("maze/claims", {success: function (resp) {
+	resp.rows.forEach(function (row) {
+		new Claim(row.value).show();
+	});
+}});
+
+</script>
+</body>
+</html>

@@ -480,13 +480,6 @@ var Couch = (function() {
             ajaxOptions
           );
         },
-        openDoc: function(docId, options, ajaxOptions) {
-          ajax({url: this.uri + encodeDocId(docId) + encodeOptions(options)},
-            options,
-            "The document could not be retrieved",
-            ajaxOptions
-          );
-        },
         saveDoc: function(doc, options) {
           options = options || {};
           var db = this;
