@@ -55,11 +55,10 @@ function (doc, oldDoc, userCtx) {
 				// unless it is invalid
 			]);
 		}*/
-		if (oldDoc.creator) {
+		if (doc.creator || oldDoc.creator) {
 			validate([
 				doc.creator == oldDoc.creator,
-				"Maze creator cannot be changed except by admin."
-				// unless it is not set
+				"Creator cannot be changed except by admin."
 			]);
 		}
 	}
@@ -126,6 +125,9 @@ function (doc, oldDoc, userCtx) {
 	} else if (doc.type == "tile") {
 		// Tile validation
 		validate([
+			doc.creator == userCtx.name || isAdmin,
+				"Tile can only be changed by its creator or an admin.",
+			
 			doc.maze_id,
 				"Tile must have a maze_id.",
 			
