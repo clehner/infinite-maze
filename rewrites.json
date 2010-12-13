@@ -37,6 +37,14 @@
 		}
 	},
 	{
+		"from": "claims.xml",
+		"to": "_list/claims_rss/claims",
+		"query": {
+			"limit": 10,
+			"descending": true
+		}
+	},
+	{
 		"from": "favicon.ico",
 		"to": "images/favicon.ico"
 	},
