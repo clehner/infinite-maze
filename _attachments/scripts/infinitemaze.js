@@ -112,6 +112,13 @@ var EmptyTileBox = Classy(TileBox, {
 		this.claimLink.innerHTML = "Claim";
 		this.innerTileInfo.appendChild(document.createTextNode(" "));
 		this.innerTileInfo.appendChild(this.claimLink);
+		
+		this.fixLink = document.createElement("a");
+		this.fixLink.href = "";
+		this.fixLink.onclick = this.onFixLinkClick.bind(this);
+		this.fixLink.innerHTML = "Fix";
+		this.innerTileInfo.appendChild(document.createTextNode(" "));
+		this.innerTileInfo.appendChild(this.fixLink);
 	},
 	coverTile: function (tile) {
 		TileBox.prototype.coverTile.call(this, tile);
@@ -121,11 +128,9 @@ var EmptyTileBox = Classy(TileBox, {
 		this.nameText.nodeValue = name;
 		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
 		
-		// show or hide the edit link
 		toggleClass(this.editLink, "hidden", !this.canEditThisTile());
-		
-		// show or hide the claim link
 		toggleClass(this.claimLink, "hidden", !this.canClaimThisTile());
+		toggleClass(this.fixLink, "hidden", !this.canFixThisTile());
 	},
 	onEditLinkClick: function (e) {
 		e.preventDefault();
@@ -159,6 +164,16 @@ var EmptyTileBox = Classy(TileBox, {
 		return !hasCreator && !this.tile.claimSubmitted;
 		//var loggedIn = !!InfiniteMaze.getUsername();
 		//return loggedIn && !hasCreator;
+	},
+	canFixThisTile: function () {
+		if (!InfiniteMaze.sessionManager.isAdmin()) return false;
+		var start = this.tile.info.start;
+		return start && (start[0] < 0 || start[0] > 256 ||
+			start[1] < 0 || start[1] > 256);
+	},
+	onFixLinkClick: function (e) {
+		e.preventDefault();
+		InfiniteMaze.loader.fixTile(this.tile);
 	}
 });
 
@@ -685,8 +700,10 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 						var y = doc.location[1];
 						var tile = InfiniteMaze.viewer.mazeCanvas.getTile(x, y);
 						(tilesInfo[x] || (tilesInfo[x] = {}))[y] = {
+							// imitation of maze_and_tiles view / maze list
 							id: id,
 							creator: doc.creator,
+							start: doc.start,
 							nocache: !tile.isEmpty
 						};
 						// update the tile with the new doc
@@ -769,6 +786,20 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 				}
 			});
 		});
+	},
+	
+	fixTile: function (tile) {
+		this.getTileDoc(tile, function (doc) {
+			doc.start = [doc.start[0] % 256, doc.start[1] % 256];
+			this.db.saveDoc(doc, {
+				success: function () {
+					alert("Fixed.");
+				},
+				error: function (status, error, reason) {
+					alert("Error. " + reason);
+				}
+			});
+		}.bind(this));
 	}
 });
 

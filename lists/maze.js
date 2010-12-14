@@ -21,10 +21,8 @@ function(head, req) {
 			} else if (location = value.location) {
 				var x = location[0];
 				var y = location[1];
-				(tiles[x] || (tiles[x] = {}))[y] = {
-					id: row.id,
-					creator: value.creator
-				};
+				value.id = row.id;
+				(tiles[x] || (tiles[x] = {}))[y] = value;
 			}
 		}
 		if (!maze) {
