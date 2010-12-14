@@ -196,6 +196,14 @@ body {
 	border: 1px solid white;
 	background: rgba(127, 127, 127, 0.6);
 }
+#drawing-cursor.bucket {
+	background: transparent url(../images/bucket.gif) 0 0 no-repeat;
+	width: 16px !important;
+	height: 16px !important;
+	margin-left: -13px;
+	margin-top: -16px;
+	border-style: none;
+}
 
 .tile-info {
 	position: absolute;

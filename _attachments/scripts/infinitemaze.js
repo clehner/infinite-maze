@@ -567,10 +567,12 @@ constructor: function (viewer) {
 	sizePicker.onSelect = function setPencilSize(size) {
 		if (size == bucketTool) {
 			mouseControl.setBehavior(bucketTool);
+			addClass(cursor, "bucket");
 			return;
 		}
 		
 		mouseControl.setBehavior(drawingTool);
+		removeClass(cursor, "bucket");
 		
 		pencilSize = +size;
 		if (tile) {
