@@ -323,6 +323,9 @@ var GridMazeViewer = Classy(MazeViewer, {
 		
 		// turn off the cross-hairs cursor outside this tile.
 		removeClass(this.centerer, "in");
+		
+		// clear the path above this tile
+		this.overlay.clearTile(tile);
 
 		this.hideTileBoxes();
 		
@@ -490,7 +493,7 @@ constructor: function (viewer) {
 	
 	var colors = {
 		light: [0xffffff, 0xfffa53, 0xffd1f0, 0x8ffa8e, 0x80e9fd],
-		dark: [0x000000, 0x5e320b, 0x900000, 0x006000, 0x0000f0]
+		dark: [0x000000, 0x5e320b, 0xcc0000, 0x006000, 0x0000f0]
 	};
 	var colorPicker = ColorPicker.ify($("color-picker-light"), colors.light.map(hexToColor));
 	colorPicker.extend($("color-picker-dark"), colors.dark.map(hexToColor));

@@ -291,6 +291,18 @@ TiledCanvas.prototype = {
 			tile.offsetX / this.tileWidth,
 			tile.offsetY / this.tileHeight
 		];
+	},
+	
+	clearTile: function (tile) {
+		this.clearRect(tile.offsetX, tile.offsetY,
+			this.tileWidth, this.tileHeight);
+	},
+	
+	clearRect: function (x, y, w, h) {
+		var tiles = this.getTilesInRect(x, y, x + w, y + h);
+		tiles.forEach(function (tile) {
+			tile.ctx.clearRect(x - tile.offsetX, y - tile.offsetY, w, h);
+		});
 	}
 };
 
@@ -458,6 +470,7 @@ MazeViewer.prototype = {
 		this.hideHelpWindow();
 		
 		this.overlay = new TiledCanvas(256, 256);
+		this.overlay.element.style.opacity = 0.6;
 		this.centerer.appendChild(this.overlay.element);
 		
 		if (supportsTouch) {
