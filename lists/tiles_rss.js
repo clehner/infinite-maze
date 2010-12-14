@@ -19,11 +19,12 @@ function(head, req) {
 	provides("xml", function() {
 		var mazeTitle = "The Infinite Maze";
 		var mazeId = req.query.id || "1";
+		var mazeAddr = '../' + mazeId;
 		send('<?xml version="1.0" encoding="utf-8"?>\n' +
 			'<feed xmlns="http://www.w3.org/2005/Atom">\n' +
 			'<title>' + mazeTitle + ' - New Tiles</title>' +
 			'<id>urn:uuid:3E6BDCD0-C684-4B1F-8A99-D04850B9303A</id>' +
-			'<link rel="alternate" href="/mazes/' + mazeId + '"/>');
+			'<link rel="alternate" href="' + mazeAddr + '"/>');
 		//var newest_date = new Date(0);
 		//send(JSON.stringify(req));
 		while (row = getRow()) {
@@ -37,13 +38,15 @@ function(head, req) {
 			var src = '../../db/' + row.id + '/tile.png';
 			var title = "Tile at " + coords + " by " + creator + " on " +
 				date.toLocaleString();
+			var url = mazeAddr + "#" + value.location.join(",");
 			var entry = <entry>
 				<id>urn:uuid:{row.id}</id>
 				<title>{coords}</title>
 				<updated>{date.toISOString()}</updated>
+				<link href={url} />
 				<content type="xhtml">
 					<div xmlns="http://www.w3.org/1999/xhtml">
-						<img src={src} alt={title}/>
+						<img style="background:black" src={src} alt={title}/>
 					</div>
 				</content>
 			</entry>;
