@@ -481,16 +481,17 @@ function isArray(obj) {
 
 // originally by William Malone
 // http://williammalone.com/articles/html5-canvas-javascript-paint-bucket-tool/
-function floodFill(context, startX, startY, fillColor, threshold) {
-	var canvasWidth = context.canvas.width;
-	var canvasHeight = context.canvas.height;
-	var colorLayer = context.getImageData(0, 0, canvasWidth, canvasHeight);
+function floodFill(ctx, startX, startY, fillColor, threshold) {
+	var canvasWidth = ctx.canvas.width;
+	var canvasHeight = ctx.canvas.height;
+	var colorLayer = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 	var drawingBoundTop = 0;
 	
 	var startPixelPos = (startY * canvasWidth + startX) * 4;
 	var startR = colorLayer.data[startPixelPos];
 	var startG = colorLayer.data[startPixelPos + 1];
 	var startB = colorLayer.data[startPixelPos + 2];
+	var startA = colorLayer.data[startPixelPos + 3];
 	
 	if (fillColor[0] == "#") {
 		fillColor = [
@@ -509,6 +510,8 @@ function floodFill(context, startX, startY, fillColor, threshold) {
 		return;
 	}
 	
+	var preserveAlpha = (startA == 255);
+	
 	function matchStartColor(pixelPos) {
 		var r = colorLayer.data[pixelPos];
 		var g = colorLayer.data[pixelPos + 1];
@@ -522,7 +525,7 @@ function floodFill(context, startX, startY, fillColor, threshold) {
 		colorLayer.data[pixelPos] = fillColorR;
 		colorLayer.data[pixelPos + 1] = fillColorG;
 		colorLayer.data[pixelPos + 2] = fillColorB;
-		colorLayer.data[pixelPos + 3] = 255;
+		if (!preserveAlpha) colorLayer.data[pixelPos + 3] = 255;
 	}
 
 	var pixelStack = [
@@ -565,6 +568,6 @@ function floodFill(context, startX, startY, fillColor, threshold) {
 			}
 			pixelPos += canvasWidth * 4;
 		}
-		context.putImageData(colorLayer, 0, 0);
+		ctx.putImageData(colorLayer, 0, 0);
 	}
 }
