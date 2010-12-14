@@ -504,18 +504,20 @@ function floodFill(ctx, startX, startY, fillColor, threshold) {
 	var fillColorG = fillColor[1];
 	var fillColorB = fillColor[2];
 	
-	if (startR == fillColorR &&
-		startG == fillColorG &&
-		startB == fillColorB) {
+	if (matchStartColor2(fillColorR, fillColorG, fillColorB)) {
 		return;
 	}
 	
 	var preserveAlpha = (startA == 255);
 	
 	function matchStartColor(pixelPos) {
-		var r = colorLayer.data[pixelPos];
-		var g = colorLayer.data[pixelPos + 1];
-		var b = colorLayer.data[pixelPos + 2];
+		return matchStartColor2(
+			colorLayer.data[pixelPos],
+			colorLayer.data[pixelPos + 1],
+			colorLayer.data[pixelPos + 2]
+		);
+	}
+	function matchStartColor2(r, g, b) {
 		return Math.abs(r - startR) <= threshold &&
 			Math.abs(g - startG) <= threshold &&
 			Math.abs(b - startB) <= threshold;
