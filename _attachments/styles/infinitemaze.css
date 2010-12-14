@@ -229,7 +229,7 @@ body {
 }
 
 #rules {
-	width: 45%;
+	width: 40%;
 	height: 100%;
 	float: left;
 	/*font-size: 16px;*/
@@ -281,12 +281,19 @@ body {
 	line-height: 1em;
 	vertical-align: middle;
 }
-
 #size-picker .circle {
 	display: block;
 	margin: auto;
 	background-color: black;
 	z-index: -1;
+}
+
+#bucket-tool td {
+	line-height: 1em;
+	background: white url(../images/bucket.gif) 50% 50% no-repeat;
+}
+#bucket-tool td.selected {
+	background-color: #999;
 }
 
 /* Account Settings Window */

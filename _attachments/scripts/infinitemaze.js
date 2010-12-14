@@ -485,54 +485,22 @@ constructor: function (viewer) {
 	// Allow edits to be undone if the user discards them.
 	var restore = function () {};
 	
-	// Init color picker
-	function hexToColor(hexInt) {
-		var hex = hexInt.toString(16);
-		return '#' + ('00000' + hex).substr(-6);
+	// move the fake cursor on mousemove
+	function onMouseMove(e) {
+		var s = pencilSize / 2 - 2;
+		cursorStyle.left = e.clientX - s + "px";
+		cursorStyle.top = e.clientY - s + "px";
 	}
+	tileBox.element.addEventListener("mousemove", onMouseMove, false);
+
+	// Mouse dragging behavior
+	var mouseControl = new DragBehavior({
+		element: tileBox.element,
+		context: this
+	});
 	
-	var colors = {
-		light: [0xffffff, 0xfffa53, 0xffd1f0, 0x8ffa8e, 0x80e9fd],
-		dark: [0x000000, 0x5e320b, 0xcc0000, 0x006000, 0x0000f0]
-	};
-	var colorPicker = ColorPicker.ify($("color-picker-light"), colors.light.map(hexToColor));
-	colorPicker.extend($("color-picker-dark"), colors.dark.map(hexToColor));
-	colorPicker.onSelect = function setPencilColor(color) {
-		if (tile) {
-			tile.ctx.strokeStyle = color;
-		}
-		cursorStyle.borderColor = color;
-	};
-	colorPicker.selectCoord(0, 0);
-	
-	// Init size picker
-	var pencilSizes = [18, 13, 8, 4, 1.5];
-	var sizePicker = SizePicker.ify($("size-picker"), pencilSizes);
-	var pencilSize;
-	sizePicker.onSelect = function setPencilSize(size) {
-		pencilSize = +size;
-		if (tile) {
-			tile.ctx.lineWidth = pencilSize;
-		}
-		sizePicker.resizeCircle(cursor, size - 3);
-	};
-	sizePicker.select(0);
-	
-	// Init buttons.
-	$("save-btn").onclick = save;
-	$("discard-btn").onclick = discard;
-	$("login-signup-link").onclick = function (e) {
-		e.preventDefault();
-		InfiniteMaze.loginSignupWindow.show();
-	};
-	
-	this.onDragStart = function (e) {
-		this.x = e._x - .01;
-		this.y = e._y - .01;
-		this.onDrag(e);
-	};
-	
-	this.onDrag = function (e) {
+	// mouse dragging for drawing
+	function onDrawDrag(e) {
 		var ctx = tile.ctx;
 		// draw on pixels, not in between them.
 		var offset = 0.5;
@@ -548,25 +516,80 @@ constructor: function (viewer) {
 		e.preventDefault();
 		// but still allow the fake cursor to move
 		onMouseMove(e);
-	};
-	
-	// Mouse dragging behavior
-	new DragBehavior({
-		element: tileBox.element,
-		onDragStart: this.onDragStart,
-		onDrag: this.onDrag,
-		onDragEnd: null,
-		context: this
-	});
-	
-	function onMouseMove(e) {
-		var s = pencilSize / 2 - 2;
-		cursorStyle.left = e.clientX - s + "px";
-		cursorStyle.top = e.clientY - s + "px";
 	}
 	
-	tileBox.element.addEventListener("mousemove", onMouseMove, false);
+	// the set of event listeners (a behavior) for the drawing tool
+	var drawingTool = {
+		onDragStart: function (e) {
+			this.x = e._x - .01;
+			this.y = e._y - .01;
+			onDrawDrag.call(this, e);
+		},
+		onDrag: onDrawDrag,
+		onDragEnd: null
+	};
+	
+	// bucket tool behavior
+	var bucketTool = {
+		onDragStart: function (e) {
+			// bucket flood fill
+			floodFill(tile.ctx, e._x, e._y, selectedColor, 30);
+			e.stopPropagation();
+		}
+	};
 
+	// Init color picker
+	function hexToColor(hexInt) {
+		var hex = hexInt.toString(16);
+		return '#' + ('00000' + hex).substr(-6);
+	}
+	
+	var colors = {
+		light: [0xffffff, 0xffff00, 0xffd1f0, 0x80ff80, 0x80ffff],
+		dark: [0x000000, 0x5e320b, 0xaa0000, 0x006000, 0x0000ff]
+	};
+	var selectedColor;
+	var colorPicker = ColorPicker.ify($("color-picker-light"), colors.light.map(hexToColor));
+	colorPicker.extend($("color-picker-dark"), colors.dark.map(hexToColor));
+	colorPicker.onSelect = function setPencilColor(color) {
+		selectedColor = color;
+		if (tile) {
+			tile.ctx.strokeStyle = color;
+		}
+		cursorStyle.borderColor = color;
+	};
+	colorPicker.selectCoord(0, 0);
+	
+	// Init size picker
+	var pencilSizes = [18, 13, 8, 4, 1.5];
+	var sizePicker = SizePicker.ify($("size-picker"), pencilSizes);
+	var pencilSize;
+	sizePicker.onSelect = function setPencilSize(size) {
+		if (size == bucketTool) {
+			mouseControl.setBehavior(bucketTool);
+			return;
+		}
+		
+		mouseControl.setBehavior(drawingTool);
+		
+		pencilSize = +size;
+		if (tile) {
+			tile.ctx.lineWidth = pencilSize;
+		}
+		sizePicker.resizeCircle(cursor, size - 3);
+	};
+	sizePicker.select(0);
+	
+	sizePicker.extend($("bucket-tool"), [bucketTool]);
+	
+	// Init buttons.
+	$("save-btn").onclick = save;
+	$("discard-btn").onclick = discard;
+	$("login-signup-link").onclick = function (e) {
+		e.preventDefault();
+		InfiniteMaze.loginSignupWindow.show();
+	};
+	
 	// returns a point within a tile that is closest to another point
 	function nearestPointInTile(tile, adjacentPoint) {
 		var el = tile.element;

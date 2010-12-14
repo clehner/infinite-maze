@@ -461,6 +461,12 @@ function DragBehavior(options) {
 		onDragStart && onDragStart.call(context, e);
 	}
 	element.addEventListener("mousedown", onMouseDown, false);
+	
+	this.setBehavior = function (opt) {
+		onDragStart = opt.onDragStart;
+		onDrag = opt.onDrag;
+		onDragEnd = opt.onDragEnd;
+	};
 }
 
 if (!Date.now) {
@@ -471,4 +477,94 @@ if (!Date.now) {
 
 function isArray(obj) {
 	return Object.prototype.toString.call(obj) == "[object Array]";
+}
+
+// originally by William Malone
+// http://williammalone.com/articles/html5-canvas-javascript-paint-bucket-tool/
+function floodFill(context, startX, startY, fillColor, threshold) {
+	var canvasWidth = context.canvas.width;
+	var canvasHeight = context.canvas.height;
+	var colorLayer = context.getImageData(0, 0, canvasWidth, canvasHeight);
+	var drawingBoundTop = 0;
+	
+	var startPixelPos = (startY * canvasWidth + startX) * 4;
+	var startR = colorLayer.data[startPixelPos];
+	var startG = colorLayer.data[startPixelPos + 1];
+	var startB = colorLayer.data[startPixelPos + 2];
+	
+	if (fillColor[0] == "#") {
+		fillColor = [
+			parseInt(fillColor.substr(1, 2), 16),
+			parseInt(fillColor.substr(3, 2), 16),
+			parseInt(fillColor.substr(5, 2), 16)
+		];
+	}
+	var fillColorR = fillColor[0];
+	var fillColorG = fillColor[1];
+	var fillColorB = fillColor[2];
+	
+	if (startR == fillColorR &&
+		startG == fillColorG &&
+		startB == fillColorB) {
+		return;
+	}
+	
+	function matchStartColor(pixelPos) {
+		var r = colorLayer.data[pixelPos];
+		var g = colorLayer.data[pixelPos + 1];
+		var b = colorLayer.data[pixelPos + 2];
+		return Math.abs(r - startR) <= threshold &&
+			Math.abs(g - startG) <= threshold &&
+			Math.abs(b - startB) <= threshold;
+	}
+	
+	function colorPixel(pixelPos) {
+		colorLayer.data[pixelPos] = fillColorR;
+		colorLayer.data[pixelPos + 1] = fillColorG;
+		colorLayer.data[pixelPos + 2] = fillColorB;
+		colorLayer.data[pixelPos + 3] = 255;
+	}
+
+	var pixelStack = [
+		[startX, startY]
+	];
+	while (pixelStack.length) {
+		var newPos, x, y, pixelPos, reachLeft, reachRight;
+		newPos = pixelStack.pop();
+		x = newPos[0];
+		y = newPos[1];
+		pixelPos = (y * canvasWidth + x) * 4;
+		while (y-- >= drawingBoundTop && matchStartColor(pixelPos)) {
+			pixelPos -= canvasWidth * 4;
+		}
+		pixelPos += canvasWidth * 4;
+		++y;
+		reachLeft = false;
+		reachRight = false;
+		while (y++ < canvasHeight - 1 && matchStartColor(pixelPos)) {
+			colorPixel(pixelPos);
+			if (x > 0) {
+				if (matchStartColor(pixelPos - 4)) {
+					if (!reachLeft) {
+						pixelStack.push([x - 1, y]);
+						reachLeft = true;
+					}
+				} else if (reachLeft) {
+					reachLeft = false;
+				}
+			}
+			if (x < canvasWidth - 1) {
+				if (matchStartColor(pixelPos + 4)) {
+					if (!reachRight) {
+						pixelStack.push([x + 1, y]);
+						reachRight = true;
+					}
+				} else if (reachRight) {
+					reachRight = false;
+				}
+			}
+			pixelPos += canvasWidth * 4;
+		}
+		context.putImageData(colorLayer, 0, 0);
+	}
 }
