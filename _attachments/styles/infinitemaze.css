@@ -198,8 +198,8 @@ body {
 }
 #drawing-cursor.bucket {
 	background: transparent url(../images/bucket.gif) 0 0 no-repeat;
-	width: 16px !important;
-	height: 16px !important;
+	width: 16px;
+	height: 16px;
 	margin-left: -13px;
 	margin-top: -16px;
 	border-style: none;

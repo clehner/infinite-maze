@@ -444,6 +444,12 @@ var SizePicker = Classy(Picker, {
 		s.borderRadius =
 			s.MozBorderRadius =
 			s.WebkitBorderRadius = Math.max(size / 2, 1) + "px";
+	},
+	
+	uncircle: function (element) {
+		var s = element.style;
+		s.width = s.height = "";
+		s.borderRadius = s.MozBorderRadius = s.WebkitBorderRadius = "";
 	}
 });
 SizePicker.ify = Picker.ify;
@@ -566,8 +572,10 @@ constructor: function (viewer) {
 	var pencilSize;
 	sizePicker.onSelect = function setPencilSize(size) {
 		if (size == bucketTool) {
+			pencilSize = 2;
 			mouseControl.setBehavior(bucketTool);
 			addClass(cursor, "bucket");
+			sizePicker.uncircle(cursor);
 			return;
 		}
 		
