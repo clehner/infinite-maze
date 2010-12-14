@@ -748,7 +748,8 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			doc.location = tileCoords;
 			doc.created_at = Date.now();
 			if (!doc.start) {
-				doc.start = InfiniteMaze.editor.getTileEntrance();
+				var absStart = InfiniteMaze.editor.getTileEntrance();
+				doc.start = tile.getPointRelative(absStart);
 			}
 			doc._attachments = {
 				"tile.png": {
@@ -1138,6 +1139,16 @@ InfiniteMaze.init = function (db, info, cb) {
 		if (cb) {
 			cb.call(this);
 		}
+		function updateLocationFromHash() {
+			var hash = location.hash.substr(1);
+			var loc = hash.split(",");
+			var x = (loc[0] * 256 || 0) + 127;
+			var y = (loc[1] * 256 || 0) + 127;
+			self.viewer.scrollTo(x, y);
+			self.viewer.updateOffset();
+		}
+		updateLocationFromHash();
+		window.addEventListener("hashchange", updateLocationFromHash, false);
 	}.bind(this));
 };
 

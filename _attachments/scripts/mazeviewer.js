@@ -146,6 +146,11 @@ Tile.prototype = {
 		var dataURL = this.element.toDataURL("image/png");
 		var imageData = dataURL.substr('data:image/png;base64,'.length);
 		return imageData;
+	},
+	
+	// given a point relative to the maze, return it relative to the tile
+	getPointRelative: function (absPoint) {
+		return [absPoint[0] - this.offsetX, absPoint[1] - this.offsetY];
 	}
 };
 Tile.hide = Tile.prototype.hide.unbind();
@@ -535,10 +540,15 @@ MazeViewer.prototype = {
 	},
 	
 	onMouseDrag: function (e) {
-		this.centerX += this.prevPageX - e.pageX;
-		this.centerY += this.prevPageY - e.pageY;
-		this.prevPageX = e.pageX;
-		this.prevPageY = e.pageY;
+		this.scrollTo(
+			this.centerX + this.prevPageX - (this.prevPageX = e.pageX),
+			this.centerY + this.prevPageY - (this.prevPageY = e.pageY)
+		);
+	},
+	
+	scrollTo: function (x, y) {
+		this.centerX = x;
+		this.centerY = y;
 		this.updateViewport();
 	},
 	
