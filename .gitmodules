@@ -1,0 +1,6 @@
+[submodule "nodejs/node-couchdb"]
+	path = nodejs/node-couchdb
+	url = git://github.com/felixge/node-couchdb.git
+[submodule "nodejs/node-mail"]
+	path = nodejs/node-mail
+	url = git://github.com/weaver/node-mail.git

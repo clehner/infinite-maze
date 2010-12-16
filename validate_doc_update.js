@@ -41,12 +41,7 @@ function (doc, oldDoc, userCtx) {
 		]);
 		return;
 	}
-	
-	validate([
-		doc.type in {"maze":1, "tile": 1, "claim": 1},
-		"Document must be a valid type (maze, tile, or claim)."
-	]);
-	
+		
 	if (oldDoc && !isAdmin) {
 		/*if (typeof oldDoc.created_at == "number") {
 			validate([
@@ -63,13 +58,9 @@ function (doc, oldDoc, userCtx) {
 		}
 	}
 	
-	validate([
-		typeof doc.created_at == "number",
-		"created_at must be a unix timestamp."
-	]);
+	var type = doc.type;
 	
-
-	if (doc.type == "maze") {
+	if (type == "maze") {
 		// Maze validation
 		
 		validate([
@@ -78,7 +69,10 @@ function (doc, oldDoc, userCtx) {
 			
 			doc.title, "Maze must have a title.",
 
-			isPoint(doc.start), "Maze must have a valid start."
+			isPoint(doc.start), "Maze must have a valid start.",
+
+			typeof doc.created_at == "number",
+				"created_at must be a unix timestamp."
 		]);
 		
 		if (doc.format == "tiled") {
@@ -122,7 +116,7 @@ function (doc, oldDoc, userCtx) {
 		} else {
 			throw {forbidden: "Maze must be in a valid format (tiled)."};
 		}
-	} else if (doc.type == "tile") {
+	} else if (type == "tile") {
 		// Tile validation
 		validate([
 			doc.creator == userCtx.name || isAdmin,
@@ -135,9 +129,12 @@ function (doc, oldDoc, userCtx) {
 				"Tile must have valid location coordinates.",
 			
 			doc._attachments && doc._attachments['tile.png'],
-				"Tile must have an attachment called 'tile.png'."
+				"Tile must have an attachment called 'tile.png'.",
+
+			typeof doc.created_at == "number",
+				"created_at must be a unix timestamp."
 		]);
-	} else if (doc.type == "claim") {
+	} else if (type == "claim") {
 		// Claim validation
 		validate([
 			doc.claim_type,
@@ -147,7 +144,25 @@ function (doc, oldDoc, userCtx) {
 				"Claim must have a tile_id.",
 			
 			doc.user == userCtx.name || isAdmin,
-				"Claim must be for your own account."
+				"Claim must be for your own account.",
+
+			typeof doc.created_at == "number",
+				"created_at must be a unix timestamp."
 		]);
+	} else if (type == "user-info") {
+		// User info
+		validate([
+			doc._id == "user-info:" + doc.name,
+				"Id must be in the format user-info:{name}",
+			
+			doc.name,
+				"User info must have a name.",
+			
+			typeof doc.signup == "number",
+				"User info must have a signup timestamp."
+		]);
+	} else {
+		throw {forbidden:
+			"Document must be a valid type (maze, tile, user-info, or claim)."};
 	}
 }
