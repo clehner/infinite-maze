@@ -1,6 +1,7 @@
 //
 // couchdb.js
 // based on jquery.couch.js (v0.11.0)
+// http://svn.apache.org/repos/asf/couchdb/trunk/share/www/script/jquery.couch.js
 // de-jQuerying by CEL
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -348,7 +349,6 @@ var Couch = (function() {
           options = options || {};
           // set up the promise object within a closure for this handler
           var timeout = 100, db = this, active = true,
-            inProgress = false,
             listeners = [],
             promise = {
             onChange : function(fun) {
@@ -360,7 +360,7 @@ var Couch = (function() {
             start : function() { // added by cel
               if (!active) {
                 active = true;
-                if (!inProgress) {
+                if (1) {
                   getChangesSince();
                 }
               }
@@ -374,7 +374,6 @@ var Couch = (function() {
           }
           // when there is a change, call any listeners, then check for another change
           options.success = function(resp) {
-            inProgress = false;
             timeout = 100;
             if (active) {
               since = resp.last_seq;
@@ -383,7 +382,6 @@ var Couch = (function() {
             };
           };
           options.error = function() {
-            inProgress = false;
             if (active) {
               setTimeout(getChangesSince, timeout);
               timeout *= 2;
@@ -391,7 +389,6 @@ var Couch = (function() {
           };
           // actually make the changes request
           function getChangesSince() {
-            inProgress = true;
             options.feed = "longpoll";
             options.since = since;
             options.heartbeat = options.heartbeat || 10 * 1000;
@@ -534,7 +531,7 @@ var Couch = (function() {
           ajax({
               type: "POST",
               url: this.uri + "_bulk_docs" + encodeOptions(options),
-              data: toJSON(docs)
+              contentType: "application/json", data: toJSON(docs)
             },
             options,
             "The documents could not be saved"
