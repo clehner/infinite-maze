@@ -1,12 +1,16 @@
-function(keys, values, rereduce) {
-	var users = {};
-	var usersArray = [];
-	var allUsers = rereduce ? [].concat.apply([], values) : values;
-	allUsers.forEach(function (user) {
-		if (!(user in users)) {
-			users[user] = true;
-			usersArray.push(user);
-		}
+function uniq(array) {
+	var elems = {};
+	return array.filter(function (elem) {
+		return !(elem in elems) && (elems[elem] = true);
 	});
-	return usersArray;
+}
+
+function(keys, values, rereduce) {
+	if (values.some(function (value) {
+		return value.length == 0;
+	})) {
+		return [];
+	}
+	var users = [].concat.apply([], values);
+	return uniq(users);
 }
