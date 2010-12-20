@@ -487,22 +487,46 @@ MazeViewer.prototype = {
 	},
 	
 	onTouchStart: function (e) {
-		// only deal with first finger.
-		if (e.targetTouches.length != 1) return false;
-		
-		document.addEventListener("touchmove", this.onTouchMove, false);
-		document.addEventListener("touchend", this.onTouchEnd, false);
+		// only add listeners with the first finger.
+		if (e.targetTouches.length == 1) {
+			document.addEventListener("touchmove", this.onTouchMove, false);
+			document.addEventListener("touchend", this.onTouchEnd, false);
+			this.updateTouch(e);
+		}
 		
 		this.updateOffset();
 		this.onTouchMove(e);
 	},
 	
+	updateTouch: function (e) {
+		var x = 0;
+		var y = 0;
+		var numTouches = e.touches.length;
+		for (var i = 0; i < numTouches; i++) {
+			x += e.touches[i].pageX;
+			y += e.touches[i].pageY;
+		}
+		this.pageX = x / numTouches;
+		this.pageY = y / numTouches;
+	},
+	
 	onTouchMove: function (e) {
 		e.preventDefault();
-		this.moveToPixel(
-			e.touches[0].pageX - this.offsetX,
-			e.touches[0].pageY - this.offsetY
-		);
+		var numTouches = e.touches.length;
+		if (numTouches == 1) {
+			this.moveToPixel(
+				e.touches[0].pageX - this.offsetX,
+				e.touches[0].pageY - this.offsetY
+			);
+		} else {
+			var prevPageX = this.pageX;
+			var prevPageY = this.pageY;
+			this.updateTouch(e);
+			this.scrollTo(
+				this.centerX + prevPageX - this.pageX,
+				this.centerY + prevPageY - this.pageY
+			);
+		}
 	},
 	
 	onTouchEnd: function (e) {
@@ -534,8 +558,8 @@ MazeViewer.prototype = {
 		// ignore right click
 		if (e.which == 2 || e.button == 2) return;
 		
-		this.prevPageX = e.pageX;
-		this.prevPageY = e.pageY;
+		this.pageX = e.pageX;
+		this.pageY = e.pageY;
 		e.preventDefault();
 		addClass(this.centerer, 'moving'); // change cursor
 		this.centerer.removeEventListener("mousemove", this.onMouseMove, false);
@@ -554,8 +578,8 @@ MazeViewer.prototype = {
 	
 	onMouseDrag: function (e) {
 		this.scrollTo(
-			this.centerX + this.prevPageX - (this.prevPageX = e.pageX),
-			this.centerY + this.prevPageY - (this.prevPageY = e.pageY)
+			this.centerX + this.pageX - (this.pageX = e.pageX),
+			this.centerY + this.pageY - (this.pageY = e.pageY)
 		);
 	},
 	

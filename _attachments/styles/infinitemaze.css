@@ -1,3 +1,7 @@
+html {
+	height: 100%;
+}
+
 body {
 	width: 100%;
 	margin: 0;
@@ -36,6 +40,25 @@ body {
 	background: rgba(255, 255, 255, 0.9);
 	z-index: 7;
 }
+
+@media (max-device-width: 480px) {
+	.window {
+		width: 252px;
+		padding: 15px 20px;
+		margin-left: -147px;
+	}
+	.window h1 {
+		font-size: 150%;
+	}
+	.window h2 {
+		margin: .5em 0;
+	}
+	#welcome ul {
+		margin: .5em;
+		padding-left: 0;
+	}
+}
+
 .window h1 {
 	margin: .25em 0;
 }
