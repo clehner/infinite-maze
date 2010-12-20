@@ -5,7 +5,7 @@ var sys = require('sys'),
 	client = couchdb.createClient(5984, cred.couchdb.host, 
 		cred.couchdb.user, cred.couchdb.pass),
 	db = client.db('maze'),
-	debug = cred.true;
+	debug = cred.debug;
 
 function saveDoc(doc, cb) {
 	if (debug) cb();
