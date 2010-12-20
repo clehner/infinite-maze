@@ -13,57 +13,55 @@ function saveDoc(doc, cb) {
 }
 
 db.changesStream({
-	filter: 'maze/new_users_to_email'
+	filter: 'maze/new_users_to_email',
+	include_docs: true
 }).addListener('data', function (change) {
-	db.getDoc(change.id, function (er, doc) {
+	var doc = change.doc;
+	doc.emailed_welcome = true;
+	saveDoc(doc, function (er, ok) {
 		if (er) throw er;
-		doc.emailed_welcome = true;
-		saveDoc(doc, function (er, ok) {
-			if (er) throw er;
-			sendNewUserEmail(doc);
-		});
+		sendNewUserEmail(doc);
 	});
 });
 
 db.changesStream({
-	filter: 'maze/tiles_to_email'
+	filter: 'maze/tiles_to_email',
+	include_docs: true
 }).addListener('data', function (change) {
 	// Get the changed tile
-	db.getDoc(change.id, function (er, doc) {
+	var doc = change.doc;
+	// Get the usernames of the creators of the adjacent tiles.
+	db.view("maze", "adjacent_tile_creators", {
+		key: [doc.maze_id].concat(doc.location),
+		group: true
+	}, function (er, result) {
 		if (er) throw er;
-		// Get the usernames of the creators of the adjacent tiles.
-		db.view("maze", "adjacent_tile_creators", {
-			key: [doc.maze_id].concat(doc.location),
-			group: true
-		}, function (er, result) {
-			if (er) throw er;
-			var row = result.rows[0];
-			if (row) {
-				var usernames = row.value;
-				// Update the tile doc so duplicate emails aren't sent later.
-				doc.emailed_neighbors = true;
-				saveDoc(doc, function (er, ok) {
-					if (er) throw er;
-					usernames.forEach(function (username) {
-						// Don't notify a user of their own drawing.
-						if (username != doc.creatora) {
-							// Get the email address for a username
-							db.view("maze", "user_emails", {
-								key: username
-							}, function (er, result) {
-								if (er) throw er;
-								var row = result.rows[0];
-								if (row) {
-									var email = row.value;
-									// Send an email
-									sendNewTileEmail(doc, username, email);
-								}
-							});
-						}
-					});
+		var row = result.rows[0];
+		if (row) {
+			var usernames = row.value;
+			// Update the tile doc so duplicate emails aren't sent later.
+			doc.emailed_neighbors = true;
+			saveDoc(doc, function (er, ok) {
+				if (er) throw er;
+				usernames.forEach(function (username) {
+					// Don't notify a user of their own drawing.
+					if (username != doc.creator) {
+						// Get the email address for a username
+						db.view("maze", "user_emails", {
+							key: username
+						}, function (er, result) {
+							if (er) throw er;
+							var row = result.rows[0];
+							if (row) {
+								var email = row.value;
+								// Send an email
+								sendNewTileEmail(doc, username, email);
+							}
+						});
+					}
 				});
-			}
-		});
+			});
+		}
 	});
 });
 

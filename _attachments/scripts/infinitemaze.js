@@ -719,34 +719,27 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		// Start listening for tile changes
 		var promise = this.changesPromise = this.db.changes(this.update_seq, {
 			filter: "maze/tiles",
-			maze_id: this.mazeId
+			maze_id: this.mazeId,
+			include_docs: true
 		});
 		promise.onChange(function (resp) {
-			var docsToUpdate = {};
 			self.update_seq = resp.last_seq;
 			resp.results.forEach(function (change) {
-				docsToUpdate[change.id] = true;
+				var doc = change.doc;
+				// new tile doc
+				var x = doc.location[0];
+				var y = doc.location[1];
+				var tile = InfiniteMaze.viewer.mazeCanvas.getTile(x, y);
+				(tilesInfo[x] || (tilesInfo[x] = {}))[y] = {
+					// imitation of maze_and_tiles view / maze list
+					id: doc._id,
+					creator: doc.creator,
+					start: doc.start,
+					nocache: !tile.isEmpty
+				};
+				// update the tile with the new doc
+				InfiniteMaze.viewer.initMazeTile(tile, x, y);
 			});
-			// todo: combine these requests
-			for (var id in docsToUpdate) {
-				self.db.openDoc(id, {
-					success: function (doc) {
-						// new tile doc
-						var x = doc.location[0];
-						var y = doc.location[1];
-						var tile = InfiniteMaze.viewer.mazeCanvas.getTile(x, y);
-						(tilesInfo[x] || (tilesInfo[x] = {}))[y] = {
-							// imitation of maze_and_tiles view / maze list
-							id: id,
-							creator: doc.creator,
-							start: doc.start,
-							nocache: !tile.isEmpty
-						};
-						// update the tile with the new doc
-						InfiniteMaze.viewer.initMazeTile(tile, x, y);
-					}
-				});
-			}
 		});
 		window.addEventListener("online", promise.start, false);
 		window.addEventListener("offline", promise.stop, false);
