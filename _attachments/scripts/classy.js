@@ -51,6 +51,20 @@ function Classy(parent, properties) {
 		for (prop in properties) {
 			prototype[prop] = properties[prop];
 		}
+		
+		// Fix IE that doesn't iterate through non-enumerable properties
+		// when using for in loop.
+		
+		/*@cc_on
+		var nonEnum = ["toString", "toLocaleString", "isPrototypeOf",
+			"propertyIsEnumerable", "hasOwnProperty", "valueOf", "constructor"];
+		
+		while (prop = nonEnum.pop()) {
+			if (properties.hasOwnProperty(prop)) {
+				prototype[prop] = properties[prop];
+			}
+		}
+		@*/
 	}
 	
 	// If the child has defined a constructor, use it.
@@ -73,25 +87,6 @@ function Classy(parent, properties) {
 	
 	// Attach the prototype to the class.
 	newClass.prototype = prototype;
-	
-	// Fix IE that doesn't iterate through non-enumerable properties
-	// when using for in loop.
-	
-	// I don't know why I'm even putting this here because I don't
-	// plan on supporting IE... Maybe someone else will find this
-	// useful. Anyway, its a conditional comment so it can't hurt.
-	
-	/*@cc_on
-
-	var nonEnum = ["toString", "toLocaleString", "isPrototypeOf",
-		"propertyIsEnumerable", "hasOwnProperty", "valueOf"];
-	
-	while (prop = nonEnum.pop()) {
-		if (properties.hasOwnProperty(prop)) {
-			prototype[prop] = obj[prop];
-		}
-	}
-	@*/
 	
 	return newClass;
 }

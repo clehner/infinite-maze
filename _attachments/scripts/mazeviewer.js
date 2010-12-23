@@ -161,7 +161,7 @@ Tile.show = Tile.prototype.show.unbind();
 function TiledCanvas(tileWidth, tileHeight) {
 	this.tileWidth = +tileWidth;
 	this.tileHeight = +tileHeight;
-	this.tiles = [];
+	this.tiles = {};
 	this.element = document.createElement("div");
 	this.element.className = "layer";
 }
@@ -183,7 +183,7 @@ TiledCanvas.prototype = {
 	
 	// tile coords, not pixels
 	getTile: function (x, y) {
-		var row = this.tiles[y] || (this.tiles[y] = []);
+		var row = this.tiles[y] || (this.tiles[y] = {});
 		if (x in row) {
 			return row[x];
 		}
@@ -359,14 +359,13 @@ MazeViewer.prototype = {
 	//title: "",
 	entered: false,
 	mazeCanvas: null, // TiledCanvas
-	overlay: null, // TiledCanvas
 	x: NaN, // player coords
 	y: NaN,
 	offsetX: NaN, // for mouse handling
 	offsetY: NaN,
 	centerX: NaN, // viewport position
 	centerY: NaN,
-	playerMarker: HTMLDivElement,
+	playerMarker: null, //div
 	tileSize: [256, 256],
 	startPos: [127, 127],
 	isInViewMode: true,

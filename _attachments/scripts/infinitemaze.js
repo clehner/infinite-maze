@@ -41,7 +41,7 @@ Box.ificate = function (obj, element /*, [args...] */) {
 	
 	var ret = this.apply(obj, Array.prototype.slice.call(arguments, 2));
 	return ret instanceof Object ? ret : obj;
-}
+};
 
 // A tile box is used to overlay a tile with a border and some html.
 var TileBox = Classy(Box, {
@@ -646,7 +646,7 @@ constructor: function (viewer) {
 		});
 
 		viewer.exitDrawTileMode();
-	};
+	}
 	this.close = close;
 	
 	// Make a function to restore the tile to its pre-edit state.
@@ -686,14 +686,14 @@ constructor: function (viewer) {
 			},
 			close // success
 		);
-	};
+	}
 	this.save = save;
 	
 	function discard() {
 		if (!confirm("You really want to discard your drawing?")) return;
 		restore();
 		close();
-	};
+	}
 	this.discard = discard;
 	
 	this.getTileEntrance = function () {
@@ -1045,7 +1045,7 @@ function SessionManager(userCtx) {
 			// Deal with new user
 			InfiniteMaze.headerBar.updateForUser();
 		}
-	};
+	}
 	
 	this.refreshUserCtx = function (done) {
 		Couch.session({
@@ -1104,7 +1104,7 @@ function SessionManager(userCtx) {
 					Couch.signup({
 						name: username,
 						signup_date: Date.now(),
-						email: email,
+						email: email
 					}, password, {
 						success: function () {
 							self.login(username, password, onSuccess, onError);

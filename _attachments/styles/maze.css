@@ -8,6 +8,8 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
+	width: 100%;
+	height: 100%;
 }
 
 .maze {
@@ -33,12 +35,6 @@ canvas, .maze .layer {
 	/* for ipad/iphone */
 	-webkit-user-select: none;
 }
-
-/*
-.tile {
-	border: 1px solid grey;
-}
-*/
 
 .marker {
 	position: absolute;

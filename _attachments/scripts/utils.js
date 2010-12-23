@@ -7,6 +7,7 @@ if (!window.console) {
 // http://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
 function loadScript(url, callback){
     var script = document.createElement("script")
+    var script = document.createElement("script");
     script.type = "text/javascript";
 
     if (script.readyState){ // IE
@@ -42,7 +43,7 @@ var clone = (function () {
 	return function (prototype) {
 		Dummy.prototype = prototype;
 		return new Dummy();
-	}
+	};
 })();
 
 Function.prototype.memoized = function () {
@@ -306,7 +307,7 @@ PointMap.prototype = {
 	}
 };
 
-// heuristic (optimistic)
+// heuristic (optimistic/admissible = never overestimates)
 function estimatedDistance(pointA, pointB) {
 	var dx = Math.abs(pointA.x - pointB.x),
 		dy = Math.abs(pointA.y - pointB.y);
