@@ -1168,7 +1168,22 @@ function TileClaimer(db) {
 
 // The App
 
-InfiniteMaze.init = function (db, info, cb) {
+InfiniteMaze.init = function (cb) {
+	Couch.urlPrefix = ".";
+	var db = Couch.db("db");
+	Couch.urlPrefix = "";
+	
+	var mazeId = "1";
+	
+	db.list("maze/maze", "maze_and_tiles", {
+		key: mazeId,
+		success: function (data) {
+			InfiniteMaze.init2(db, data, cb);
+		}
+	});
+};
+
+InfiniteMaze.init2 = function (db, info, cb) {
 	var self = this;
 	var mazeDoc = info.maze;
 	var tiles = info.tiles;

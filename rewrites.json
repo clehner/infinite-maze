@@ -5,19 +5,7 @@
 	},
 	{
 		"from": "",
-		"to": "_list/maze/maze_and_tiles",
-		"query": {
-			"currentdir": true,
-			"id": "1",
-			"key": "\"1\""
-		}
-	},
-	{
-		"from": "mazes/:id",
-		"to": "_list/maze/maze_and_tiles",
-		"query": {
-			"id": ":id"
-		}
+		"to": "index.html"
 	},
 	{
 		"from": "mazes/:id/tiles.xml",
