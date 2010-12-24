@@ -1171,9 +1171,9 @@ function TileClaimer(db) {
 InfiniteMaze.init = function (cb) {
 	Couch.urlPrefix = ".";
 	var db = Couch.db("db");
-	Couch.urlPrefix = "";
 	
-	var mazeId = "1";
+	var defaultMazeId = "1";
+	var mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
 	
 	db.list("maze/maze", "maze_and_tiles", {
 		key: mazeId,

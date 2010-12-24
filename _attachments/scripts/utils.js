@@ -574,3 +574,24 @@ function floodFill(ctx, startX, startY, fillColor, threshold) {
 		ctx.putImageData(colorLayer, 0, 0);
 	}
 }
+
+// parse a GET-encoded query string into an object
+function parseQuery(str) {
+	var obj = {};
+	str.split('&').forEach(function (pair) {
+		var pair2 = pair.split('=');
+		var key = pair2[0];
+		var value = pair2[1];
+		if (key in obj) {
+			var prevValue = obj[key];
+			if (typeof prevValue == "string") {
+				obj[key] = [prevValue, value];
+			} else {
+				prevValue.push(value);
+			}
+		} else {
+			obj[key] = value;
+		}
+	});
+	return obj;
+}
