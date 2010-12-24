@@ -27,13 +27,15 @@ body {
 	top: 50%;
 	left: 50%;
 	width: 452px;
-	max-height: 250px;
+	max-height: 260px;
 	margin-left: -262px;
 	margin-top: -137px;
 	padding: 24px 36px;
 	overflow: auto;
 	border: 1px solid #999;
-	border-radius: 1em;
+	        border-radius: 1em;
+	   -moz-border-radius: 1em;
+	-webkit-border-radius: 1em;
 	        box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	   -moz-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	-webkit-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
@@ -94,7 +96,9 @@ body {
 	padding: 6px;
 	color: #030;
 	cursor: pointer;
-	border-radius: 6px;
+	        border-radius: 6px;
+	   -moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
 	outline: none;
 }
 #welcome #enter-btn:hover {
@@ -238,7 +242,9 @@ body {
 	font-size: 12px;
 	padding: 2px 3px;
 	opacity: 0.75;
-	border-radius: 4px;
+	        border-radius: 4px;
+	   -moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
 }
 .tile-info:hover {
 	opacity: 0.25;

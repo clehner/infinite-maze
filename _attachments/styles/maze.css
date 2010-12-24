@@ -27,8 +27,6 @@
 .centerer {
 	top: 50%;
 	left: 50%;
-	/*-webkit-transition-property: top, left;
-	-webkit-transition-duration: 500ms;*/
 }
 
 canvas, .maze .layer {
@@ -51,22 +49,6 @@ canvas, .maze .layer {
 
 .marker.highlight, .marker:hover {
 	opacity: 1;
-}
-
-.help-window {
-	position: absolute;
-	width: 200px;
-	margin-left: -100px;
-	opacity: 0.85;
-	color: white;
-	background-color: black;
-	border: 12px solid black;
-	border-radius: 8px;
-	-moz-border-radius: 8px;
-	box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
-	-webkit-box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
-	-moz-box-shadow: 10px 10px 8px rgba(40, 40, 40, 0.40);
-	/*-webkit-transition: opacity 250ms ease-out;*/
 }
 
 .player-marker {

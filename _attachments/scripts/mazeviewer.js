@@ -2,24 +2,6 @@ var supportsTouch = !!window.Touch;
 
 // Maze stuff
 
-function HelpWindow(options) {
-	var elm = document.createElement("div");
-	elm.className = "help-window";
-	
-	var content = options.content;
-	if (content) {
-		elm.appendChild((content instanceof Node) ? content :
-			document.createTextNode(content));
-	}
-	if (supportsTouch) {
-		elm.addEventListener("touchstart", function (e) {
-			e.preventDefault();
-		}, false);
-	}
-	
-	return elm;
-}
-
 function rgba(r, g, b, a) {
 	return "rgba(" + r + ", " + g + ", " + b + ", " + a + ")";
 }
@@ -343,7 +325,6 @@ function MazeViewer(options) {
 	this.setPosition(this.startPos[0], this.startPos[1]);
 	
 	this.showStartMarker();
-	//this.showHelpWindow();
 	
 	this.updateViewport();
 	this.updateOffset();
@@ -427,27 +408,6 @@ MazeViewer.prototype = {
 		this.centerer.appendChild(marker.element);
 	},
 	
-	showHelpWindow: function () {
-		var helpWindow = this.helpWindow = new HelpWindow({
-			content: "Move your mouse through the maze, starting here!"
-		});
-		helpWindow.style.left = this.startPos[0] + "px";
-		helpWindow.style.top = this.startPos[1] - 80 + "px";
-		var marker = this.startPosMarker;
-		helpWindow.onmouseover = marker.highlight.bind(marker);
-		helpWindow.onmouseout = marker.unhighlight.bind(marker);
-		this.centerer.appendChild(helpWindow);
-	},
-	
-	hideHelpWindow: function () {
-		var helpWindow = this.helpWindow;
-		if (helpWindow) {
-			Transition(helpWindow, {opacity: 0}, 250,
-				this.centerer.removeChild.bind(this.centerer, helpWindow));
-			delete this.helpWindow;
-		}
-	},
-	
 	onResize: function () {
 		this.updateViewport();
 	},
@@ -465,8 +425,6 @@ MazeViewer.prototype = {
 			delete self.startPosMarker;
 		});
 		
-		
-		this.hideHelpWindow();
 		
 		this.overlay = new TiledCanvas(256, 256);
 		this.overlay.element.style.opacity = 0.6;

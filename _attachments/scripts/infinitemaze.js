@@ -341,10 +341,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.drawingTile = null;
 		this.isInViewMode = true;
 		addClass(this.centerer, "in");
-	},
-
-	showHelpWindow: function () {},
-	hideHelpWindow: function () {}
+	}
 });
 
 var Picker = Classy(Box, {
@@ -1175,11 +1172,13 @@ InfiniteMaze.init = function (cb) {
 	var defaultMazeId = "1";
 	var mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
 	
-	db.list("maze/maze", "maze_and_tiles", {
-		key: mazeId,
-		success: function (data) {
-			InfiniteMaze.init2(db, data, cb);
-		}
+	shim(window.JSON, "../scripts/json2.js", function () {
+		db.list("maze/maze", "maze_and_tiles", {
+			key: mazeId,
+			success: function (data) {
+				InfiniteMaze.init2(db, data, cb);
+			}
+		});
 	});
 };
 
@@ -1189,42 +1188,40 @@ InfiniteMaze.init2 = function (db, info, cb) {
 	var tiles = info.tiles;
 	var userCtx = info.userCtx;
 	var update_seq = info.update_seq;
-	shim(window.JSON, "../scripts/json2.js", function () {
-		this.sessionManager = new SessionManager(userCtx);
-		this.loader = new InfiniteMazeLoader(db, mazeDoc, tiles, update_seq);
-		this.viewer = new GridMazeViewer({
-			loader: this.loader,
-			container: $("maze")
-		});
-		this.viewer.enterMaze();
-		this.editor = new GridMazeTileEditor(this.viewer);
-		this.headerBar = new HeaderBar();
-		this.headerBar.updateForUser();
-		this.welcomeWindow = new WelcomeWindow();
-		this.loginSignupWindow = new LoginSignupWindow();
-		this.accountSettingsWindow = new AccountSettingsWindow();
-		this.claimer = new TileClaimer(db);
-		if (info.listen_changes !== false) {
-			window.addEventListener("load", function () {
-				setTimeout(function () {
-					self.loader.listenForChanges();
-				}, 100);
-			}, false);
-		}
-		if (cb) {
-			cb.call(this);
-		}
-		function updateLocationFromHash() {
-			var hash = location.hash.substr(1);
-			var loc = hash.split(",");
-			var x = (loc[0] * 256 || 0) + 127;
-			var y = (loc[1] * 256 || 0) + 127;
-			self.viewer.scrollTo(x, y);
-			self.viewer.updateOffset();
-		}
-		updateLocationFromHash();
-		window.addEventListener("hashchange", updateLocationFromHash, false);
-	}.bind(this));
+	this.sessionManager = new SessionManager(userCtx);
+	this.loader = new InfiniteMazeLoader(db, mazeDoc, tiles, update_seq);
+	this.viewer = new GridMazeViewer({
+		loader: this.loader,
+		container: $("maze")
+	});
+	this.viewer.enterMaze();
+	this.editor = new GridMazeTileEditor(this.viewer);
+	this.headerBar = new HeaderBar();
+	this.headerBar.updateForUser();
+	this.welcomeWindow = new WelcomeWindow();
+	this.loginSignupWindow = new LoginSignupWindow();
+	this.accountSettingsWindow = new AccountSettingsWindow();
+	this.claimer = new TileClaimer(db);
+	if (info.listen_changes !== false) {
+		window.addEventListener("load", function () {
+			setTimeout(function () {
+				self.loader.listenForChanges();
+			}, 100);
+		}, false);
+	}
+	if (cb) {
+		cb.call(this);
+	}
+	function updateLocationFromHash() {
+		var hash = location.hash.substr(1);
+		var loc = hash.split(",");
+		var x = (loc[0] * 256 || 0) + 127;
+		var y = (loc[1] * 256 || 0) + 127;
+		self.viewer.scrollTo(x, y);
+		self.viewer.updateOffset();
+	}
+	updateLocationFromHash();
+	window.addEventListener("hashchange", updateLocationFromHash, false);
 };
 
 InfiniteMaze.getUsername = function () {
