@@ -1,10 +1,7 @@
 Make the account settings window work.
 Make tiled layered canvas.
-Make hash navigation (partial, i.e. coordinates and page, #12,53;login)
 Add a license to the code.
 Check maze tiles for following rules.
 When in edit mode, the tile is temporarily locked from other people editing it.
 Real time broadcasting of people's locations in the maze, with their username.
 Undo functionality?
-Flood fill tool
-Make claim system.

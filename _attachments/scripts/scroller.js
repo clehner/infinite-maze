@@ -46,13 +46,14 @@ function Scroller(options) {
 	var x = 0;
 	var y = 0;
 	var self = this;
+	var selfScroll = false;
 	function move(dx, dy, e) {
 		if (!dx && !dy) {
 			return false;
 		}
-		self.x = (x += dx);
-		self.y = (y += dy);
-		if (onScroll) {
+		self.x = (x += +dx);
+		self.y = (y += +dy);
+		if (onScroll && !selfScroll) {
 			onScroll(x, y, e);
 		}
 		if (scrollContents) {
@@ -64,7 +65,9 @@ function Scroller(options) {
 	this.move = move;
 	
 	if (start) {
+		selfScroll = true;
 		move(start[0], start[1]);
+		selfScroll = false;
 	}
 	
 	var fixedX = 75;
@@ -76,7 +79,6 @@ function Scroller(options) {
 	reset();
 	setTimeout(reset, 1);
 
-	var selfScroll = false;
 	scroller.addEventListener("scroll", function (e) {
 		if (selfScroll) return;
 		var dx = fixedX - this.scrollLeft;

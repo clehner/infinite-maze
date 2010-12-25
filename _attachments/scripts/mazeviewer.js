@@ -290,7 +290,7 @@ TiledCanvas.prototype = {
 
 // MazeViewer
 
-function MazeViewer(options) {
+function MazeViewer(opt) {
 	this.bindMethods(this.onResize, this.onMouseDown,
 		this.onMouseMove, this.onMouseUp, this.onTouchStart, this.onTouchMove,
 		this.onTouchEnd, this.possibleDirections);
@@ -302,14 +302,18 @@ function MazeViewer(options) {
 	this.centerer.className = "layer centerer";
 	this.element.appendChild(this.centerer);
 	
-	if (options) {
-		if (options.loader) {
-			this.loader = options.loader;
-			this.tileSize = this.loader.getTileSize();
-			this.startPos = this.loader.getStartPos();
-		}
-		if (options.container) options.container.appendChild(this.element);
+	var options = opt || {};
+	if (options.loader) {
+		this.loader = options.loader;
+		this.tileSize = this.loader.getTileSize();
+		this.startPos = this.startScrollPos = this.loader.getStartPos();
 	}
+	if (options.container) options.container.appendChild(this.element);
+	var context = options.context;
+	if (options.onScroll) this._onScroll = options.onScroll.bind(context);
+	if (options.onMove) this._onMove = options.onMove.bind(context);
+	if (options.startPos) this.startPos = options.startPos;
+	if (options.startScrollPos) this.startScrollPos = options.startScrollPos;
 
 	this.mazeCanvas = new TiledCanvas(this.tileSize[0], this.tileSize[1]);
 	this.mazeCanvas.initTile = this.initMazeTile.bind(this);
@@ -318,11 +322,8 @@ function MazeViewer(options) {
 		contents: this.centerer,
 		dragToScroll: true,
 		scrollContents: true,
-		start: [-20-this.startPos[0], -20-this.startPos[1]],
-		onScroll: function (x, y, e) {
-			this.updateOffset();
-			this.updateViewport(x, y);
-		}.bind(this)
+		start: [-this.startScrollPos[0], -this.startScrollPos[1]],
+		onScroll: this.updateViewport.bind(this)
 	});
 	this.centerer.appendChild(this.mazeCanvas.element);
 	
@@ -354,11 +355,19 @@ MazeViewer.prototype = {
 	offsetY: NaN,
 	playerMarker: null, //div
 	tileSize: [256, 256],
-	startPos: [127, 127],
+	startPos: [127, 127], // player position
+	startScrollPos: [127, 127], // viewport position
 	isInViewMode: true,
 	pathColor: "#0f0",
 	loader: null, // MazeLoader, for saving and getting tiles
+	
+	// Amount of pixels by which the pathfinding algorithm may deviate
+	// from a straight line.
 	correctionAmount: 5,
+	
+	// listeners, overridden by instance options
+	_onScroll: function (x, y) {},
+	_onMove: function (x, y) {},
 	
 	load: function () {
 		window.addEventListener("resize", this.onResize, false);
@@ -418,18 +427,22 @@ MazeViewer.prototype = {
 		this.updateViewport();
 	},
 	
-	enterMaze: function () {
+	enterMaze: function (fast) {
 		if (this.entered) return false;
 		this.entered = true;
 		
 		addClass(this.centerer, "in");
 		
 		// hide start marker
-		var self = this;
-		Transition(this.startPosMarker.element, {opacity: 0}, 250, function () {
-			self.centerer.removeChild(self.startPosMarker.element);
-			delete self.startPosMarker;
-		});
+		var remove = function () {
+			this.centerer.removeChild(this.startPosMarker.element);
+			delete this.startPosMarker;
+		}.bind(this);
+		if (fast) {
+			remove();
+		} else {
+			Transition(this.startPosMarker.element, {opacity: 0}, 250, remove);
+		}
 		
 		
 		this.overlay = new TiledCanvas(256, 256);
@@ -447,6 +460,8 @@ MazeViewer.prototype = {
 		
 		// add player marker (red dot)
 		this.centerer.appendChild(this.playerMarker);
+		
+		this.updateViewport();
 	},
 	
 	onTouchStart: function (e) {
@@ -486,8 +501,8 @@ MazeViewer.prototype = {
 			var prevPageY = this.pageY;
 			this.updateTouch(e);
 			this.scrollTo(
-				this.centerX + prevPageX - this.pageX,
-				this.centerY + prevPageY - this.pageY
+				0 + prevPageX - this.pageX,
+				0 + prevPageY - this.pageY
 			);
 		}
 	},
@@ -540,6 +555,7 @@ MazeViewer.prototype = {
 	},
 	
 	updateViewport: function (x, y) {
+		this.updateOffset();
 		var mazeCanvas = this.mazeCanvas;
 		var parent = this.centerer.offsetParent; //this.container
 		if (!parent) {
@@ -570,6 +586,7 @@ MazeViewer.prototype = {
 				mazeCanvas.setVisibleTiles(newTiles);
 			});
 		}*/
+			this._onScroll(x, y);
 	},
 	
 	// directly set the player's position.
@@ -579,6 +596,8 @@ MazeViewer.prototype = {
 		
 		this.playerMarker.style.left = x + "px";
 		this.playerMarker.style.top = y + "px";
+		
+		this._onMove(x, y);
 	},
 	
 	// move toward a pixel

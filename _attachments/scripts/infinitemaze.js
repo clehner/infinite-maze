@@ -830,7 +830,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 });
 
 var HeaderBar = function () {
-	var container = $("header");
+	var container = this.element = $("header");
 	
 	var accountNameLink = $("account-name-link");
 	accountNameLink.onclick = function (e) {
@@ -955,9 +955,13 @@ constructor: function () {
 		Box.prototype.hide.call(self);
 		overlay.hide();
 	}
-	this.hide = function () {
-		Transition(container, {opacity: 0}, 500);
-		Transition(overlay.element, {opacity: 0}, 250, fullyHide);
+	this.hide = function (fast) {
+		if (fast) {
+			fullyHide();
+		} else {
+			Transition(container, {opacity: 0}, 500);
+			Transition(overlay.element, {opacity: 0}, 250, fullyHide);
+		}
 	};
 
 	enterButton.onclick = this.hide;
@@ -1162,15 +1166,48 @@ function TileClaimer(db) {
 	};
 }
 
+// Preferences manager
+
+function Prefs(prefix, expires) {
+	this.prefix = prefix;
+	this.expires = expires;
+}
+Prefs.prototype = {
+	prefix: "",
+	expires: null,
+	get: function (key) {
+		return Cookie.get(this.prefix + key);
+	},
+	set: function (key, value) {
+		Cookie.set(this.prefix + key, value, this.expires);
+	}
+};
+
 
 // The App
 
+// init immediate things
 InfiniteMaze.init = function (cb) {
 	Couch.urlPrefix = ".";
 	var db = Couch.db("db");
 	
 	var defaultMazeId = "1";
 	var mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
+	
+	this.prefs = new Prefs("infinitemaze-", 60);
+	this.welcomeWindow = new WelcomeWindow();
+	this.headerBar = new HeaderBar();
+	
+	// get previous positions from cookie
+	var playerPosition = this.prefs.get("player-position-" + mazeId);
+	if (playerPosition) {
+		this.welcomeWindow.hide(true);
+		this.startPos = playerPosition.split(",").map(Number);
+	}
+	var scrollPosition = this.prefs.get("scroll-position-" + mazeId);
+	if (scrollPosition) {
+		this.startScrollPos = scrollPosition.split(",").map(Number);
+	}
 	
 	shim(window.JSON, "scripts/json2.js", function () {
 		db.list("maze/maze", "maze_and_tiles", {
@@ -1182,38 +1219,46 @@ InfiniteMaze.init = function (cb) {
 	});
 };
 
+// init things that don't have to be visible immediately
 InfiniteMaze.init2 = function (db, info, cb) {
 	var self = this;
 	var mazeDoc = info.maze;
 	var tiles = info.tiles;
 	var userCtx = info.userCtx;
 	var update_seq = info.update_seq;
+	this.mazeId = mazeDoc._id;
+	
 	this.sessionManager = new SessionManager(userCtx);
 	this.loader = new InfiniteMazeLoader(db, mazeDoc, tiles, update_seq);
 	this.viewer = new GridMazeViewer({
 		loader: this.loader,
-		container: $("maze")
+		container: $("maze"),
+		startPos: this.startPos,
+		startScrollPos: this.startScrollPos,
+		onMove: this.onMove,
+		context: this
 	});
-	this.viewer.enterMaze();
+	this.viewer._onScroll = this.onScroll.bind(this);
+	this.viewer.enterMaze(true);
 	this.editor = new GridMazeTileEditor(this.viewer);
-	this.headerBar = new HeaderBar();
 	this.headerBar.updateForUser();
-	this.welcomeWindow = new WelcomeWindow();
 	this.loginSignupWindow = new LoginSignupWindow();
 	this.accountSettingsWindow = new AccountSettingsWindow();
 	this.claimer = new TileClaimer(db);
+	
 	if (info.listen_changes !== false) {
 		window.addEventListener("load", function () {
+			// allow a timeout so the browser doesn't display a loader for
+			// the changes stream
 			setTimeout(function () {
 				self.loader.listenForChanges();
 			}, 100);
 		}, false);
 	}
-	if (cb) {
-		cb.call(this);
-	}
+	
 	function updateLocationFromHash() {
 		var hash = location.hash.substr(1);
+		if (!hash) return;
 		var loc = hash.split(",");
 		var x = (loc[0] * 256 || 0) + 127;
 		var y = (loc[1] * 256 || 0) + 127;
@@ -1222,6 +1267,10 @@ InfiniteMaze.init2 = function (db, info, cb) {
 	}
 	updateLocationFromHash();
 	window.addEventListener("hashchange", updateLocationFromHash, false);
+	
+	if (cb) {
+		cb.call(this);
+	}
 };
 
 InfiniteMaze.getUsername = function () {
@@ -1230,4 +1279,12 @@ InfiniteMaze.getUsername = function () {
 
 InfiniteMaze.getUserEmail = function () {
 	return 'asdf@asdf';
+};
+
+InfiniteMaze.onScroll = function (x, y) {
+	this.prefs.set("scroll-position-" + this.mazeId, x + "," + y);
+};
+
+InfiniteMaze.onMove = function (x, y) {
+	this.prefs.set("player-position-" + this.mazeId, x + "," + y);
 };
