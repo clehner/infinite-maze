@@ -351,6 +351,8 @@ MazeViewer.prototype = {
 	mazeCanvas: null, // TiledCanvas
 	x: NaN, // player coords
 	y: NaN,
+	mouseX: NaN, // mouse coords
+	mouseY: NaN,
 	offsetX: NaN, // for mouse handling
 	offsetY: NaN,
 	playerMarker: null, //div
@@ -526,10 +528,9 @@ MazeViewer.prototype = {
 	
 	onMouseMove: function (e) {
 		if (!this.isInViewMode) return;
-		this.moveToPixel(
-			e.pageX - this.offsetX + 75,
-			e.pageY - this.offsetY + 75
-		);
+		this.mouseX = e.pageX - this.offsetX + 75;
+		this.mouseY = e.pageY - this.offsetY + 75;
+		this.moveToPixel(this.mouseX, this.mouseY);
 	},
 	
 	onMouseDown: function (e) {
@@ -548,13 +549,16 @@ MazeViewer.prototype = {
 		//this.updateViewport();
 	},
 	
-	scrollTo: function (x, y) {
-		this.centerX = x;
-		this.centerY = y;
-		this.updateViewport();
+	scrollTo: function (x, y, slow) {
+		this.scroller.moveTo(x, y, slow);
+		if (slow) {
+			this.updateViewport(x, y, slow);
+		} else {
+			this.updateOffset();
+		}
 	},
 	
-	updateViewport: function (x, y) {
+	updateViewport: function (x, y, slow) {
 		this.updateOffset();
 		var mazeCanvas = this.mazeCanvas;
 		var parent = this.centerer.offsetParent; //this.container
@@ -573,20 +577,18 @@ MazeViewer.prototype = {
 			width, //this.container.offsetWidth - c.offsetLeft,
 			height //this.container.offsetHeight - c.offsetTop
 		);
-		//if (!this.entered) {
-			mazeCanvas.setVisibleTiles(newTiles);
-		/*} else {
+		if (slow) {
 			// Transition move
 			var combinedTiles = [].concat(oldTiles, newTiles);
 			mazeCanvas.setVisibleTiles(combinedTiles);
-			Transition(this.centerer, {
-				marginLeft: -x + "px",
-				marginTop: -y + "px"
-			}, 500, function () {
+			setTimeout(function () {
 				mazeCanvas.setVisibleTiles(newTiles);
-			});
-		}*/
+			}, 500);
 			this._onScroll(x, y);
+		} else {
+			mazeCanvas.setVisibleTiles(newTiles);
+			this._onScroll(x, y);
+		}
 	},
 	
 	// directly set the player's position.

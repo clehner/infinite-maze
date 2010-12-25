@@ -351,3 +351,13 @@ body {
 #settings-form + * {
 	clear: both;
 }
+
+/* "You are here" marker */
+
+#you-are-here {
+	position: absolute;
+	width: 75px;
+	background: white;
+	border: 1px solid #999;
+	z-index: 10;
+}

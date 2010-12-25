@@ -64,6 +64,32 @@ function Scroller(options) {
 	}
 	this.move = move;
 	
+	function moveSlow(dx, dy) {
+		if (scrollContents) {
+			var moved = false;
+			Transition(mover, {
+				left: x + dx + "px",
+				top: y + dy + "px"
+			}, 500, function () {
+				if (!moved) {
+					moved = true;
+					move(dx, dy);
+				}
+			});
+		} else {
+			// todo
+			move(dx, dy);
+		}
+	}
+	
+	this.moveTo = function (x1, y1, slow) {
+		if (slow) {
+			return moveSlow(x1 - x, y1 - y);
+		} else {
+			return move(x1 - x, y1 - y);
+		}
+	};
+	
 	if (start) {
 		selfScroll = true;
 		move(start[0], start[1]);

@@ -239,6 +239,8 @@ var GridMazeViewer = Classy(MazeViewer, {
 	
 	editor: null,
 	
+	youAreHereMarker: null,
+	
 	constructor: function (options) {
 		MazeViewer.call(this, options);
 		this.load();
@@ -254,6 +256,9 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.centerer.appendChild(this.drawHereTileBox.element);
 		
 		this.hideTileBoxes();
+
+		this.youAreHereMarker = new YouAreHereMarker(this);
+		this.centerer.appendChild(this.youAreHereMarker.element);
 	},
 	
 	moveToPixel: function (x, y) {
@@ -341,6 +346,24 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.drawingTile = null;
 		this.isInViewMode = true;
 		addClass(this.centerer, "in");
+	},
+	
+	// called on scroll
+	updateViewport: function (x, y) {
+		MazeViewer.prototype.updateViewport.call(this, x, y);
+		
+		if (this.youAreHereMarker) {
+			this.youAreHereMarker.update();
+		}
+	},
+	
+	// called on scroll
+	setPosition: function (x, y) {
+		MazeViewer.prototype.setPosition.call(this, x, y);
+		
+		if (this.youAreHereMarker) {
+			//this.youAreHereMarker.update();
+		}
 	}
 });
 
@@ -1182,6 +1205,84 @@ Prefs.prototype = {
 		Cookie.set(this.prefix + key, value, this.expires);
 	}
 };
+
+
+var YouAreHereMarker = Classy(Box, {
+constructor: function (viewer) {
+	var element = document.createElement("div");
+	element.id = "you-are-here";
+	Box.ificate(this, element);
+	
+	var link = document.createElement("a");
+	link.href = "";
+	link.onclick = function (e) {
+		e.preventDefault();
+		viewer.scrollTo(-viewer.x, -viewer.y, true);
+	};
+	element.appendChild(link);
+	
+	// the arrows point to the player's location
+	var arrows = "→↘↓↙←↖↑↗→";
+	function updateText(angle) {
+		var direction = Math.round(angle / (2 * Math.PI) * 8 + 4);
+		var arrow = arrows[direction];
+		link.innerHTML = "You are here " + arrow;
+	}
+	updateText(0);
+	
+	function constrain(number, min, max) {
+		return Math.min(max, Math.max(min, number));
+	}
+	
+	this.update = function () {
+		var viewerW = viewer.element.offsetWidth;
+		var viewerH = viewer.element.offsetHeight;
+		var viewerX = viewer.scroller.x; // viewport corner
+		var viewerY = viewer.scroller.y;
+		var playerX = viewer.x;
+		var playerY = viewer.y;
+		var mouseX = viewer.mouseX;
+		var mouseY = viewer.mouseY;
+		var markerW = element.offsetWidth;
+		var markerH = element.offsetHeight;
+		
+		var correctedViewerX = -viewerX - (viewerW + 24) / 2;
+		var correctedViewerY = -viewerY - (viewerH + 38) / 2;
+		var correctedViewerX1 = correctedViewerX + viewerW - markerW;
+		var correctedViewerY1 = correctedViewerY + viewerH - markerH;
+		
+		var headerH = InfiniteMaze.headerBar.element.offsetHeight;
+		var headerW = InfiniteMaze.headerBar.element.offsetWidth;
+		
+		if (Math.abs(playerX - mouseX) < 200 &&
+			Math.abs(playerY - mouseY) < 200) {
+			// mouse is near player, so don't need to show this pointer.
+			this.hide();
+			return;
+		}
+		
+		if (playerY - correctedViewerY < headerH &&
+			correctedViewerX1 - playerX < headerW) {
+			// in top right corner. move out of way of login buttons
+			correctedViewerY += headerH;
+		}
+		
+		var markerX, markerY;
+		markerX = constrain(playerX, correctedViewerX, correctedViewerX1);
+		markerY = constrain(playerY, correctedViewerY, correctedViewerY1);
+		
+		var angle = Math.atan2(
+			markerY - playerY + markerH / 2,
+			markerX - playerX + markerW / 2
+		);
+		updateText(angle);
+		
+		this.show();
+		element.style.left = markerX + "px";
+		element.style.top = markerY + "px";
+	};
+}
+});
 
 
 // The App
