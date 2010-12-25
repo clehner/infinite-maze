@@ -196,7 +196,7 @@ TiledCanvas.prototype = {
 	})(),
 	
 	getImageData: function (x, y, w, h) {
-		var tiles = this.getTilesInRect(x, y, x + w, y + h);
+		var tiles = this.getTilesInRect(x, y, w, h);
 		if (tiles.length == 1) {
 			var tile = tiles[0];
 			return tile.ctx.getImageData(x-tile.offsetX, y-tile.offsetY, w, h);
@@ -223,8 +223,8 @@ TiledCanvas.prototype = {
 	},
 	
 	putImageData: function (imageData, x, y) {
-		var tiles = this.getTilesInRect(x, y, x + imageData.width,
-			y + imageData.height);
+		var tiles = this.getTilesInRect(x, y, imageData.width,
+			imageData.height);
 		tiles.forEach(function (tile) {
 			tile.ctx.putImageData(imageData, x-tile.offsetX, y-tile.offsetY);
 		});
@@ -246,12 +246,12 @@ TiledCanvas.prototype = {
 		return this.visibleTiles || (this.visibleTiles = this.getAllTiles());
 	},
 	
-	getTilesInRect: function (x0, y0, x1, y1) {
+	getTilesInRect: function (x0, y0, w, h) {
 		var tiles = [];
 		var left   = Math.floor(x0 / this.tileWidth);
 		var top    = Math.floor(y0 / this.tileHeight);
-		var right  = Math.ceil(x1 / this.tileWidth);
-		var bottom = Math.ceil(y1 / this.tileHeight);
+		var right  = Math.ceil((x0 + w) / this.tileWidth);
+		var bottom = Math.ceil((y0 + h) / this.tileHeight);
 		
 		for (var x = left; x < right; x++) {
 			for (var y = top; y < bottom; y++) {
@@ -281,7 +281,7 @@ TiledCanvas.prototype = {
 	},
 	
 	clearRect: function (x, y, w, h) {
-		var tiles = this.getTilesInRect(x, y, x + w, y + h);
+		var tiles = this.getTilesInRect(x, y, w, h);
 		tiles.forEach(function (tile) {
 			tile.ctx.clearRect(x - tile.offsetX, y - tile.offsetY, w, h);
 		});
@@ -291,7 +291,7 @@ TiledCanvas.prototype = {
 // MazeViewer
 
 function MazeViewer(options) {
-	this.bindMethods(this.onResize, this.onMouseDown, this.onMouseDrag,
+	this.bindMethods(this.onResize, this.onMouseDown,
 		this.onMouseMove, this.onMouseUp, this.onTouchStart, this.onTouchMove,
 		this.onTouchEnd, this.possibleDirections);
 
@@ -310,12 +310,20 @@ function MazeViewer(options) {
 		}
 		if (options.container) options.container.appendChild(this.element);
 	}
-	
-	this.centerX = this.startPos[0];
-	this.centerY = this.startPos[1];
 
 	this.mazeCanvas = new TiledCanvas(this.tileSize[0], this.tileSize[1]);
 	this.mazeCanvas.initTile = this.initMazeTile.bind(this);
+	this.scroller = new Scroller({
+		container: this.element,
+		contents: this.centerer,
+		dragToScroll: true,
+		scrollContents: true,
+		start: [-20-this.startPos[0], -20-this.startPos[1]],
+		onScroll: function (x, y, e) {
+			this.updateOffset();
+			this.updateViewport(x, y);
+		}.bind(this)
+	});
 	this.centerer.appendChild(this.mazeCanvas.element);
 	
 	// Create player marker, but don't add it until we enter the maze.
@@ -344,8 +352,6 @@ MazeViewer.prototype = {
 	y: NaN,
 	offsetX: NaN, // for mouse handling
 	offsetY: NaN,
-	centerX: NaN, // viewport position
-	centerY: NaN,
 	playerMarker: null, //div
 	tileSize: [256, 256],
 	startPos: [127, 127],
@@ -506,21 +512,16 @@ MazeViewer.prototype = {
 	onMouseMove: function (e) {
 		if (!this.isInViewMode) return;
 		this.moveToPixel(
-			e.pageX - this.offsetX,
-			e.pageY - this.offsetY
+			e.pageX - this.offsetX + 75,
+			e.pageY - this.offsetY + 75
 		);
 	},
 	
 	onMouseDown: function (e) {
-		// ignore right click
-		if (e.which == 2 || e.button == 2) return;
-		
-		this.pageX = e.pageX;
-		this.pageY = e.pageY;
+		this.updateOffset();
 		e.preventDefault();
 		addClass(this.centerer, 'moving'); // change cursor
 		this.centerer.removeEventListener("mousemove", this.onMouseMove, false);
-		document.addEventListener("mousemove", this.onMouseDrag, false);
 		document.addEventListener("mouseup", this.onMouseUp, false);
 	},
 	
@@ -528,16 +529,8 @@ MazeViewer.prototype = {
 		this.updateOffset();
 		removeClass(this.centerer, 'moving');
 		this.centerer.addEventListener("mousemove", this.onMouseMove, false);
-		document.removeEventListener("mousemove", this.onMouseDrag, false);
 		document.removeEventListener("mouseup", this.onMouseUp, false);
 		//this.updateViewport();
-	},
-	
-	onMouseDrag: function (e) {
-		this.scrollTo(
-			this.centerX + this.pageX - (this.pageX = e.pageX),
-			this.centerY + this.pageY - (this.pageY = e.pageY)
-		);
 	},
 	
 	scrollTo: function (x, y) {
@@ -546,30 +539,27 @@ MazeViewer.prototype = {
 		this.updateViewport();
 	},
 	
-	updateViewport: function (transition) {
+	updateViewport: function (x, y) {
 		var mazeCanvas = this.mazeCanvas;
 		var parent = this.centerer.offsetParent; //this.container
 		if (!parent) {
 			mazeCanvas.setVisibleTiles([]);
 			return;
 		}
-		var x = this.centerX;
-		var y = this.centerY;
+		var x = -(x || this.scroller.x);
+		var y = -(y || this.scroller.y);
 		var width = parent.offsetWidth;
 		var height = parent.offsetHeight;
 		var oldTiles = mazeCanvas.getVisibleTiles();
 		var newTiles = mazeCanvas.getTilesInRect(
 			x - width / 2, //-c.offsetLeft,
 			y - height / 2, //-c.offsetTop,
-			x + width / 2, //this.container.offsetWidth - c.offsetLeft,
-			y + width / 2 //this.container.offsetHeight - c.offsetTop
+			width, //this.container.offsetWidth - c.offsetLeft,
+			height //this.container.offsetHeight - c.offsetTop
 		);
-		if (!transition || !this.entered) {
-			// Instant move
-			this.centerer.style.marginLeft = -x + "px";
-			this.centerer.style.marginTop = -y + "px";
+		//if (!this.entered) {
 			mazeCanvas.setVisibleTiles(newTiles);
-		} else {
+		/*} else {
 			// Transition move
 			var combinedTiles = [].concat(oldTiles, newTiles);
 			mazeCanvas.setVisibleTiles(combinedTiles);
@@ -579,7 +569,7 @@ MazeViewer.prototype = {
 			}, 500, function () {
 				mazeCanvas.setVisibleTiles(newTiles);
 			});
-		}
+		}*/
 	},
 	
 	// directly set the player's position.

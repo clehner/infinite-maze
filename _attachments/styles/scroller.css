@@ -1,0 +1,34 @@
+.scroller-outer {
+	position: relative;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+.scroller-middle {
+	/* oversize, to hide inner scrollbars */
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	padding: 0 60px 60px 0;
+	overflow: auto;
+}
+.scroller-inner {
+	/* oversize, to cause scroll in middle */
+	width: 100%;
+	height: 100%;
+	padding: 0 150px 150px 0;
+	overflow: hidden;
+	position: absolute;
+}
+.scroller-fixer {
+	position: absolute;
+	left: 75px;
+	top: 75px;
+	right: 95px;
+	bottom: 95px;
+}
+.scroller-mover {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}

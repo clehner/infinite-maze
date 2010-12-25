@@ -1097,7 +1097,7 @@ function SessionManager(userCtx) {
 		validateEmailAddress(email,
 			function goodEmail() {
 				// need SHA1 for signup
-				shim(window.hex_sha1, "../scripts/sha1.js", function () {
+				shim(window.hex_sha1, "scripts/sha1.js", function () {
 					Couch.signup({
 						name: username,
 						signup_date: Date.now(),
@@ -1172,7 +1172,7 @@ InfiniteMaze.init = function (cb) {
 	var defaultMazeId = "1";
 	var mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
 	
-	shim(window.JSON, "../scripts/json2.js", function () {
+	shim(window.JSON, "scripts/json2.js", function () {
 		db.list("maze/maze", "maze_and_tiles", {
 			key: mazeId,
 			success: function (data) {
