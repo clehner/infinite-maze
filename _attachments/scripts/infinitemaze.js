@@ -268,6 +268,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		MazeViewer.prototype.moveToPixel.call(this, x, y);
 	},
 	
+	// set the player's position
 	setPosition: function (x, y) {
 		// Highlight tile adjacent to the current location, if the current
 		// location is on its border.
@@ -289,6 +290,10 @@ var GridMazeViewer = Classy(MazeViewer, {
 		}
 		
 		MazeViewer.prototype.setPosition.call(this, x, y);
+
+		if (this.youAreHereMarker) {
+			//this.youAreHereMarker.update();
+		}
 	},
 	
 	// called when the player's location is one pixel away from an adjacent tile
@@ -354,15 +359,6 @@ var GridMazeViewer = Classy(MazeViewer, {
 		
 		if (this.youAreHereMarker) {
 			this.youAreHereMarker.update();
-		}
-	},
-	
-	// called on scroll
-	setPosition: function (x, y) {
-		MazeViewer.prototype.setPosition.call(this, x, y);
-		
-		if (this.youAreHereMarker) {
-			//this.youAreHereMarker.update();
 		}
 	}
 });
@@ -1223,12 +1219,26 @@ constructor: function (viewer) {
 	
 	// the arrows point to the player's location
 	var arrows = "→↘↓↙←↖↑↗→";
-	function updateText(angle) {
+	
+	// depend on proximity to player's location
+	var prepositions = [
+		"",
+		"over",
+		"way over",
+		"waayy over",
+		"really far over"
+	];
+	
+	function updateText(x, y) {
+		var angle = Math.atan2(x, y);
 		var direction = Math.round(angle / (2 * Math.PI) * 8 + 4);
 		var arrow = arrows[direction];
-		link.innerHTML = "You are here " + arrow;
+		var distance = Math.pow(x*x + y*y, 1/4);
+		var degree = ~~Math.min(distance / 40, prepositions.length);
+		var preposition = prepositions[degree];
+		link.innerHTML = "You are " + preposition + " here " + arrow;
 	}
-	updateText(0);
+	updateText(0, 0);
 	
 	function constrain(number, min, max) {
 		return Math.min(max, Math.max(min, number));
@@ -1271,11 +1281,10 @@ constructor: function (viewer) {
 		markerX = constrain(playerX, correctedViewerX, correctedViewerX1);
 		markerY = constrain(playerY, correctedViewerY, correctedViewerY1);
 		
-		var angle = Math.atan2(
+		updateText(
 			markerY - playerY + markerH / 2,
 			markerX - playerX + markerW / 2
 		);
-		updateText(angle);
 		
 		this.show();
 		element.style.left = markerX + "px";
