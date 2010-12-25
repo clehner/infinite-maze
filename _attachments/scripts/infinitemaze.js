@@ -242,22 +242,18 @@ var GridMazeViewer = Classy(MazeViewer, {
 	youAreHereMarker: null,
 	
 	constructor: function (options) {
+		this.emptyTileBox = new EmptyTileBox(this);
+		this.getHereTileBox = new GetHereTileBox(this);
+		this.drawHereTileBox = new DrawHereTileBox(this);
+		this.hideTileBoxes();
+		this.youAreHereMarker = new YouAreHereMarker(this);
+
 		MazeViewer.call(this, options);
 		this.load();
 		
-		// initialize tile boxes.
-		this.emptyTileBox = new EmptyTileBox(this);
 		this.centerer.appendChild(this.emptyTileBox.element);
-		
-		this.getHereTileBox = new GetHereTileBox(this);
 		this.centerer.appendChild(this.getHereTileBox.element);
-		
-		this.drawHereTileBox = new DrawHereTileBox(this);
 		this.centerer.appendChild(this.drawHereTileBox.element);
-		
-		this.hideTileBoxes();
-
-		this.youAreHereMarker = new YouAreHereMarker(this);
 		this.centerer.appendChild(this.youAreHereMarker.element);
 	},
 	
