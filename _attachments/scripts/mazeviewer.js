@@ -519,8 +519,8 @@ MazeViewer.prototype = {
 	updateOffset: function () {
 		var x = 0, y = 0;
 		for (var el = this.centerer; el; el = el.offsetParent) {
-			x += el.offsetLeft;
-			y += el.offsetTop;
+			x += el.offsetLeft - el.scrollLeft;
+			y += el.offsetTop - el.scrollTop;
 		}
 		this.offsetX = x;
 		this.offsetY = y;
@@ -528,8 +528,9 @@ MazeViewer.prototype = {
 	
 	onMouseMove: function (e) {
 		if (!this.isInViewMode) return;
-		this.mouseX = e.pageX - this.offsetX + 75;
-		this.mouseY = e.pageY - this.offsetY + 75;
+		if (!e.pageX && !e.pageY) return;
+		this.mouseX = e.pageX - this.offsetX;
+		this.mouseY = e.pageY - this.offsetY;
 		this.moveToPixel(this.mouseX, this.mouseY);
 	},
 	
