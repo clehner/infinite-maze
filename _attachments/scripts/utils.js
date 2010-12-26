@@ -300,20 +300,18 @@ function samePoint(a, b) {
 function PointMap() {}
 PointMap.prototype = {
 	set: function (point, value) {
-		(this[point.x] || (this[point.x] = {}))[point.y] = value;
+		this[point.x + "," + point.y] = value;
 	},
 	get: function (point) {
-		return (this[point.x] || 0)[point.y];
+		return this[point.x + "," + point.y];
 	}
 };
 
 // heuristic (optimistic/admissible = never overestimates)
 function estimatedDistance(pointA, pointB) {
-	var dx = Math.abs(pointA.x - pointB.x),
-		dy = Math.abs(pointA.y - pointB.y);
-	return (dx > dy) ?
-		(dx - dy) * 1 + dy * Math.SQRT2:
-		(dy - dx) * 1 + dx * Math.SQRT2;
+	var dx = pointA.x - pointB.x;
+	var dy = pointA.y - pointB.y;
+	return Math.sqrt(dx*dx + dy*dy);
 }
 /*
 function estimatedDistance(pointA, pointB) {
@@ -322,9 +320,16 @@ function estimatedDistance(pointA, pointB) {
 	return dx + dy;
 }
 function estimatedDistance(pointA, pointB) {
-	var dx = pointA.x - pointB.x;
-	var dy = pointA.y - pointB.y;
-	return Math.sqrt(dx*dx + dy*dy);
+	var dx = Math.abs(pointA.x - pointB.x),
+		dy = Math.abs(pointA.y - pointB.y);
+	return (dx > dy) ?
+		(dx - dy) * 1 + dy * Math.SQRT2:
+		(dy - dx) * 1 + dx * Math.SQRT2;
+}
+function estimatedDistance(pointA, pointB) {
+	var dx = Math.abs(pointA.x - pointB.x);
+	var dy = Math.abs(pointA.y - pointB.y);
+	return Math.max(dx, dy);
 }
 */
 

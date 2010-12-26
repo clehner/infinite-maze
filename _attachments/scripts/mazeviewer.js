@@ -633,20 +633,22 @@ MazeViewer.prototype = {
 		var data = this.mazeCanvas.getImageData(x - 1, y - 1, 3, 3).data;
 
 		var isColorPassable = this.isColorPassable;
-		function isPassable(x, y) {
-			var i = 4 * (y * 3 + x);
-			return isColorPassable(data[i++], data[i++], data[i++], data[i]);
+		function pointIfPassable(dx, dy) {
+			var i = 4 * (dy * 3 + dx);
+			if (isColorPassable(data[i++], data[i++], data[i++], data[i])) {
+				return point(x + dx - 1, y + dy - 1);
+			}
 		}
 		
-		var n = isPassable(1, 0) && point(x, y - 1);
-		var s = isPassable(1, 2) && point(x, y + 1);
-		var w = isPassable(0, 1) && point(x - 1, y);
-		var e = isPassable(2, 1) && point(x + 1, y);
-		/*var ne = (n || e) && isPassable(2, 0) && point(x + 1, y - 1);
-		var se = (s || e) && isPassable(2, 2) && point(x + 1, y + 1);
-		var sw = (s || w) && isPassable(0, 2) && point(x - 1, y + 1);
-		var nw = (n || w) && isPassable(0, 0) && point(x - 1, y - 1);*/
-		return [n, s, e, w /*, ne, se, sw, nw */].filter(Boolean);
+		var n = pointIfPassable(1, 0);
+		var s = pointIfPassable(1, 2);
+		var w = pointIfPassable(0, 1);
+		var e = pointIfPassable(2, 1);
+		var ne = (n || e) && pointIfPassable(2, 0);
+		var se = (s || e) && pointIfPassable(2, 2);
+		var sw = (s || w) && pointIfPassable(0, 2);
+		var nw = (n || w) && pointIfPassable(0, 0);
+		return [n, s, e, w, ne, se, sw, nw].filter(Boolean);
 	}
 };
 

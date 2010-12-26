@@ -39,10 +39,6 @@ function Scroller(options) {
 	
 	container.appendChild(outer);
 	
-	if (scrollContents) {
-		contents.style.position = "relative";
-	}
-	
 	var x = 0;
 	var y = 0;
 	var self = this;
