@@ -615,4 +615,33 @@ var Cookie = {
 		document.cookie = c_name + "=" + escape(value) +
 			((expiredays == null) ? "" : ";expires=" + exdate.toUTCString());
 	}
+};
+
+// don't execute a function more than once every @threshold ms
+Function.prototype.throttled = function (threshold) {
+	var func = this,
+		throttling, args,
+		apply = this.apply;
+	function endThrottle() {
+		throttling = false;
+		if (args) {
+			apply.apply(func, args);
+			args = null;
+		}
+	}
+	return function throttler() {
+		if (throttling) {
+			args = [this, arguments];
+		} else {
+			args = null;
+			throttling = true;
+			setTimeout(endThrottle, threshold);
+			return func.apply(this, arguments);
+		}
+	};
+};
+
+// pythagorean distance formula
+function distance(x, y) {
+	return Math.sqrt(x*x + y*y);
 }

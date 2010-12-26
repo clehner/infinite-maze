@@ -148,7 +148,7 @@ var EmptyTileBox = Classy(TileBox, {
 				alert("Thank you. Your claim has been submitted.");
 			}
 		} else {
-			if (confirm("Did you draw this tile? If so, log in to claim it.")) {
+			if (confirm("Did you draw this tile? Log in to claim it.")) {
 				InfiniteMaze.loginSignupWindow.show();
 			}
 		}
@@ -1195,7 +1195,7 @@ Prefs.prototype = {
 	},
 	set: function (key, value) {
 		Cookie.set(this.prefix + key, value, this.expires);
-	}
+	}.throttled(50)
 };
 
 
@@ -1241,41 +1241,39 @@ constructor: function (viewer) {
 	}
 	
 	this.update = function () {
+		// relative to viewport
+		// offsetX ~= viewer.scroller.x + viewerW / 2 + 12
+		var playerX = viewer.x + viewer.offsetX;
+		var playerY = viewer.y + viewer.offsetY;
+		var mouseX = viewer.mouseX + viewer.offsetX;
+		var mouseY = viewer.mouseY + viewer.offsetY;
 		var viewerW = viewer.element.offsetWidth;
 		var viewerH = viewer.element.offsetHeight;
-		var viewerX = viewer.scroller.x; // viewport corner
-		var viewerY = viewer.scroller.y;
-		var playerX = viewer.x;
-		var playerY = viewer.y;
-		var mouseX = viewer.mouseX;
-		var mouseY = viewer.mouseY;
 		var markerW = element.offsetWidth;
 		var markerH = element.offsetHeight;
 		
-		var correctedViewerX = -viewerX - (viewerW + 24) / 2;
-		var correctedViewerY = -viewerY - (viewerH + 38) / 2;
-		var correctedViewerX1 = correctedViewerX + viewerW - markerW;
-		var correctedViewerY1 = correctedViewerY + viewerH - markerH;
+		var effectiveViewerW = viewerW - markerW;
+		var effectiveViewerH = viewerH - markerH;
 		
 		var headerH = InfiniteMaze.headerBar.element.offsetHeight;
 		var headerW = InfiniteMaze.headerBar.element.offsetWidth;
 		
-		if (Math.abs(playerX - mouseX) < 200 &&
-			Math.abs(playerY - mouseY) < 200) {
+		if (distance(playerX - mouseX, playerY - mouseY) < 250) {
 			// mouse is near player, so don't need to show this pointer.
 			this.hide();
 			return;
 		}
 		
-		if (playerY - correctedViewerY < headerH &&
-			correctedViewerX1 - playerX < headerW) {
-			// in top right corner. move out of way of login buttons
-			correctedViewerY += headerH;
+		var top = 0;
+		// move out of the way of the login buttons.
+		if (playerY < headerH &&
+			effectiveViewerW - playerX < headerW) {
+			top += headerH;
 		}
 		
 		var markerX, markerY;
-		markerX = constrain(playerX, correctedViewerX, correctedViewerX1);
-		markerY = constrain(playerY, correctedViewerY, correctedViewerY1);
+		markerX = constrain(playerX, 0, effectiveViewerW);
+		markerY = constrain(playerY, top, effectiveViewerH);
 		
 		updateText(
 			markerY - playerY + markerH / 2,
@@ -1285,7 +1283,7 @@ constructor: function (viewer) {
 		this.show();
 		element.style.left = markerX + "px";
 		element.style.top = markerY + "px";
-	};
+	}.throttled(30)
 }
 });
 
