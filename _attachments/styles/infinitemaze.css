@@ -246,8 +246,17 @@ body {
 	   -moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
 }
-.tile-info:hover {
-	opacity: 0.25;
+.tile-info.left {
+	left: 0;
+}
+.tile-info.right {
+	right: 0;
+}
+.tile-info.dim {
+	opacity: 0.2;
+}
+.tile-info:empty {
+	display: none;
 }
 
 .tile-info .name {

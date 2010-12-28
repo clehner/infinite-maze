@@ -72,7 +72,7 @@ var TileBox = Classy(Box, {
 });
 
 // placed over drawn tiles
-var EmptyTileBox = Classy(TileBox, {
+var InfoTileBox = Classy(TileBox, {
 	tileInfoEl: null,
 	innerTileInfo: null,
 	nameElement: null,
@@ -84,42 +84,48 @@ var EmptyTileBox = Classy(TileBox, {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "empty");
 		
-		this.tileInfoEl = document.createElement("div");
-		this.tileInfoEl.className = "tile-info";
-		this.element.appendChild(this.tileInfoEl);
+		var checkIfInWay = this.checkIfInWay.bind(this);
 		
-		this.innerTileInfo = document.createElement("span");
-		this.innerTileInfo.className = "tile-info-inner";
-		this.tileInfoEl.appendChild(this.innerTileInfo);
+		var infoLeft = this.infoLeft = this.inner;
+		infoLeft.className = "tile-info left";
+		infoLeft.addEventListener("mouseover", checkIfInWay, false);
+		infoLeft.addEventListener("mouseout", checkIfInWay, false);
+		this.element.appendChild(infoLeft);
 		
-		this.nameElement = document.createElement("span");
-		this.nameElement.className = "name";
-		this.innerTileInfo.appendChild(this.nameElement);
+		var infoRight = this.infoRight = document.createElement("div");
+		infoRight.className = "tile-info right";
+		infoRight.addEventListener("mouseover", checkIfInWay, false);
+		infoRight.addEventListener("mouseout", checkIfInWay, false);
+		this.element.appendChild(infoRight);
 		
-		this.nameText = document.createTextNode("");
-		this.nameElement.appendChild(this.nameText);
+		var nameElement = this.nameElement = document.createElement("span");
+		nameElement.className = "name";
+		infoLeft.appendChild(nameElement);
+		var nameText = this.nameText = document.createTextNode("");
+		nameElement.appendChild(nameText);
 		
-		this.editLink = document.createElement("a");
-		this.editLink.href = "";
-		this.editLink.onclick = this.onEditLinkClick.bind(this);
-		this.editLink.innerHTML = "Edit";
-		this.innerTileInfo.appendChild(document.createTextNode(" "));
-		this.innerTileInfo.appendChild(this.editLink);
+		var editLink = this.editLink = document.createElement("a");
+		editLink.href = "";
+		editLink.onclick = this.onEditLinkClick.bind(this);
+		editLink.innerHTML = "Edit";
+		infoRight.appendChild(document.createTextNode(" "));
+		infoRight.appendChild(editLink);
 		
-		this.claimLink = document.createElement("a");
-		this.claimLink.href = "";
-		this.claimLink.onclick = this.onClaimLinkClick.bind(this);
-		this.claimLink.innerHTML = "Claim";
-		this.innerTileInfo.appendChild(document.createTextNode(" "));
-		this.innerTileInfo.appendChild(this.claimLink);
+		var claimLink = this.claimLink = document.createElement("a");
+		claimLink.href = "";
+		claimLink.onclick = this.onClaimLinkClick.bind(this);
+		claimLink.innerHTML = "Claim";
+		infoRight.appendChild(document.createTextNode(" "));
+		infoRight.appendChild(claimLink);
 		
-		this.fixLink = document.createElement("a");
-		this.fixLink.href = "";
-		this.fixLink.onclick = this.onFixLinkClick.bind(this);
-		this.fixLink.innerHTML = "Fix";
-		this.innerTileInfo.appendChild(document.createTextNode(" "));
-		this.innerTileInfo.appendChild(this.fixLink);
+		var fixLink = this.fixLink = document.createElement("a");
+		fixLink.href = "";
+		fixLink.onclick = this.onFixLinkClick.bind(this);
+		fixLink.innerHTML = "Fix";
+		infoRight.appendChild(document.createTextNode(" "));
+		infoRight.appendChild(fixLink);
 	},
+	
 	coverTile: function (tile) {
 		TileBox.prototype.coverTile.call(this, tile);
 
@@ -128,16 +134,44 @@ var EmptyTileBox = Classy(TileBox, {
 		this.nameText.nodeValue = name;
 		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
 		
-		toggleClass(this.editLink, "hidden", !this.canEditThisTile());
-		toggleClass(this.claimLink, "hidden", !this.canClaimThisTile());
-		toggleClass(this.fixLink, "hidden", !this.canFixThisTile());
+		// show or hide links
+		var loader = InfiniteMaze.loader;
+		
+		var editable = loader.canEditTile(tile);
+		var claimable = loader.canClaimTile(tile);
+		var fixable = loader.canFixTile(tile);
+		var anything = editable || claimable || fixable;
+		toggleClass(this.editLink, "hidden", !editable);
+		toggleClass(this.claimLink, "hidden", !claimable);
+		toggleClass(this.fixLink, "hidden", !fixable);
+		toggleClass(this.infoRight, "hidden", !anything);
 	},
+	
+	// Hide info texts if they are in the way of the player.
+	checkIfInWay: function () {
+		var infoLeft = this.infoLeft;
+		var infoRight = this.infoRight;
+		var viewer = InfiniteMaze.viewer;
+		var playerIsInThisTile = viewer.tileIn == this.tile;
+		if (playerIsInThisTile) {
+			var x = viewer.x - this.tile.offsetX;
+			var y = viewer.y - this.tile.offsetY;
+			if (y < infoLeft.offsetHeight + infoLeft.offsetTop) {
+				var inWayLeft = x < infoLeft.offsetWidth;
+				var inWayRight = x > infoRight.offsetLeft;
+			}
+		}
+		toggleClass(infoLeft, "dim", inWayLeft);
+		toggleClass(infoRight, "dim", inWayRight);
+	},
+	
 	onEditLinkClick: function (e) {
 		e.preventDefault();
-		if (this.canEditThisTile()) {
+		if (InfiniteMaze.loader.canEditTile(this.tile)) {
 			InfiniteMaze.viewer.enterDrawTileMode(this.tile);
 		}
 	},
+	
 	onClaimLinkClick: function (e) {
 		e.preventDefault();
 		var loggedIn = InfiniteMaze.getUsername();
@@ -153,27 +187,34 @@ var EmptyTileBox = Classy(TileBox, {
 			}
 		}
 	},
-	canEditThisTile: function () {
-		var loggedInUser = InfiniteMaze.getUsername();
-		var isAdmin = InfiniteMaze.sessionManager.isAdmin();
-		return loggedInUser &&
-			(isAdmin || (this.tile.info.creator == loggedInUser));
-	},
-	canClaimThisTile: function () {
-		var hasCreator = this.tile.info.creator;
-		return !hasCreator && !this.tile.claimSubmitted;
-		//var loggedIn = !!InfiniteMaze.getUsername();
-		//return loggedIn && !hasCreator;
-	},
-	canFixThisTile: function () {
-		if (!InfiniteMaze.sessionManager.isAdmin()) return false;
-		var start = this.tile.info.start;
-		return start && (start[0] < 0 || start[0] > 256 ||
-			start[1] < 0 || start[1] > 256);
-	},
+	
 	onFixLinkClick: function (e) {
 		e.preventDefault();
-		InfiniteMaze.loader.fixTile(this.tile);
+		// let the user pick a location
+		var useNearestEdge = true;
+		//confirm("Pick a start point. Use nearest edge?");
+		var tile = this.tile;
+		this.element.addEventListener("mousedown", function pointPicked(e) {
+			this.removeEventListener("mousedown", pointPicked, false);
+			var x = InfiniteMaze.viewer.mouseX - tile.offsetX;
+			var y = InfiniteMaze.viewer.mouseY - tile.offsetY;
+			var point;
+			if (useNearestEdge) {
+				var distancesToEdges = [x, y, 256 - x, 256 - y];
+				var nearestEdge = distancesToEdges.indexOf(
+					Math.min.apply(Math, distancesToEdges));
+				point = [
+					[0, y],
+					[x, 0],
+					[256, y],
+					[x, 256]
+				][nearestEdge];
+			} else {
+				point = [x, y];
+			}
+			// tell the loader to set this tile's start point to that location.
+			InfiniteMaze.loader.setTileStart(tile, point);
+		}, false);
 	}
 });
 
@@ -230,7 +271,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 	// Tile boxes show borders and information over the maze grid squares.
 	// The "draw here" tile box includes a button that the user can click to
 	// go to drawing mode and draw the tile.
-	emptyTileBox: null,
+	infoTileBox: null,
 	getHereTileBox: null,
 	drawHereTileBox: null,
 	
@@ -242,7 +283,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 	youAreHereMarker: null,
 	
 	constructor: function (options) {
-		this.emptyTileBox = new EmptyTileBox(this);
+		this.infoTileBox = new InfoTileBox(this);
 		this.getHereTileBox = new GetHereTileBox(this);
 		this.drawHereTileBox = new DrawHereTileBox(this);
 		this.hideTileBoxes();
@@ -251,7 +292,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		MazeViewer.call(this, options);
 		this.load();
 		
-		this.centerer.appendChild(this.emptyTileBox.element);
+		this.centerer.appendChild(this.infoTileBox.element);
 		this.centerer.appendChild(this.getHereTileBox.element);
 		this.centerer.appendChild(this.drawHereTileBox.element);
 		this.centerer.appendChild(this.youAreHereMarker.element);
@@ -290,6 +331,8 @@ var GridMazeViewer = Classy(MazeViewer, {
 		if (this.youAreHereMarker) {
 			//this.youAreHereMarker.update();
 		}
+		
+		this.infoTileBox.checkIfInWay();
 	},
 	
 	// called when the player's location is one pixel away from an adjacent tile
@@ -303,20 +346,26 @@ var GridMazeViewer = Classy(MazeViewer, {
 			if (this.getHereTileBox.tile == tile) {
 				this.getHereTileBox.hide();
 			}
-			if (this.emptyTileBox.tile == tile) {
-				this.emptyTileBox.hide();
+			if (this.infoTileBox.tile == tile) {
+				this.infoTileBox.hide();
 			}
 		}
 	},
 	
 	// called on mouseover of a tile
 	onTileMouseOver: function (tile) {
-		var tileBox = tile.isEmpty ? this.getHereTileBox : this.emptyTileBox;
-		tileBox.coverTile(tile);
+		// Show the relevant tile box.
+		if (tile.isEmpty) {
+			this.getHereTileBox.coverTile(tile);
+			this.infoTileBox.hide();
+		} else {
+			this.infoTileBox.coverTile(tile);
+			this.getHereTileBox.hide();
+		}
 	},
 	
 	hideTileBoxes: function () {
-		this.emptyTileBox.hide();
+		this.infoTileBox.hide();
 		this.getHereTileBox.hide();
 		this.drawHereTileBox.hide();
 	},
@@ -841,6 +890,29 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 				}
 			});
 		}.bind(this));
+	},
+	
+	canEditTile: function (tile) {
+		var user = InfiniteMaze.getUsername();
+		var isMyTile = user && (user == tile.info.creator);
+		var isAdmin = InfiniteMaze.sessionManager.isAdmin();
+		return isAdmin || isMyTile;
+	},
+	
+	canClaimTile: function (tile) {
+		var hasCreator = tile.info.creator;
+		return !hasCreator && !tile.claimSubmitted;
+		//var loggedIn = !!InfiniteMaze.getUsername();
+		//return loggedIn && !hasCreator;
+	},
+	
+	canFixTile: function (tile) {
+		return InfiniteMaze.sessionManager.isAdmin();
+	},
+	
+	canTeleportToTile: function (tile) {
+		var isStartTile = tile.offsetX == 0 && tile.offsetY == 0;
+		return isStartTile || this.canEditTile(tile);
 	}
 });
 
