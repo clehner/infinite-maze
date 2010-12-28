@@ -5,28 +5,26 @@ if (!window.console) {
 }
 
 // http://www.nczonline.net/blog/2009/07/28/the-best-way-to-load-external-javascript/
-function loadScript(url, callback){
-    var script = document.createElement("script")
-    var script = document.createElement("script");
-    script.type = "text/javascript";
+function loadScript(url, callback) {
+	var script = document.createElement("script");
+	script.type = "text/javascript";
+	script.async = "async";
 
-    if (script.readyState){ // IE
-        script.onreadystatechange = function(){
-            if (script.readyState == "loaded" ||
-                    script.readyState == "complete") {
-                script.onreadystatechange = null;
-                callback();
-            }
-        };
-    } else { // others
-        script.onload = function () {
-            callback();
-        };
-    }
+	if (!callback) {
+	} else if (script.readyState) { // IE
+		script.onreadystatechange = function () {
+			if (script.readyState in {loaded:1, complete:1}) {
+				script.onreadystatechange = null;
+				callback();
+			}
+		};
+	} else { // others
+		script.onload = callback;
+	}
 
-    script.src = url;
-    var head = document.documentElement.firstChild;
-    head.insertBefore(script, head.firstChild);
+	script.src = url;
+	var head = document.documentElement.firstChild;
+	head.insertBefore(script, head.firstChild);
 }
 
 // Conditionally load a script
@@ -69,9 +67,6 @@ Function.prototype.memoized = function () {
 		} 
 		return function () {
 			return fn.apply(context, arguments);
-			/*return arguments.length ?
-				fn.apply(context, arguments) :
-				fn.call(context);*/
 		};
 	};
 	

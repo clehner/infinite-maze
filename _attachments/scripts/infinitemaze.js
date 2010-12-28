@@ -1392,3 +1392,14 @@ InfiniteMaze.onScroll = function (x, y) {
 InfiniteMaze.onMove = function (x, y) {
 	this.prefs.set("player-position-" + this.mazeId, x + "," + y);
 };
+
+
+// Google Analytics
+if (location.hostname != "localhost") {
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-11963387-3']);
+	_gaq.push(['_trackPageview']);
+	
+	loadScript(('https:' == document.location.protocol ?
+		'https://ssl' : 'http://www') + '.google-analytics.com/ga.js');
+}
