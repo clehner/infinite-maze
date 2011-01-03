@@ -1499,10 +1499,7 @@ InfiniteMaze.onMove = function (x, y) {
 
 // Google Analytics
 if (location.hostname != "localhost") {
-	var _gaq = _gaq || [];
-	_gaq.push(['_setAccount', 'UA-11963387-3']);
-	_gaq.push(['_trackPageview']);
-	
-	loadScript(('https:' == document.location.protocol ?
-		'https://ssl' : 'http://www') + '.google-analytics.com/ga.js');
+	loadScript("http://www.google-analytics.com/ga.js", function () {		 
+		_gat._getTracker("UA-11963387-3")._trackPageview();		 
+	});
 }
