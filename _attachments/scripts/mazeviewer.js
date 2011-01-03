@@ -69,6 +69,7 @@ Tile.prototype = {
 	ctx: null,
 	isEmpty: true,
 	info: {},
+	_onLoad: null,
 	
 	drawLine: function (x1, y1, x2, y2, color) {
 		var ctx = this.ctx;
@@ -87,6 +88,7 @@ Tile.prototype = {
 		img.onload = function () {
 			if (clearFirst) self.clear();
 			self.drawImage(img);
+			self._loaded();
 		};
 		// We can't say the image is empty until it has loaded,
 		// but if it is a 404, then it is empty.
@@ -94,6 +96,22 @@ Tile.prototype = {
 		this.isEmpty = false;
 		img.src = src;
 		// to do: show a loading sign?
+	},
+	
+	// call a function when the tile is loaded
+	onLoad: function (cb) {
+		if (this.isEmpty) {
+			this._onLoad = cb;
+		} else {
+			cb();
+		}
+	},
+	
+	_loaded: function () {
+		if (this._onLoad) {
+			this._onLoad();
+			delete this._onLoad;
+		}
 	},
 	
 	drawImage: function (img) {
@@ -398,7 +416,7 @@ MazeViewer.prototype = {
 	initMazeTile: function (tile, x, y) {
 		var tileSrc = this.loader.getTileSrc(x, y);
 		if (tileSrc) {
-			tile.loadImageSrc(tileSrc);
+			this.loader.queueLoadTile(tile, tileSrc);
 		}
 		// add creator info, and other stuff
 		var tileInfo = this.loader.getTileInfo(x, y);
@@ -657,11 +675,14 @@ var MazeLoader = Classy({
 	db: null,
 	mazeDoc: null,
 	mazeId: "",
+	tileLoadingQueue: null,
+	_queueing: false,
 	
 	constructor: function (db, doc) {
 		this.db = db;
 		this.mazeDoc = doc;
 		this.mazeId = doc._id;
+		this.tileLoadingQueue = [];
 	},
 	
 	getTileSrc: function (x, y) {},
@@ -684,5 +705,35 @@ var MazeLoader = Classy({
 
 	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
 		onError(0, "Saving is not yet implemented.");
+	},
+	
+	queueLoadTile: function (tile, src) {
+		this.tileLoadingQueue.push([tile, src]);
+		if (!this._queueing) {
+			setTimeout(this._emptyQueue.bind(this), 1);
+			this._queueing = true;
+		}
+	},
+	
+	// load the tiles in the queue
+	_emptyQueue: function () {
+		this._queueing = false;
+		var centerX = -127-InfiniteMaze.viewer.scroller.x;
+		var centerY = -127-InfiniteMaze.viewer.scroller.y;
+		this.tileLoadingQueue.map(function (item) {
+			var tile = item[0];
+			item.distance = distance(
+				tile.offsetX - centerX,
+				tile.offsetY - centerY
+			);
+			return item;
+		}).sort(function (a, b) {
+			return a.distance - b.distance;
+		}).forEach(function (item, i) {
+			var tile = item[0];
+			var src = item[1];
+			tile.loadImageSrc(src);
+		});
+		this._tileLoadingQueue = [];
 	}
 });
