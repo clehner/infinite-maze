@@ -745,7 +745,15 @@ constructor: function (viewer) {
 			function onError(status, error, reason) {
 				alert("There was an error: " + reason);
 			},
-			close // success
+			function success() {
+				close();
+				// show a help window if it is the user's first drawing
+				var firstDrawing = !InfiniteMaze.prefs.get("first-drawing");
+				if (firstDrawing) {
+					InfiniteMaze.prefs.set("first-drawing", "1");
+					InfiniteMaze.postSaveWindow.show();
+				}
+			}
 		);
 	}
 	this.save = save;
@@ -1356,6 +1364,28 @@ constructor: function (viewer) {
 		element.style.left = markerX + "px";
 		element.style.top = markerY + "px";
 	}.throttled(30)
+
+}
+});
+
+var ClosableDialog = Classy(Box, {
+	constructor: function () {
+		Box.call(this);
+		this.addCloseButton();
+	},
+	addCloseButton: function () {
+		var closeButton = document.createElement("div");
+		closeButton.className = "close";
+		closeButton.appendChild(document.createTextNode("X")); //×
+		closeButton.onclick = this.hide.bind(this);
+		this.element.appendChild(closeButton);
+	}
+});
+
+var PostSaveWindow = Classy(ClosableDialog, {
+constructor: function () {
+	this.element = $("post-save-window");
+	ClosableDialog.call(this);
 }
 });
 
@@ -1419,6 +1449,7 @@ InfiniteMaze.init2 = function (db, info, cb) {
 	this.editor = new GridMazeTileEditor(this.viewer);
 	this.headerBar.updateForUser();
 	this.loginSignupWindow = new LoginSignupWindow();
+	this.postSaveWindow = new PostSaveWindow();
 	this.accountSettingsWindow = new AccountSettingsWindow();
 	this.claimer = new TileClaimer(db);
 	

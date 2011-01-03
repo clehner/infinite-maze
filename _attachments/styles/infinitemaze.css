@@ -17,7 +17,7 @@ body {
 #overlay {
 	background: black;
 	opacity: .7;
-	z-index: 7;
+	z-index: 15;
 }
 
 /* Windows (modal dialogues) */
@@ -41,7 +41,7 @@ body {
 	-webkit-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	background: white;
 	background: rgba(255, 255, 255, 0.9);
-	z-index: 8;
+	z-index: 20;
 }
 
 @media (max-device-width: 480px) {
@@ -91,7 +91,7 @@ body {
 }
 #welcome #enter-btn {
 	background: #9e6;
-	border: 1px solid #0c0;
+	border: 1px solid #3c0;
 	font-size: 1em;
 	padding: 6px;
 	color: #030;
@@ -109,6 +109,9 @@ body {
 	background: #3e3;
 	color: #010;
 }
+#welcome #enter-btn:focus {
+	border-color: #060;
+}
 
 /* Header */
 
@@ -117,7 +120,7 @@ body {
 	top: 0;
 	right: 0;
 	background: #eee;
-	z-index: 6;
+	z-index: 11;
 	border: 3px #999;
 	border-style: none none solid solid;
 	padding: 2px 5px;
@@ -236,12 +239,11 @@ body {
 .tile-info {
 	position: absolute;
 	top: 0;
-	left: 0;
 	margin: 5px;
 	background-color: white;
 	font-size: 12px;
 	padding: 2px 3px;
-	opacity: 0.75;
+	opacity: 0.8;
 	        border-radius: 4px;
 	   -moz-border-radius: 4px;
 	-webkit-border-radius: 4px;
@@ -272,7 +274,7 @@ body {
 	background-color: #ccc;
 	border-top: 2px solid black;
 	padding: 5px;
-	z-index: 6;
+	z-index: 10;
 }
 
 #rules {
@@ -368,5 +370,33 @@ body {
 	width: 75px;
 	background: white;
 	border: 1px solid #999;
+	z-index: 6;
+}
+
+/* Teleporter */
+
+.marker.teleporter {
 	z-index: 5;
+}
+
+/* Post-save Window */
+
+#post-save-window {
+	width: 190px;
+	top: 45%;
+	left: auto;
+	right: 2%;
+}
+
+/* Closable dialog windows */
+
+.window .close {
+	position: absolute;
+	bottom: 14px;
+	right: 14px;
+	color: #933;
+}
+.window .close:hover {
+	color: #090;
+	cursor: pointer;
 }
