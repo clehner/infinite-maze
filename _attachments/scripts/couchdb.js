@@ -136,7 +136,7 @@ var Couch = (function() {
     var buf = [];
     if (typeof(options) === "object" && options !== null) {
       for (var name in options) {
-        if (name in {"error":1, "success":1})
+        if (name in {"error":1, "success":1, "beforeSuccess":1, "ajaxStart":1})
           continue;
         var value = options[name];
         if (name in {"key":1, "startkey":1, "endkey":1}) {
