@@ -10,6 +10,9 @@ var Box = Classy({
 			}
 		} else {
 			this.element = document.createElement(this.tagName);
+			if (!this.visible) {
+				addClass(this.element, "hidden");
+			}
 		}
 	},
 	
@@ -748,7 +751,7 @@ constructor: function (viewer) {
 	function onDrawDrag(e) {
 		var ctx = tile.ctx;
 		// draw on pixels, not in between them.
-		var offset = 0.5;
+		var offset = 1.5;
 		ctx.beginPath();
 		ctx.moveTo(this.x + offset, this.y + offset);
 		this.x = e._x;
@@ -863,6 +866,13 @@ constructor: function (viewer) {
 		
 		colorPicker.update();
 		sizePicker.update();
+		
+		// scroll to center this tile
+		viewer.scrollTo(
+			tile.offsetX + viewer.tileSize[0]/2 + 20,
+			tile.offsetY + viewer.tileSize[1]/2 + 60,
+			true // slowly
+		);
 		
 		toolboxElement.style.bottom = "-120px";
 		removeClass(toolboxElement, "hidden");
@@ -992,6 +1002,11 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		window.addEventListener("offline", promise.stop, false);
 	},
 	
+	listenForChangesSafe: function () {
+		// Allow a timeout so the browser doesn't display a loader
+		setTimeout(this.listenForChanges.bind(this), 3000);
+	},
+	
 	stopListeningForChanges: function () {
 		var promise = this.changesPromise;
 		promise.stop();
@@ -1015,6 +1030,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	makeTileDoc: function (cb) {
 		cb({
 			_id: Couch.newUUID(),
+			//_id: "tile:" + this.mazeId + ":" + location,
 			type: "tile",
 			maze_id: this.mazeId,
 			creator: InfiniteMaze.getUsername()
@@ -1039,7 +1055,12 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		var self = this;
 		this.getTileDoc(tile, function (doc) {
 			doc.location = tileCoords;
-			doc.created_at = Date.now();
+			var now = Date.now();
+			if (doc.created_at) {
+				doc.modified_at = now;
+			} else {
+				doc.created_at = now;
+			}
 			if (!doc.start) {
 				var absStart = InfiniteMaze.editor.getTileEntrance();
 				doc.start = tile.getPointRelative(absStart);
@@ -1053,9 +1074,11 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			self.db.saveDoc(doc, {
 				error: onError,
 				success: function () {
+					//console.log('old tile info', tile.info);
 					tile.info = {
 						creator: doc.creator,
-						id: doc._id
+						id: doc._id,
+						location: tile.info.location
 					};
 					tile.isEmpty = false;
 					onSuccess.apply(this, arguments);
@@ -1064,13 +1087,10 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		});
 	},
 	
-	fixTile: function (tile) {
+	setTileStart: function (tile, point) {
 		this.getTileDoc(tile, function (doc) {
-			doc.start = [doc.start[0] % 256, doc.start[1] % 256];
+			doc.start = point;
 			this.db.saveDoc(doc, {
-				success: function () {
-					alert("Fixed.");
-				},
 				error: function (status, error, reason) {
 					alert("Error. " + reason);
 				}
@@ -1078,11 +1098,14 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		}.bind(this));
 	},
 	
-	canEditTile: function (tile) {
+	isTileMine: function (tile) {
 		var user = InfiniteMaze.getUsername();
-		var isMyTile = user && (user == tile.info.creator);
+		return user && (user == tile.info.creator);
+	},
+	
+	canEditTile: function (tile) {
 		var isAdmin = InfiniteMaze.sessionManager.isAdmin();
-		return isAdmin || isMyTile;
+		return isAdmin || this.isTileMine(tile);
 	},
 	
 	canClaimTile: function (tile) {
@@ -1098,7 +1121,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	
 	canTeleportToTile: function (tile) {
 		var isStartTile = tile.offsetX == 0 && tile.offsetY == 0;
-		return isStartTile || this.canEditTile(tile);
+		return isStartTile || this.isTileMine(tile); //canEditTile(tile);
 	}
 });
 
@@ -1237,7 +1260,13 @@ constructor: function () {
 		}
 	};
 
-	enterButton.onclick = this.hide;
+	var self = this;
+	enterButton.onclick = function () {
+		self.hide();
+		if (self._onEnter) {
+			self._onEnter();
+		}
+	};
 }
 });
 
@@ -1257,7 +1286,7 @@ constructor: function () {
 		loader.stop();
 		loginForm.reset();
 		signupForm.reset();
-		alert("You have logged in successfully.");
+		alert("Login success.");
 	}
 	
 	function onLoginError(msg) {
@@ -1278,6 +1307,7 @@ constructor: function () {
 		loader.start();
 		InfiniteMaze.sessionManager.login(username, password, onLogin, onLoginError);
 		// This form must be allowed to submit for some browsers to remember the login.
+		// so we submit it into a dummy iframe.
 	};
 	
 	var signupForm = $("signup-form");
@@ -1459,16 +1489,26 @@ function TileClaimer(db) {
 
 function Prefs(prefix, expires) {
 	this.prefix = prefix;
-	this.expires = expires;
 }
 Prefs.prototype = {
 	prefix: "",
-	expires: null,
+	backend: window.localStorage ? {
+		get: localStorage.getItem.bind(localStorage),
+		set: localStorage.setItem.bind(localStorage)
+	} : {
+		expires: 60,
+		get: function (key, value) {
+			return Cookie.get(key, value, this.expires);
+		},
+		set: function (key, value) {
+			Cookie.set(key, value, this.expires);
+		}
+	},
 	get: function (key) {
-		return Cookie.get(this.prefix + key);
+		return this.backend.get(this.prefix + key);
 	},
 	set: function (key, value) {
-		Cookie.set(this.prefix + key, value, this.expires);
+		this.backend.set(this.prefix + key, value);
 	}.throttled(50)
 };
 
@@ -1483,9 +1523,11 @@ constructor: function (viewer) {
 	link.href = "";
 	link.onclick = function (e) {
 		e.preventDefault();
-		viewer.scrollTo(-viewer.x, -viewer.y, true);
+		viewer.scrollTo(viewer.x, viewer.y, true);
 	};
 	element.appendChild(link);
+	var linkText = document.createTextNode("");
+	link.appendChild(linkText);
 	
 	// the arrows point to the player's location
 	var arrows = "→↘↓↙←↖↑↗→";
@@ -1499,14 +1541,14 @@ constructor: function (viewer) {
 		"really far over"
 	];
 	
+	// the message changes depending on the distance to the player's location
 	function updateText(x, y) {
 		var angle = Math.atan2(x, y);
 		var direction = Math.round(angle / (2 * Math.PI) * 8 + 4);
 		var arrow = arrows[direction];
-		var distance = Math.pow(x*x + y*y, 1/4);
-		var degree = ~~Math.min(distance / 40, prepositions.length);
-		var preposition = prepositions[degree];
-		link.innerHTML = "You are " + preposition + " here " + arrow;
+		var degree = Math.pow(distance(x, y), 1/2) / 30;
+		var preposition = prepositions[~~Math.min(degree, prepositions.length)];
+		linkText.nodeValue = "You are " + preposition + " here " + arrow;
 	}
 	updateText(0, 0);
 	
@@ -1514,6 +1556,7 @@ constructor: function (viewer) {
 		return Math.min(max, Math.max(min, number));
 	}
 	
+	var self = this;
 	this.update = function () {
 		// relative to viewport
 		// offsetX ~= viewer.scroller.x + viewerW / 2 + 12
@@ -1534,7 +1577,7 @@ constructor: function (viewer) {
 		
 		if (distance(playerX - mouseX, playerY - mouseY) < 250) {
 			// mouse is near player, so don't need to show this pointer.
-			this.hide();
+			self.hide();
 			return;
 		}
 		
@@ -1545,20 +1588,20 @@ constructor: function (viewer) {
 			top += headerH;
 		}
 		
-		var markerX, markerY;
-		markerX = constrain(playerX, 0, effectiveViewerW);
-		markerY = constrain(playerY, top, effectiveViewerH);
+		var markerX = constrain(playerX, 0, effectiveViewerW);
+		var markerY = constrain(playerY, top, effectiveViewerH);
 		
 		updateText(
 			markerY - playerY + markerH / 2,
 			markerX - playerX + markerW / 2
 		);
 		
-		this.show();
+		self.show();
 		element.style.left = markerX + "px";
 		element.style.top = markerY + "px";
 	}.throttled(30)
 
+	link.onmouseover = this.update;
 }
 });
 
@@ -1589,84 +1632,106 @@ constructor: function () {
 // init immediate things
 InfiniteMaze.init = function (cb) {
 	Couch.urlPrefix = ".";
-	var db = Couch.db("db");
+	this.db = Couch.db("db");
 	
 	var defaultMazeId = "1";
-	var mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
+	this.mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
 	
-	this.prefs = new Prefs("infinitemaze-", 60);
+	this.prefs = new Prefs("infinitemaze-");
 	this.welcomeWindow = new WelcomeWindow();
 	this.headerBar = new HeaderBar();
 	
-	// get previous positions from cookie
-	var playerPosition = this.prefs.get("player-position-" + mazeId);
-	if (playerPosition) {
+	// on return visits don't show the welcome window.
+	if (this.hasPlayerEntered()) {
 		this.welcomeWindow.hide(true);
-		this.startPos = playerPosition.split(",").map(Number);
-	}
-	var scrollPosition = this.prefs.get("scroll-position-" + mazeId);
-	if (scrollPosition) {
-		this.startScrollPos = scrollPosition.split(",").map(Number);
+	} else {
+		this.welcomeWindow._onEnter = this.playerHasEntered.bind(this);
 	}
 	
+	if (this.playerPositionStored()) {
+		this.startPos = this.getStoredPlayerPosition();
+		this.startScrollPos = this.getStoredScrollPosition();
+		this.init2(cb);
+	} else {
+		this.getRandomStartPoint(function (coords) {
+			this.startTileCoords = coords;
+			this.init2(cb);
+		}.bind(this));
+	}
+};
+
+// Load the maze data.
+InfiniteMaze.init2 = function (cb) {
+	var self = this;
 	shim(window.JSON, "scripts/json2.js", function () {
-		db.list("maze/maze", "maze_and_tiles", {
-			key: mazeId,
+		self.db.list("maze/maze", "maze_and_tiles", {
+			key: self.mazeId,
 			success: function (data) {
-				InfiniteMaze.init2(db, data, cb);
+				self.init3(data, cb);
 			}
 		});
 	});
 };
 
-// init things that don't have to be visible immediately
-InfiniteMaze.init2 = function (db, info, cb) {
+// Render the maze and do the real initing
+InfiniteMaze.init3 = function (info, cb) {
 	var self = this;
 	var mazeDoc = info.maze;
 	var tiles = info.tiles;
 	var userCtx = info.userCtx;
 	var update_seq = info.update_seq;
-	this.mazeId = mazeDoc._id;
 	
-	this.sessionManager = new SessionManager(userCtx);
-	this.loader = new InfiniteMazeLoader(db, mazeDoc, tiles, update_seq);
-	this.viewer = new GridMazeViewer({
+	this.sessionManager = new SessionManager(this.db, userCtx);
+	this.loader = new InfiniteMazeLoader(this.db, mazeDoc, tiles, update_seq);
+	var viewer = this.viewer = new GridMazeViewer({
 		loader: this.loader,
 		container: $("maze"),
 		startPos: this.startPos,
 		startScrollPos: this.startScrollPos,
 		onMove: this.onMove,
+		onScroll: this.onScroll,
 		context: this
 	});
-	this.viewer._onScroll = this.onScroll.bind(this);
-	this.viewer.enterMaze(true);
+	
+	// If we have loaded a random start tile, we must teleport to it.
+	var coords = this.startTileCoords;
+	if (coords) {
+		var startTile = viewer.mazeCanvas.getTile(coords[0], coords[1]);
+		startTile.onLoad(function () {
+			var teleporter = startTile.teleporter;
+			if (teleporter) {
+				teleporter.teleport(true);
+			} else {
+				console.log('no teleporter');
+				//alert(coords);
+			}
+			this.viewer.load();
+		}.bind(this));
+	} else {
+		this.viewer.load();
+	}
+	
 	this.editor = new GridMazeTileEditor(this.viewer);
 	this.headerBar.updateForUser();
 	this.loginSignupWindow = new LoginSignupWindow();
 	this.postSaveWindow = new PostSaveWindow();
 	this.accountSettingsWindow = new AccountSettingsWindow();
-	this.claimer = new TileClaimer(db);
+	this.claimer = new TileClaimer(this.db);
 	
 	if (info.listen_changes !== false) {
-		window.addEventListener("load", function () {
-			// allow a timeout so the browser doesn't display a loader for
-			// the changes stream
-			setTimeout(function () {
-				self.loader.listenForChanges();
-			}, 100);
-		}, false);
+		this.loader.listenForChangesSafe();
 	}
 	
-	function updateLocationFromHash() {
+	function updateLocationFromHash(e, fast) {
 		var hash = location.hash.substr(1);
 		if (!hash) return;
 		var loc = hash.split(",");
 		var x = (loc[0] * 256 || 0) + 127;
 		var y = (loc[1] * 256 || 0) + 127;
-		self.viewer.scrollTo(x, y);
-		self.viewer.updateOffset();
+		viewer.scrollTo(x, y, !fast);
+		viewer.updateOffset();
 	}
-	updateLocationFromHash();
+	updateLocationFromHash(null, true);
 	window.addEventListener("hashchange", updateLocationFromHash, false);
 	
 	if (cb) {
@@ -1682,12 +1747,47 @@ InfiniteMaze.getUserEmail = function () {
 	return 'asdf@asdf';
 };
 
+InfiniteMaze.getRandomStartPoint = function (cb) {
+	//setTimeout(cb.curry([-1,1]), 200);
+	this.db.openDoc("start-tiles:" + this.mazeId, {
+		success: function (doc) {
+			var points = doc.tiles;
+			var point = points[~~(Math.random() * points.length)];
+			//alert(point);
+			cb(point);
+		},
+		error: function () {
+			// default to center tile
+			cb([0, 0]);
+		}
+	});
+};
+
+// store and retrieve positions
+
 InfiniteMaze.onScroll = function (x, y) {
 	this.prefs.set("scroll-position-" + this.mazeId, x + "," + y);
 };
-
 InfiniteMaze.onMove = function (x, y) {
 	this.prefs.set("player-position-" + this.mazeId, x + "," + y);
+};
+
+InfiniteMaze.hasPlayerEntered = function () {
+	return !!this.prefs.get("entered");
+};
+InfiniteMaze.playerHasEntered = function () {
+	this.prefs.set("entered", "1");
+};
+InfiniteMaze.playerPositionStored = function () {
+	return !!this.prefs.get("player-position-" + this.mazeId);
+};
+InfiniteMaze.getStoredPlayerPosition = function () {
+	var str = this.prefs.get("player-position-" + this.mazeId);
+	return str && str.split(",").map(Number);
+};
+InfiniteMaze.getStoredScrollPosition = function () {
+	var str = this.prefs.get("scroll-position-" + this.mazeId);
+	return str && str.split(",").map(Number);
 };
 
 

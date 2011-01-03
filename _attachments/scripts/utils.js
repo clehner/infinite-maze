@@ -91,6 +91,11 @@ Function.prototype.memoized = function () {
 	
 })();
 
+// Dummy function.
+// evidence that this is ok:
+// http://jsperf.com/empty-functions
+Function.empty = new Function();
+
 // subtract the elements of one array from another. (set subtraction)
 Array.prototype.subtract = function (subtrahend) {
 	return this.filter(function (item) {
@@ -437,8 +442,8 @@ function DragBehavior(options) {
 	function calculateOffsets() {
 		var x = 0, y = 0;
 		for (var el = element; el; el = el.offsetParent) {
-			x += el.offsetLeft;
-			y += el.offsetTop;
+			x += el.offsetLeft - el.scrollLeft;
+			y += el.offsetTop - el.scrollTop;
 		}
 		offsetX = x;
 		offsetY = y;
@@ -606,10 +611,10 @@ function parseQuery(str) {
 var Cookie = {
 	get: function (c_name) {
 		if (document.cookie.length > 0) {
-			c_start = document.cookie.indexOf(c_name + "=");
+			var c_start = document.cookie.indexOf(c_name + "=");
 			if (c_start != -1) {
 				c_start = c_start + c_name.length + 1;
-				c_end = document.cookie.indexOf(";", c_start);
+				var c_end = document.cookie.indexOf(";", c_start);
 				if (c_end == -1) c_end = document.cookie.length;
 				return unescape(document.cookie.substring(c_start, c_end));
 			}

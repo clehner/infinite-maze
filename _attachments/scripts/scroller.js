@@ -50,7 +50,7 @@ function Scroller(options) {
 		self.x = (x += +dx);
 		self.y = (y += +dy);
 		if (onScroll && !selfScroll) {
-			onScroll(x, y, e);
+			onScroll(x, y);
 		}
 		if (scrollContents) {
 			mover.style.left = x + "px";
@@ -80,9 +80,9 @@ function Scroller(options) {
 	
 	this.moveTo = function (x1, y1, slow) {
 		if (slow) {
-			return moveSlow(x1 - x, y1 - y);
+			return moveSlow(-x1 - x, -y1 - y);
 		} else {
-			return move(x1 - x, y1 - y);
+			return move(-x1 - x, -y1 - y);
 		}
 	};
 	

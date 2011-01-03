@@ -74,7 +74,7 @@ function(head, req) {
 		];
 		
 		// Array.prototype.reduce
-		if(![].reduce)Array.prototype.reduce=function(e){if(this===void 0||this===null)throw new TypeError;var b=Object(this),d=b.length>>>0;if(typeof e!=="function")throw new TypeError;if(d==0&&arguments.length==1)throw new TypeError;var a=0,c;if(arguments.length>=2)c=arguments[1];else{do{if(a in b){c=b[a++];break}if(++a>=d)throw new TypeError;}while(1)}for(;a<d;){if(a in b)c=e.call(undefined,c,b[a],a,b);a++}return c};
+		if(![].reduce)Array.prototype.reduce=function(e){if(this==null)throw new TypeError;var b=Object(this),d=b.length>>>0;if(typeof e!=="function")throw new TypeError;if(d==0&&arguments.length==1)throw new TypeError;var a=0,c;if(arguments.length>=2)c=arguments[1];else{do{if(a in b){c=b[a++];break}if(++a>=d)throw new TypeError;}while(1)}for(;a<d;){if(a in b)c=e.call(undefined,c,b[a],a,b);a++}return c};
 		
 		return replacements.reduce(replacePairs, templates["maze_static"]);
 	});

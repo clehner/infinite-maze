@@ -329,8 +329,6 @@ function MazeViewer(opt) {
 	}
 	if (options.container) options.container.appendChild(this.element);
 	var context = options.context;
-	if (options.onScroll) this._onScroll = options.onScroll.bind(context);
-	if (options.onMove) this._onMove = options.onMove.bind(context);
 	if (options.startPos) this.startPos = options.startPos;
 	if (options.startScrollPos) this.startScrollPos = options.startScrollPos;
 
@@ -350,11 +348,17 @@ function MazeViewer(opt) {
 	this.playerMarker = document.createElement("div");
 	this.playerMarker.className = "player-marker";
 	
-	this.setPosition(this.startPos[0], this.startPos[1]);
+	//this.setPosition(this.startPos[0], this.startPos[1]);
+	// Avoid race conditions by only using the base setPosition method here,
+	// and by doing it before onMove is set.
+	MazeViewer.prototype.setPosition.apply(this, this.startPos);
 	
+	if (options.onScroll) this._onScroll = options.onScroll.bind(context);
+	if (options.onMove) this._onMove = options.onMove.bind(context);
+
 	this.showStartMarker();
 	
-	this.updateViewport();
+	//this.updateViewport();
 	this.updateOffset();
 }
 
@@ -465,7 +469,6 @@ MazeViewer.prototype = {
 			Transition(this.startPosMarker.element, {opacity: 0}, 250, remove);
 		}
 		
-		
 		this.overlay = new TiledCanvas(256, 256);
 		this.overlay.element.style.opacity = 0.6;
 		this.centerer.appendChild(this.overlay.element);
@@ -569,10 +572,10 @@ MazeViewer.prototype = {
 		//this.updateViewport();
 	},
 	
-	scrollTo: function (x, y, slow) {
+	scrollTo: function (x, y, slow) {x
 		this.scroller.moveTo(x, y, slow);
 		if (slow) {
-			this.updateViewport(x, y, slow);
+			this.updateViewport(-x, -y, slow);
 		} else {
 			this.updateOffset();
 		}
@@ -601,8 +604,10 @@ MazeViewer.prototype = {
 			// Transition move
 			var combinedTiles = [].concat(oldTiles, newTiles);
 			mazeCanvas.setVisibleTiles(combinedTiles);
+			var self = this;
 			setTimeout(function () {
 				mazeCanvas.setVisibleTiles(newTiles);
+				self.updateOffset();
 			}, 500);
 			this._onScroll(x, y);
 		} else {

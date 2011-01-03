@@ -134,6 +134,10 @@ function (doc, oldDoc, userCtx) {
 			typeof doc.created_at == "number",
 				"created_at must be a unix timestamp."
 		]);
+		validate([
+			doc._attachments['tile.png'].content_type == 'image/png',
+				"Tile attachment must have mime-type 'image/png'.",
+		]);
 	} else if (type == "claim") {
 		// Claim validation
 		validate([
@@ -160,6 +164,19 @@ function (doc, oldDoc, userCtx) {
 			
 			typeof doc.signup == "number",
 				"User info must have a signup timestamp."
+		]);
+	} else if (type == "start-tiles") {
+		// List of start tiles
+		validate([
+			isAdmin,
+				"Only admin can edit the list of start tiles.",
+
+			doc._id == "start-tiles:" + doc.maze_id,
+				"Id must be in the format start_tiles:{maze_id}",
+			
+			isArray(doc.tiles) &&
+				doc.tiles.every(isPoint),
+					"There must be tiles in the list."
 		]);
 	} else {
 		throw {forbidden:

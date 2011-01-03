@@ -34,31 +34,50 @@ canvas, .maze .layer {
 	-webkit-user-select: none;
 }
 
+/* Teleporter marker */
+
 .marker {
 	position: absolute;
 	width: 25px;
 	height: 25px;
 	border: 1px solid rgb(0, 200, 0);
-	border-radius: 13px;
+	        border-radius: 13px;
+	   -moz-border-radius: 13px;
+	-webkit-border-radius: 13px;
 	background-color: rgb(127, 255, 127);
 	background-color: rgba(0, 255, 0, 0.5);
 	margin: -13px;
 	opacity: .5;
-	/*-webkit-transition: opacity 250ms ease-out;*/
+}
+
+/* Animate teleporters */
+
+@-webkit-keyframes pulse {
+	0% {
+		opacity: .5;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: .5;
+	}
 }
 
 .marker.highlight, .marker:hover {
 	opacity: 1;
+	-webkit-animation: pulse 500ms infinite ease-in-out alternate;
 }
 
 .player-marker {
 	position: absolute;
-	width: 5px;
-	height: 5px;
-	/*border: 1px solid #f00;*/
-	/*background-color: rgba(255, 0, 0, 0.75);*/
-	border-radius: 5px;
-	background-color: #f00;
+	width: 0px;
+	height: 0px;
+	        border-radius: 6px;
+	   -moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	background-color: #fff;
+	border: 3px solid #f00;
 	margin: -2px 0 0 -2px;
 	z-index: 2;
 }
