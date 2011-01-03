@@ -1371,31 +1371,42 @@ function SessionManager(db, userCtx) {
 	};
 	
 	this.signup = function (username, password, email, onSuccess, onError) {
-		if (!username) return onError("Username is required.",
-			"Please choose a username.");
-		if (!email) return onError("Email is required.",
-			"Please enter your email address to sign up.");
+		if (!username) return onError("Please choose a username.");
+		if (!email) return onError("Please enter your email address.");
 		
 		validateEmailAddress(email,
 			function goodEmail() {
 				// need SHA1 for signup
 				shim(window.hex_sha1, "scripts/sha1.js", function () {
-					Couch.signup({
-						name: username,
-						signup_date: Date.now(),
-						email: email
-					}, password, {
+					Couch.signup({name: username}, password, {
 						success: function () {
-							self.login(username, password, onSuccess, onError);
+							self.login(username, password, function () {
+								// make the user info doc
+								db.saveDoc({
+									_id: "user-info:" + username,
+									type: "user-info",
+									name: username,
+									signup: Date.now(),
+									email: email
+								}, {
+									success: onSuccess,
+									error: onError
+								});
+							}, onError);
 						},
-						error: function (a, b, c) {
-							onError("Sorry, something went wrong in the signup process: " + a + ", " + b + ", " + c);
+						error: function (status, error, reason) {
+							if (error == "conflict") {
+								onError("The username \"" + username +
+									"\" is already taken.");
+							} else {
+								onError("Error: " + reason);
+							}
 						}
 					});
 				});
 			},
 			function badEmail(valid) {
-				onError("Bad email. Try a different one.");
+				onError("That doesn't look like an email address…");
 			}
 		);
 	};
