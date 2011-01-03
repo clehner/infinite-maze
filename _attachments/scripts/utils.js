@@ -91,6 +91,13 @@ Function.prototype.memoized = function () {
 	
 })();
 
+// subtract the elements of one array from another. (set subtraction)
+Array.prototype.subtract = function (subtrahend) {
+	return this.filter(function (item) {
+		return subtrahend.indexOf(item) == -1;
+	});
+};
+
 // http://gist.github.com/345486
 // Simulate onhashchange support in all browsers
 "onhashchange" in window || (function () {

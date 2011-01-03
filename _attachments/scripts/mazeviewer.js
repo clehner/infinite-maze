@@ -135,8 +135,8 @@ Tile.prototype = {
 		return [absPoint[0] - this.offsetX, absPoint[1] - this.offsetY];
 	}
 };
-Tile.hide = Tile.prototype.hide.unbind();
-Tile.show = Tile.prototype.show.unbind();
+Tile.hide = function (tile) { tile.hide(); }
+Tile.show = function (tile) { tile.show(); }
 
 // TiledCanvas
 
@@ -261,10 +261,11 @@ TiledCanvas.prototype = {
 		return tiles;
 	},
 	
-	setVisibleTiles: function (tiles) {
-		// todo: optimize this, maybe
-		this.getVisibleTiles().forEach(Tile.hide);
-		(this.visibleTiles = tiles).forEach(Tile.show);
+	setVisibleTiles: function (newTiles) {
+		var oldTiles = this.getVisibleTiles();
+		this.visibleTiles = newTiles;
+		oldTiles.subtract(newTiles).forEach(Tile.hide);
+		newTiles.subtract(oldTiles).forEach(Tile.show);
 	},
 	
 	// not pixels!
