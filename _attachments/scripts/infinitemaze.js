@@ -60,6 +60,7 @@ var TileBox = Classy(Box, {
 	
 	// move the tile box to a tile's position
 	coverTile: function (tile) {
+		if (this.tile == tile && this.visible) return;
 		this.tile = tile;
 		this.show();
 		var s1 = this.element.style;
@@ -279,8 +280,10 @@ var GridMazeViewer = Classy(MazeViewer, {
 	drawingTile: null,
 	
 	editor: null,
-	
 	youAreHereMarker: null,
+	
+	// what tile the player is in
+	tileIn: null,
 	
 	constructor: function (options) {
 		this.infoTileBox = new InfoTileBox(this);
@@ -290,16 +293,20 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.youAreHereMarker = new YouAreHereMarker(this);
 
 		MazeViewer.call(this, options);
-		this.load();
-		
+
 		this.centerer.appendChild(this.infoTileBox.element);
 		this.centerer.appendChild(this.getHereTileBox.element);
 		this.centerer.appendChild(this.drawHereTileBox.element);
 		this.centerer.appendChild(this.youAreHereMarker.element);
 	},
 	
-	moveToPixel: function (x, y) {
+	load: function () {
+		MazeViewer.prototype.load.call(this);
 		this.hideTileBoxes();
+		this.enterMaze(true);
+	},
+	
+	moveToPixel: function (x, y) {
 		var tile = this.mazeCanvas.getTileAtPixel(x, y);
 		this.onTileMouseOver(tile);
 		MazeViewer.prototype.moveToPixel.call(this, x, y);
@@ -319,15 +326,25 @@ var GridMazeViewer = Classy(MazeViewer, {
 			this._onTileAdjacent(x - tileWidth, y);
 		} else if (xInTile == -1 || xInTile == tileWidth - 1) {
 			this._onTileAdjacent(x + tileWidth, y);
-		}
-		if (yInTile == 0) {
+			// todo: split these and allow multiple drawheretileboxes.
+		} else if (yInTile == 0) {
 			this._onTileAdjacent(x, y - tileHeight);
 		} else if (yInTile == -1 || yInTile == tileHeight - 1) {
 			this._onTileAdjacent(x, y + tileHeight);
+		} else {
+			this._onTileAdjacent(null);
 		}
 		
 		MazeViewer.prototype.setPosition.call(this, x, y);
-
+		
+		// update what tile the player is in.
+		var prevTileIn = this.tileIn;
+		var tileIn = this.mazeCanvas.getTileAtPixel(x, y);
+		if (tileIn != prevTileIn) {
+			this.tileIn = tileIn;
+			this.onTileEnter(tileIn, prevTileIn);
+		}
+		
 		if (this.youAreHereMarker) {
 			//this.youAreHereMarker.update();
 		}
@@ -337,10 +354,13 @@ var GridMazeViewer = Classy(MazeViewer, {
 	
 	// called when the player's location is one pixel away from an adjacent tile
 	_onTileAdjacent: function (x, y) {
+		if (x == null) {
+			this.drawHereTileBox.hide();
+			return;
+		}
 		var tile = this.mazeCanvas.getTileAtPixel(x, y);
 		if (tile.isEmpty) {
-			var box = this.drawHereTileBox;
-			box.coverTile(tile);
+			this.drawHereTileBox.coverTile(tile);
 			
 			// hide any other tile boxes covering this tile.
 			if (this.getHereTileBox.tile == tile) {
@@ -352,7 +372,13 @@ var GridMazeViewer = Classy(MazeViewer, {
 		}
 	},
 	
-	// called on mouseover of a tile
+	// called when the player enters a new tile.
+	onTileEnter: function (tileIn, tileOut) {
+		tileIn.updateTeleporter();
+		tileOut && tileOut.updateTeleporter();
+	},
+	
+	// called on mouseover of a tile.
 	onTileMouseOver: function (tile) {
 		// Show the relevant tile box.
 		if (tile.isEmpty) {
@@ -399,12 +425,164 @@ var GridMazeViewer = Classy(MazeViewer, {
 	},
 	
 	// called on scroll
-	updateViewport: function (x, y) {
-		MazeViewer.prototype.updateViewport.call(this, x, y);
+	updateViewport: function (x, y, slow) {
+		MazeViewer.prototype.updateViewport.call(this, x, y, slow);
 		
 		if (this.youAreHereMarker) {
 			this.youAreHereMarker.update();
 		}
+	},
+	
+	initMazeTile: (function () {
+		// @this {Tile}
+		function tileShow() {
+			Tile.prototype.show.call(this);
+			this.teleporter.update();
+		}
+		function tileHide() {
+			Tile.prototype.hide.call(this);
+			this.teleporter.hide();
+		}
+		function updateTeleporter() {
+			//if (this.teleporter) {
+				this.teleporter.update();
+			//}
+		}
+		
+		return function (tile, x, y) {
+			MazeViewer.prototype.initMazeTile.call(this, tile, x, y);
+			if (tile.info.start) {
+				// remove old teleporter first, if exists
+				if (tile.teleporter) {
+					this.centerer.removeChild(tile.teleporter.element);
+				}
+				// add new teleporter
+				var teleporter = tile.teleporter = new Teleporter(this, tile);
+				setTimeout(teleporter.update.bind(teleporter), 10);
+				this.centerer.appendChild(teleporter.element);
+				// add these functions to be able to hide and show teleporter
+				tile.show = tileShow;
+				tile.hide = tileHide;
+				tile.updateTeleporter = updateTeleporter;
+			} else {
+				// dummy function
+				tile.updateTeleporter = Function.empty;
+			}
+		}
+	})(),
+	
+	updateTeleporters: function () {
+		this.mazeCanvas.getVisibleTiles().forEach(function (tile) {
+			tile.updateTeleporter();
+		});
+	},
+	
+	// get the tile that the player is in
+	tileWeAreIn: function () {
+		return this.mazeCanvas.getTileAtPixel(this.x, this.y);
+	}
+});
+
+// a link on a tile to teleport to that tile
+var Teleporter = Classy(Box, {
+	tagName: "a",
+	coords: [0, 0],
+	visible: false,
+	
+	constructor: function (mazeViewer, tile) {
+		Box.call(this);
+		this.tile = tile;
+		
+		// the teleporter goes to the start point of the tile.
+		var start = tile.info.start || [0, 0];
+		this.coords = [
+			tile.offsetX + start[0],
+			tile.offsetY + start[1]
+		];
+		
+		var a = this.element;
+		addClass(a, "marker teleporter");
+		a.style.left = this.coords[0] + "px";
+		a.style.top = this.coords[1] + "px";
+		a.href = "#" + mazeViewer.mazeCanvas.getTileCoords(tile);
+		a.onclick = this.onClick.bind(this);
+		a.title = "Teleport here";
+	},
+	
+	onClick: function (e) {
+		e.preventDefault();
+		this.teleport();
+	},
+	
+	canShow: function () {
+		var allowed = InfiniteMaze.loader.canTeleportToTile(this.tile);
+		return allowed;
+		//var inSameTile = InfiniteMaze.viewer.tileWeAreIn() == this.tile;
+		//return allowed && !inSameTile;
+	},
+	
+	update: function () {
+		if (this.canShow()) this.show();
+		else this.hide();
+	},
+	
+	teleport: function (scroll) {
+		var viewer = InfiniteMaze.viewer;
+		var dest = this.coords;
+		// If the point has no passable neighbors, it is a dead end,
+		if (viewer.possibleDirections(point(dest[0], dest[1])).length == 0) {
+			// and we must find a nearby passable point instead.
+			// This way we avoid teleporting into oblivion.
+			dest = this.findNearestPassablePointOnTileEdge();
+			if (!dest) {
+				alert("You can't teleport here!");
+				return;
+			}
+		}
+		viewer.setPosition(dest[0], dest[1]);
+		if (scroll) {
+			viewer.scrollTo(dest[0], dest[1]);
+		}
+	},
+	
+	// this is a very long function name
+	findNearestPassablePointOnTileEdge: function () {
+		var tile = this.tile;
+		var startX = this.coords[0] - tile.offsetX;
+		var startY = this.coords[1] - tile.offsetY;
+		var point = null;
+		var horizontal = Math.min(startY, 256 - startY) <
+			Math.min(startX, 256 - startX);
+		var data;
+		if (horizontal) {
+			data = tile.ctx.getImageData(0, startY, 256, 1).data;
+		} else {
+			data = tile.ctx.getImageData(startX, 0, 1, 256).data;
+		}
+		var isColorPassable = InfiniteMaze.viewer.isColorPassable;
+		function test(n) {
+			var p = horizontal ? [n, 0] : [0, n];
+			var i = 4 * n;
+			if (isColorPassable(data[i], data[i+1], data[i+2], data[i+3])) {
+				point = [p[0] + tile.offsetX, p[1] + tile.offsetY];
+				return true;
+			}
+		}
+		// yes! i finally used a named statement block in js!
+		search: {
+			var start = horizontal ? startX : startY;
+			var mid = 2 * Math.min(start, 256-start);
+			// this stuff is too annoying to explain.
+			for (var i = 0; i < mid; i++) {
+				if (test(start + ((i % 2) ? (i - 1) : -i) / 2)) break search;
+			}
+			if (start > 127) for (i = 256 - mid; i > 0; i--) {
+				if (test(i)) break search;
+			} else for (i = mid; i < 256; i++) {
+				if (test(i)) break search;
+			}
+		}
+		return point;
 	}
 });
 
@@ -1122,10 +1300,16 @@ function validateEmailAddress(email, isGood, isBad) {
 }
 
 // Deals with signup, login, logout, and userCtx.
-function SessionManager(userCtx) {
+function SessionManager(db, userCtx) {
 	var self = this;
 	if (userCtx) {
 		self.userCtx = userCtx;
+	}
+	
+	// after login
+	function dealWithNewUser() {
+		InfiniteMaze.headerBar.updateForUser();
+		InfiniteMaze.viewer.updateTeleporters();
 	}
 	
 	function setUserCtx(ctx) {
@@ -1138,8 +1322,7 @@ function SessionManager(userCtx) {
 			ctx = self.userCtx;
 		}
 		if (ctx.name != oldUsername) {
-			// Deal with new user
-			InfiniteMaze.headerBar.updateForUser();
+			dealWithNewUser();
 		}
 	}
 	
