@@ -234,9 +234,28 @@ var DrawHereTileBox = Classy(TileBox, {
 		button.innerHTML = "Draw";
 		button.onclick = this.onButtonClick.bind(this);
 		this.inner.appendChild(button);
+		
+		// while hovering the draw-here box, freeze the player's position
+		this.element.addEventListener("mouseover", this.freezePlayer.bind(this),
+			false);
+		
+		// when the mouse leaves this box, allow the player to move again.
+		this.element.addEventListener("mouseout", this.releasePlayer.bind(this),
+			false);
 	},
+	
 	onButtonClick: function () {
 		this.maze.enterDrawTileMode(this.tile);
+	},
+	
+	freezePlayer: function () {
+		InfiniteMaze.viewer.inViewMode = false;
+	},
+	
+	releasePlayer: function () {
+		if (!InfiniteMaze.viewer.inEditMode) {
+			InfiniteMaze.viewer.inViewMode = true;
+		}
 	}
 });
 
@@ -271,6 +290,8 @@ var DrawingTileBox = Classy(TileBox, {
 
 
 var GridMazeViewer = Classy(MazeViewer, {
+
+	inEditMode: false,
 
 	// Tile boxes show borders and information over the maze grid squares.
 	// The "draw here" tile box includes a button that the user can click to
@@ -403,7 +424,8 @@ var GridMazeViewer = Classy(MazeViewer, {
 	enterDrawTileMode: function (tile) {
 		if (this.drawingTile == tile) return;
 		this.drawingTile = tile;
-		this.isInViewMode = false;
+		this.inViewMode = false;
+		this.inEditMode = true;
 		
 		// turn off the cross-hairs cursor outside this tile.
 		removeClass(this.centerer, "in");
@@ -423,7 +445,8 @@ var GridMazeViewer = Classy(MazeViewer, {
 	exitDrawTileMode: function () {
 		if (!this.drawingTile) return;
 		this.drawingTile = null;
-		this.isInViewMode = true;
+		this.inViewMode = true;
+		this.inEditMode = false;
 		addClass(this.centerer, "in");
 	},
 	

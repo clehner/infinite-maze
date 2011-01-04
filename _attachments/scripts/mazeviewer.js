@@ -382,7 +382,7 @@ MazeViewer.prototype = {
 	tileSize: [256, 256],
 	startPos: [127, 127], // player position
 	startScrollPos: [127, 127], // viewport position
-	isInViewMode: true,
+	inViewMode: true,
 	pathColor: "#0f0",
 	loader: null, // MazeLoader, for saving and getting tiles
 	
@@ -549,11 +549,12 @@ MazeViewer.prototype = {
 	},
 	
 	onMouseMove: function (e) {
-		if (!this.isInViewMode) return;
 		if (!e.pageX && !e.pageY) return;
 		this.mouseX = e.pageX - this.offsetX;
 		this.mouseY = e.pageY - this.offsetY;
-		this.moveToPixel(this.mouseX, this.mouseY);
+		if (this.inViewMode) {
+			this.moveToPixel(this.mouseX, this.mouseY);
+		}
 	},
 	
 	onMouseDown: function (e) {
