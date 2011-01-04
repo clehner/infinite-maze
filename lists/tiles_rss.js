@@ -16,10 +16,11 @@ function(head, req) {
 		})();
 	}
 	
+	var defaultMaze = "1";
 	provides("xml", function() {
 		var mazeTitle = "The Infinite Maze";
-		var mazeId = req.query.id || "1";
-		var mazeAddr = '../' + mazeId;
+		var mazeId = req.query.id || defaultMaze;
+		var mazeAddr = '../' + (mazeId == defaultMaze ? '' : '?maze=' + mazeId);
 		send('<?xml version="1.0" encoding="utf-8"?>\n' +
 			'<feed xmlns="http://www.w3.org/2005/Atom">\n' +
 			'<title>' + mazeTitle + ' - New Tiles</title>' +
