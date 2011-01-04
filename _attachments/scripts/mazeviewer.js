@@ -739,6 +739,7 @@ var MazeLoader = Classy({
 			var src = item[1];
 			tile.loadImageSrc(src);
 		});
-		this._tileLoadingQueue = [];
+		// empty the queue
+		this.tileLoadingQueue = [];
 	}
 });
