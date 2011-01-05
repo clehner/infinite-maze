@@ -986,7 +986,7 @@ constructor: function (viewer) {
 	this.save = save;
 	
 	function discard() {
-		if (!confirm("You really want to discard your drawing?")) return;
+		if (!confirm("You really want to discard what you drew?")) return;
 		restore();
 		close();
 	}
