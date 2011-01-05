@@ -753,8 +753,19 @@ constructor: function (viewer) {
 	// entrance pixel to the tile
 	var entrance;
 	
-	// Allow edits to be undone if the user discards them.
-	var restore = function () {};
+	// Undo all edits to be undone if the user discards the edit session.
+	var restore = Function.empty;
+	
+	var lastSnapshot = Function.empty;
+	function saveForUndo() {
+		lastSnapshot = snapshot();
+	}
+	
+	function undo() {
+		var redo = snapshot();
+		lastSnapshot();
+		lastSnapshot = redo;
+	}
 	
 	// move the fake cursor on mousemove
 	function onMouseMove(e) {
@@ -764,7 +775,7 @@ constructor: function (viewer) {
 	}
 	tileBox.element.addEventListener("mousemove", onMouseMove, false);
 
-	// Mouse dragging behavior
+	// Mouse dragging, which will be attached to different tool behaviors
 	var mouseControl = new DragBehavior({
 		element: tileBox.element,
 		context: this
@@ -792,6 +803,7 @@ constructor: function (viewer) {
 	// the set of event listeners (a behavior) for the drawing tool
 	var drawingTool = {
 		onDragStart: function (e) {
+			saveForUndo();
 			this.x = e._x - .01;
 			this.y = e._y - .01;
 			onDrawDrag.call(this, e);
@@ -803,6 +815,7 @@ constructor: function (viewer) {
 	// bucket tool behavior
 	var bucketTool = {
 		onDragStart: function (e) {
+			saveForUndo();
 			// bucket flood fill
 			floodFill(tile.ctx, e._x, e._y, selectedColor, 30);
 			e.stopPropagation();
@@ -864,6 +877,8 @@ constructor: function (viewer) {
 		e.preventDefault();
 		InfiniteMaze.loginSignupWindow.show();
 	};
+	$("undo-btn").onclick = undo;
+
 	
 	// returns a point within a tile that is closest to another point
 	function nearestPointInTile(tile, adjacentPoint) {
@@ -881,7 +896,7 @@ constructor: function (viewer) {
 		entrance = nearestPointInTile(tile, adjacentPoint);
 
 		tileCoords = viewer.mazeCanvas.getTileCoords(tile);
-		restore = makeRestore();
+		restore = snapshot(true);
 
 		// Place the tile box over the tile.
 		viewer.centerer.appendChild(tileBox.element);
@@ -921,9 +936,10 @@ constructor: function (viewer) {
 	}
 	this.close = close;
 	
-	// Make a function to restore the tile to its pre-edit state.
-	function makeRestore() {
-		if (tile.isEmpty) {
+	// Make a function to restore the tile to its current state.
+	function snapshot(couldClear) {
+		// only clear if we are exiting drawing mode
+		if (couldClear && tile.isEmpty) {
 			return function () {
 				tile.clear();
 			};

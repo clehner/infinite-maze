@@ -308,13 +308,13 @@ body {
 	margin-top: 8px;
 }
 
-.picker {
+.picker, .picker-btn {
 	border: 3px solid #999;
 	background-color: black;
 	border-spacing: 1px;
 }
 
-.picker td {
+.picker td, .picker-btn {
 	font-size: 18px;
 	width: 1em;
 	height: 1em;
@@ -343,6 +343,15 @@ body {
 }
 #bucket-tool td.selected {
 	background-color: #999;
+}
+
+#undo-btn {
+	margin: 4px 5px 7px;
+	background: white url(../images/undo.gif) 50% 50% no-repeat;
+	border: 1px solid black;
+}
+#undo-btn:active {
+	background-color: #aaa;
 }
 
 /* Account Settings Window */
