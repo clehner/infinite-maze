@@ -457,6 +457,7 @@ function DragBehavior(options) {
 	
 	function onMouseDown(e) {
 		// ignore right click
+		document.addEventListener("contextmenu", onMouseUp, false);
 		calculateOffsets();
 		function onMouseMove(e) {
 			correctEvent(e);
