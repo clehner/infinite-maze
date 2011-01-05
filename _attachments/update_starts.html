@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+	<title>Update Start Points</title>
+	<meta charset="utf-8">
+	<link rel="alternate" type="application/atom+xml" href="claims.xml">
+	<style type="text/css">
+	</style>
+	<script src="scripts/couchdb.js"></script>
+</head>
+<body>
+<h1>Update start tiles</h1>
+<form id="form">
+<p>Maze id: <input id="maze_id" value="1"></p>
+<p><button type="submit">Update</button></p>
+<pre id="result"></pre>
+</form>
+<script type="text/javascript">
+Couch.urlPrefix = "./";
+var db = Couch.db("db");
+function $(id) { return document.getElementById(id); }
+$("form").onsubmit = function (e) {
+	e.preventDefault();
+	var mazeId = $("maze_id").value;
+	
+	var tiles;
+	db.list("maze/start_points", "tile_neighborhoods", {
+		group_level: 3,
+		startkey: [mazeId],
+		endkey: [mazeId, {}],
+		success: function (t) {
+			tiles = t;
+			saveDoc();
+		}
+	});
+	
+	var doc;
+	db.openDoc("start-tiles:" + mazeId, {
+		success: function (d) {
+			doc = d
+			saveDoc();
+		}
+	});
+	
+	function saveDoc() {
+		if (!tiles || !doc) return;
+		doc.tiles = tiles;
+		db.saveDoc(doc, {success: function () {
+			$("result").innerHTML = "Success.\n" + JSON.stringify(tiles);
+		}});
+	}
+};
+
+</script>
+</body>
+</html>
