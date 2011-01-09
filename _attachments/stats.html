@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+	<title>The Infinite Maze - Statistics</title>
+	<meta charset="utf-8">
+	<link rel="alternate" type="application/atom+xml" href="claims.xml">
+	<style type="text/css">
+		body {
+			font-family: Arial, sans;
+		}
+		#stats p {
+			white-space: pre;
+		}
+		#stats em {
+			font-weight: bold;
+			font-style: normal;
+		}
+	</style>
+	<script src="scripts/couchdb.js"></script>
+</head>
+<body>
+	<h1>Maze Statistics</h1>
+	<div id="stats">
+<p>Tiles: <em id="tiles">0</em>
+Width: <em id="tiles-width">0</em>
+Height: <em id="tiles-height">0</em></p>
+
+<p>Area: <em id="area">0</em> ft&sup2;
+Width: <em id="physical-width">0</em> ft
+Height: <em id="physical-height">0</em> ft</p>
+	</div>
+	<pre id="result"></pre>
+	<script type="text/javascript">
+		function $(id) { return document.getElementById(id); }
+		
+		// Physical tile size in feet
+		// tile pixels / ppi / ft
+		var aspect = 256/113/12;
+		
+		function render(stats) {
+			$("tiles").innerHTML = stats.area;
+			$("tiles-width").innerHTML = stats.width;
+			$("tiles-height").innerHTML = stats.height;
+			$("area").innerHTML = (stats.area * aspect * aspect).toFixed(2);
+			$("physical-width").innerHTML = (stats.width * aspect).toFixed(2);
+			$("physical-height").innerHTML = (stats.height * aspect).toFixed(2);
+		}
+		
+		Couch.urlPrefix = "./";
+		var db = Couch.db("db");
+		var mazeId = "1";
+		db.view("maze/maze_stats", {
+			group: true,
+			key: mazeId,
+			success: function (resp) {
+				render(resp.rows[0].value);
+			}
+		});
+	</script>
+</body>
+</html>
