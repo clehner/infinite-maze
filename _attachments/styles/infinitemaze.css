@@ -381,6 +381,12 @@ body {
 	border: 1px solid #999;
 	z-index: 6;
 	margin: 3px;
+	        box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.5);
+	   -moz-box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.5);
+	-webkit-box-shadow: 6px 6px 8px rgba(0, 0, 0, 0.5);
+}
+#you-are-here a {
+	color: blue;
 }
 
 /* Teleporter */
