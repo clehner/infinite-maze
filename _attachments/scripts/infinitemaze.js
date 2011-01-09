@@ -83,6 +83,7 @@ var InfoTileBox = Classy(TileBox, {
 	nameText: null,
 	editLink: null,
 	claimLink: null,
+	deleteLink: null,
 	
 	constructor: function () {
 		TileBox.apply(this, arguments);
@@ -125,9 +126,16 @@ var InfoTileBox = Classy(TileBox, {
 		var fixLink = this.fixLink = document.createElement("a");
 		fixLink.href = "";
 		fixLink.onclick = this.onFixLinkClick.bind(this);
-		fixLink.innerHTML = "Fix";
+		fixLink.innerHTML = "F";
 		infoRight.appendChild(document.createTextNode(" "));
 		infoRight.appendChild(fixLink);
+		
+		var deleteLink = this.deleteLink = document.createElement("a");
+		deleteLink.href = "";
+		deleteLink.onclick = this.onDeleteLinkClick.bind(this);
+		deleteLink.innerHTML = "D";
+		infoRight.appendChild(document.createTextNode(" "));
+		infoRight.appendChild(deleteLink);
 	},
 	
 	coverTile: function (tile) {
@@ -144,10 +152,12 @@ var InfoTileBox = Classy(TileBox, {
 		var editable = loader.canEditTile(tile);
 		var claimable = loader.canClaimTile(tile);
 		var fixable = loader.canFixTile(tile);
-		var anything = editable || claimable || fixable;
+		var deletable = loader.canFixTile(tile);
+		var anything = editable || claimable || fixable || deletable;
 		toggleClass(this.editLink, "hidden", !editable);
 		toggleClass(this.claimLink, "hidden", !claimable);
 		toggleClass(this.fixLink, "hidden", !fixable);
+		toggleClass(this.deleteLink, "hidden", !deletable);
 		toggleClass(this.infoRight, "hidden", !anything);
 	},
 	
@@ -219,6 +229,13 @@ var InfoTileBox = Classy(TileBox, {
 			// tell the loader to set this tile's start point to that location.
 			InfiniteMaze.loader.setTileStart(tile, point);
 		}, false);
+	},
+	
+	onDeleteLinkClick: function (e) {
+		e.preventDefault();
+		if (confirm("Really delete this tile?")) {
+			InfiniteMaze.loader.deleteTile(this.tile);
+		}
 	}
 });
 
@@ -1021,11 +1038,15 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		promise.onChange(function (resp) {
 			self.update_seq = resp.last_seq;
 			resp.results.forEach(function (change) {
+				// a new, updated, or deleted tile doc
 				var doc = change.doc;
-				// new tile doc
 				var x = doc.location[0];
 				var y = doc.location[1];
+				//console.log(doc);
 				var tile = InfiniteMaze.viewer.mazeCanvas.getTile(x, y);
+				if (doc._deleted) {
+					tile.clear();
+				}
 				(tilesInfo[x] || (tilesInfo[x] = {}))[y] = {
 					// imitation of maze_and_tiles view / maze list
 					id: doc._id,
@@ -1137,6 +1158,19 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		}.bind(this));
 	},
 	
+	deleteTile: function (tile) {
+		this.getTileDoc(tile, function (doc) {
+			this.db.removeDoc(doc, {
+				success: function () {
+					tile.clear();
+				},
+				error: function (status, error, reason) {
+					alert("Error. " + reason);
+				}
+			});
+		}.bind(this));
+	},
+	
 	isTileMine: function (tile) {
 		var user = InfiniteMaze.getUsername();
 		return user && (user == tile.info.creator);
@@ -1160,6 +1194,10 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	canTeleportToTile: function (tile) {
 		var isStartTile = tile.offsetX == 0 && tile.offsetY == 0;
 		return isStartTile || this.isTileMine(tile); //canEditTile(tile);
+	},
+	
+	canDeleteTile: function (tile) {
+		return InfiniteMaze.sessionManager.isAdmin();
 	}
 });
 
