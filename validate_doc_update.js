@@ -132,7 +132,11 @@ function (doc, oldDoc, userCtx) {
 				"Tile must have an attachment called 'tile.png'.",
 
 			typeof doc.created_at == "number",
-				"created_at must be a unix timestamp."
+				"created_at must be a unix timestamp.",
+				
+			isAdmin || (!doc.emailed_neighbors ==
+				!(oldDoc && oldDoc.emailed_neighbors)),
+				"Only admin can say whether emails were sent."
 		]);
 		validate([
 			doc._attachments['tile.png'].content_type == 'image/png',
@@ -163,7 +167,12 @@ function (doc, oldDoc, userCtx) {
 				"User info must have a name.",
 			
 			typeof doc.signup == "number",
-				"User info must have a signup timestamp."
+				"User info must have a signup timestamp.",
+				
+			isAdmin || (!doc.emailed_welcome ==
+				!(oldDoc && oldDoc.emailed_welcome)),
+				"Only admin can say whether emails were sent."
+			
 		]);
 	} else if (type == "start-tiles") {
 		// List of start tiles
