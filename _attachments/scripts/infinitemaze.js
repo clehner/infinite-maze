@@ -1149,9 +1149,8 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	
 	canClaimTile: function (tile) {
 		var hasCreator = tile.info.creator;
-		return !hasCreator && !tile.claimSubmitted;
-		//var loggedIn = !!InfiniteMaze.getUsername();
-		//return loggedIn && !hasCreator;
+		var loggedIn = !!InfiniteMaze.getUsername();
+		return loggedIn && !hasCreator && !tile.claimSubmitted;
 	},
 	
 	canFixTile: function (tile) {
@@ -1586,7 +1585,7 @@ constructor: function (viewer) {
 		var direction = Math.round(angle / (2 * Math.PI) * 8 + 4);
 		var arrow = arrows[direction];
 		var degree = Math.pow(distance(x, y), 1/2) / 30;
-		var preposition = prepositions[~~Math.min(degree, prepositions.length)];
+		var preposition = prepositions[Math.min(~~degree, prepositions.length)];
 		linkText.nodeValue = "You are " + preposition + " here " + arrow;
 	}
 	updateText(0, 0);
@@ -1735,7 +1734,7 @@ InfiniteMaze.init3 = function (info, cb) {
 	// If we have loaded a random start tile, we must teleport to it.
 	var coords = this.startTileCoords;
 	if (coords) {
-		var startTile = viewer.mazeCanvas.getTile(coords[0], coords[1]);
+		var startTile = viewer.mazeCanvas.getTile(coords);
 		startTile.onLoad(function () {
 			var teleporter = startTile.teleporter;
 			if (teleporter) {

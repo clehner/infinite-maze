@@ -424,7 +424,7 @@ function toggleClass(element, className, on) {
 		on = hasClass(element, className);
 	}
 	if (!on) {
-		removeClass(element, className)
+		removeClass(element, className);
 	} else {
 		addClass(element, className);
 	}
@@ -658,3 +658,7 @@ Function.prototype.throttled = function (threshold) {
 function distance(x, y) {
 	return Math.sqrt(x*x + y*y);
 }
+
+String.prototype.contains = function (str) {
+	return this.indexOf(str) != -1;
+};

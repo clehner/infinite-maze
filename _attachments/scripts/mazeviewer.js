@@ -183,6 +183,11 @@ TiledCanvas.prototype = {
 	
 	// tile coords, not pixels
 	getTile: function (x, y) {
+		if (y == null) {
+			// allow array as single argument alternative
+			y = x[1];
+			x = x[0];
+		}
 		var row = this.tiles[y] || (this.tiles[y] = {});
 		if (x in row) {
 			return row[x];
@@ -628,10 +633,15 @@ MazeViewer.prototype = {
 		this._onMove(x, y);
 	},
 	
+	findRoute: function (xFrom, yFrom, xTo, yTo, correctionAmount) {
+		return findRoute(point(xFrom, yFrom), point(xTo, yTo),
+			this.possibleDirections, correctionAmount);
+	},
+	
 	// move toward a pixel
 	moveToPixel: function (xTo, yTo) {
-		var route = findRoute(point(this.x, this.y), point(xTo, yTo),
-			this.possibleDirections, this.correctionAmount);
+		var route = this.findRoute(this.x, this.y, xTo, yTo,
+			this.correctionAmount);
 		this.setPosition(route.point.x, route.point.y);
 		while (route) {
 			var prev = route.from;
