@@ -198,9 +198,13 @@ TiledCanvas.prototype = {
 		return tile;
 	},
 	
-	drawLine: function (x0, y0, x1, y1, color) {
+	drawLine: function (from, to, color) {
 		var w = this.tileWidth;
 		var h = this.tileHeight;
+		var x0 = from[0];
+		var y0 = from[1];
+		var x1 = to[0];
+		var y1 = to[1];
 		var self = this;
 		line(x0 / w, y0 / h, x1 / w, y1 / h, function (x, y) {
 			self.getTile(x, y).drawLine(x0, y0, x1, y1, color);
@@ -325,6 +329,11 @@ function MazeViewer(opt) {
 	this.centerer = document.createElement("div");
 	this.centerer.className = "layer centerer";
 	this.element.appendChild(this.centerer);
+	
+	this.pathfinder = new Pathfinder({
+		possibleDirections: this.possibleDirections,
+		maxExtraLength: this.correctionAmount
+	});
 	
 	var options = opt || {};
 	if (options.loader) {
@@ -633,21 +642,14 @@ MazeViewer.prototype = {
 		this._onMove(x, y);
 	},
 	
-	findRoute: function (xFrom, yFrom, xTo, yTo, correctionAmount) {
-		return findRoute(point(xFrom, yFrom), point(xTo, yTo),
-			this.possibleDirections, correctionAmount);
-	},
-	
 	// move toward a pixel
 	moveToPixel: function (xTo, yTo) {
-		var route = this.findRoute(this.x, this.y, xTo, yTo,
-			this.correctionAmount);
-		this.setPosition(route.point.x, route.point.y);
+		var route = this.pathfinder.findRoute([this.x, this.y], [xTo, yTo]);
+		this.setPosition(route.point[0], route.point[1]);
 		while (route) {
 			var prev = route.from;
 			if (prev) {
-				this.overlay.drawLine(prev.point.x, prev.point.y,
-					route.point.x, route.point.y, this.pathColor);
+				this.overlay.drawLine(prev.point, route.point, this.pathColor);
 			}
 			route = prev;
 		}
@@ -663,15 +665,15 @@ MazeViewer.prototype = {
 
 	// get passable neighboring points
 	possibleDirections: function (from) {
-		var x = from.x;
-		var y = from.y;
+		var x = from[0];
+		var y = from[1];
 		var data = this.mazeCanvas.getImageData(x - 1, y - 1, 3, 3).data;
 
 		var isColorPassable = this.isColorPassable;
 		function pointIfPassable(dx, dy) {
 			var i = 4 * (dy * 3 + dx);
 			if (isColorPassable(data[i++], data[i++], data[i++], data[i])) {
-				return point(x + dx - 1, y + dy - 1);
+				return [x + dx - 1, y + dy - 1];
 			}
 		}
 		
