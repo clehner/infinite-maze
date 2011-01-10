@@ -296,12 +296,22 @@ var DrawingTileBox = Classy(TileBox, {
 		var cursor = this.cursor = document.createElement("div");
 		cursor.id = "drawing-cursor";
 		
-		this.element.addEventListener("mouseover", function () {
-			document.body.appendChild(cursor);
-		}, false);
-		this.element.addEventListener("mouseout", function () {
-			document.body.removeChild(cursor);
-		}, false);
+		this.element.addEventListener("mouseover", this.addCursor.bind(this),
+			false);
+		this.element.addEventListener("mouseout", this.removeCursor.bind(this),
+			false);
+	},
+	addCursor: function () {
+		document.body.appendChild(this.cursor);
+	},
+	removeCursor: function () {
+		if (this.cursor.parentNode == document.body) {
+			document.body.removeChild(this.cursor);
+		}
+	},
+	hide: function () {
+		this.removeCursor();
+		TileBox.prototype.hide.call(this);
 	}
 });
 
