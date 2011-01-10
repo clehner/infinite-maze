@@ -583,7 +583,7 @@ var Teleporter = Classy(Box, {
 		var viewer = InfiniteMaze.viewer;
 		var dest = this.coords;
 		// If the point has no passable neighbors, it is a dead end,
-		if (viewer.possibleDirections(point(dest[0], dest[1])).length == 0) {
+		if (viewer.possibleDirections(dest).length == 0) {
 			// and we must find a nearby passable point instead.
 			// This way we avoid teleporting into oblivion.
 			dest = this.findNearestPassablePointOnTileEdge();
@@ -777,14 +777,18 @@ constructor: function (viewer) {
 	var cursor = tileBox.cursor;
 	var cursorStyle = cursor.style;
 	
-	// entrance pixel to the tile
+	// entrance pixel, relative to tile
 	var entrance;
+	var dirty;
+	
+	var tileSize;
 	
 	// Undo all edits to be undone if the user discards the edit session.
 	var restore = Function.empty;
 	
 	var lastSnapshot = Function.empty;
 	function saveForUndo() {
+		dirty = true;
 		lastSnapshot = snapshot();
 	}
 	
@@ -908,19 +912,28 @@ constructor: function (viewer) {
 
 	
 	// returns a point within a tile that is closest to another point
-	function nearestPointInTile(tile, adjacentPoint) {
+	function nearestPointInTile(point) {
 		var el = tile.element;
 		return [
-			Math.max(tile.offsetX,
-				Math.min(tile.offsetX + el.width, adjacentPoint[0])),
-			Math.max(tile.offsetY,
-				Math.min(tile.offsetY + el.height, adjacentPoint[1]))
+			Math.max(tile.offsetX, Math.min(tile.offsetX + el.width, point[0])),
+			Math.max(tile.offsetY, Math.min(tile.offsetY + el.height, point[1]))
 		];
 	}
 
-	this.openForTile = function (t, adjacentPoint) {
+	this.openForTile = function (t, playerPos) {
 		tile = t;
-		entrance = nearestPointInTile(tile, adjacentPoint);
+		if (tile.info.start) {
+			// the tile already has a start point
+			entrance = [
+				tile.info.start[0] + tile.offsetX,
+				tile.info.start[1] + tile.offsetY
+			];
+		} else {
+			// the player's position becomes the tile's start point.
+			entrance = nearestPointInTile(playerPos);
+		}
+		tileSize = [tile.element.width, tile.element.height];
+		dirty = false;
 
 		tileCoords = viewer.mazeCanvas.getTileCoords(tile);
 		restore = snapshot(true);
@@ -950,8 +963,7 @@ constructor: function (viewer) {
 	};
 	
 	function close() {
-		// remove the tile box
-		viewer.centerer.removeChild(tileBox.element);
+		tileBox.hide();
 
 		Transition(toolboxElement, {bottom: "-120px"}, 500);
 		Transition(viewer.element, {bottom: "0px"}, 500, function () {
@@ -980,9 +992,117 @@ constructor: function (viewer) {
 		}
 	}
 	
-	function checkRules() {
-		// TODO
+	// for rule checking path finding
+	
+	// pathfinder to tile edge.
+	var pathfinder = new Pathfinder();
+	
+	pathfinder.samePoint = function (point, line) {
+		var x = point[0];
+		var y = point[1];
+		return line.vertical ?
+			x == line.x && y > line.y && y < line.y + line.length:
+			y == line.y && x > line.x && x < line.x + line.length;
+	};
+	
+	pathfinder.estimatedDistance = function (point, line) {
+		// switch coords for calculation if not vertical
+		var x = point[1 - line.vertical];
+		var y = point[0 + line.vertical];
+		if (y < line.y)
+			return distance(x - line.x, y - line.y)
+		else if (y > line.y + length)
+			return distance(x - line.x, y - line.y - length)
+		else
+			return Math.abs(x - line.x);
+	};
+	
+	pathfinder.possibleDirections = function (point) {
+		return InfiniteMaze.viewer.possibleDirections(point).filter(
+			pointInTile);
+	};
+	
+	function pointInTile(point) {
+		// leave a margin so that the edges of adjacent cells are
+		// taken into account.
+		return point[0] >= tile.offsetX - 1 &&
+			point[1] >= tile.offsetY - 1 &&
+			point[0] <= tile.offsetX + tileSize[0] + 1 &&
+			point[1] <= tile.offsetY + tileSize[1] + 1;
+	}
+	
+	// Get a line segment corresponding to the edge of our tile that is next
+	// to a given adjacent tile.
+	function tileEdge(adjacentTile) {
+		var x0 = tile.offsetX;
+		var y0 = tile.offsetY;
+		var x1 = adjacentTile.offsetX;
+		var y1 = adjacentTile.offsetY;
+		var vertical = y1 == y0;
+		return {
+			x: x0 + (x1 > x0 ? 255 : 0),
+			y: y0 + (y1 > y0 ? 255 : 0),
+			vertical: vertical,
+			length: vertical ? x1 - x0 : y1 - y0
+		};
+	}
+
+	// can our tile connect to a tile
+	function tileIsAccessible(adjacentTile) {
+		// get the line of cells on the edge nearest our tile.
+		// return whether any of the pixels in the line are passable.
 		return true;
+	}
+	
+	function connectsToTile(adjacentTile) {
+		var edge = tileEdge(adjacentTile);
+		return pathfinder.routeExists(entrance, edge); 
+	}
+	
+	function connectsToPathInTile(adjacentTile) {
+		// todo: acknowledge paths
+		var edge = tileEdge(adjacentTile);
+		return pathfinder.routeExists(entrance, edge); 
+	}
+	
+	// check if the tile drawing follows the rules.
+	// returns false if it is ok, otherwise returns an error string.
+	function checkRules() {
+		
+		// If the tile under edit has more than one empty adjacent tile,
+		// it must connect to at least one of them.
+		var mazeCanvas = InfiniteMaze.viewer.mazeCanvas;
+		var adjacentTiles = [[0, 1], [1, 0], [0, -1], [-1, 0]].map(
+			function (point) {
+				return mazeCanvas.getTile(
+					tileCoords[0] + point[0],
+					tileCoords[1] + point[1]
+				);
+			}
+		);
+		var emptyAdjacentTiles = adjacentTiles.filter(
+			function (tile) { return tile.isEmpty; }
+		);
+		var accessibleAdjacentTiles = adjacentTiles.filter(tileIsAccessible);
+		
+		if (emptyAdjacentTiles.length >= 2) {
+			if (emptyAdjacentTiles.some(connectsToTile)) {
+				return false; // success
+			} else {
+				return "You must connect your drawing to one of the empty tiles next to it.";
+			}
+		}
+		// alternate situation: < 2 empty adjacent tiles.
+		// If the tile can connect to non-empty adjacent tiles,
+		// it must to at least 1.
+		if (accessibleAdjacentTiles.length) {
+			if (accessibleAdjacentTiles.some(connectsToPathInTile)) {
+				return false;
+			} else {
+				return "You must connect your drawing to some of the tiles next to your tile.";
+			}
+		}
+		return false;
 	}
 	
 	function save() {
@@ -990,11 +1110,13 @@ constructor: function (viewer) {
 			alert("You must be logged in to save your drawing.");
 			return;
 		}
-		if (!confirm("Are you sure you are ready to save?")) return;
-		if (!checkRules()) {
-			alert("You haven't followed all the rules! Fix your drawing and try again.");
+		var ruleBroken = checkRules();
+		if (ruleBroken) {
+			alert(ruleBroken);
 			return;
 		}
+		else return; // debugging
+		
 		InfiniteMaze.loader.saveTileDrawing(tile, tileCoords,
 			function onError(status, error, reason) {
 				alert("There was an error: " + reason);
@@ -1013,8 +1135,10 @@ constructor: function (viewer) {
 	this.save = save;
 	
 	function discard() {
-		if (!confirm("You really want to discard what you drew?")) return;
-		restore();
+		if (dirty) {
+			if (!confirm("You really want to discard what you drew?")) return;
+			restore();
+		}
 		close();
 	}
 	this.discard = discard;
