@@ -217,7 +217,7 @@ body {
 	border: 1px dotted rgba(200, 200, 200, 0.6);
 }
 .tile-box.drawing:hover {
-	border: 1px dotted rgba(200, 200, 200, 0.18);
+	border: 1px dotted rgba(200, 200, 200, 0.3);
 }
 
 #drawing-cursor {
@@ -270,18 +270,19 @@ body {
 
 #editor-toolbox {
 	top: auto;
-	height: 108px; /* 120 total */
+	height: 93px; /* 105 total */
 	background-color: #ccc;
 	border-top: 2px solid black;
 	padding: 5px;
 	z-index: 10;
+	text-align: center;
 }
 
-#rules {
+/*#rules {
 	width: 30%;
 	height: 100%;
 	float: left;
-	/*font-size: 16px;*/
+	/ *font-size: 16px;* /
 	border-right: 1px solid #888;
 	padding-right: 4px;
 	margin-right: 4px;
@@ -289,10 +290,10 @@ body {
 
 #rules h3 {
 	margin: .5em 0;
-}
+}*/
 
 #toolbox-palettes {
-	float: left;
+	/*float: left;*/
 }
 
 .toolbox-palette {
@@ -306,6 +307,16 @@ body {
 
 #save-btns {
 	margin-top: 8px;
+}
+
+#save-btn {
+	background-color: #6f0;
+	border-color: #693;
+	border-width: 1px;
+	font-size: 75%;
+	-webkit-border-radius: 8px;
+	   -moz-border-radius: 8px;
+	        border-radius: 8px;
 }
 
 .picker, .picker-btn {

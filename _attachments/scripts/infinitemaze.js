@@ -952,11 +952,10 @@ constructor: function (viewer) {
 			true // slowly
 		);
 		
-		toolboxElement.style.bottom = "-120px";
+		toolboxElement.style.bottom = "-105px";
 		removeClass(toolboxElement, "hidden");
 		setTimeout(function() {
-			Transition(toolboxElement, {bottom: "0px"}, 500);
-			Transition(viewer.element, {bottom: "120px"}, 500, function () {
+			Transition(toolboxElement, {bottom: "0px"}, 500, function () {
 				viewer.updateViewport();
 			});
 		}, 0);
@@ -965,8 +964,7 @@ constructor: function (viewer) {
 	function close() {
 		tileBox.hide();
 
-		Transition(toolboxElement, {bottom: "-120px"}, 500);
-		Transition(viewer.element, {bottom: "0px"}, 500, function () {
+		Transition(toolboxElement, {bottom: "-105px"}, 500, function () {
 			addClass(toolboxElement, "hidden");
 			viewer.updateViewport();
 		});
