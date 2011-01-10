@@ -1719,6 +1719,9 @@ constructor: function () {
 InfiniteMaze.init = function (cb) {
 	Couch.urlPrefix = ".";
 	this.db = Couch.db("db");
+	if (!location.pathname.contains("/_attachments/")) {
+		Couch.urlPrefix = "";
+	}
 	
 	var defaultMazeId = "1";
 	this.mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
