@@ -1,6 +1,5 @@
 Make the account settings window work.
 Make tiled layered canvas.
 Add a license to the code.
-Check maze tiles for following rules.
 When in edit mode, the tile is temporarily locked from other people editing it.
 Real time broadcasting of people's locations in the maze, with their username.
