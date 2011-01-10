@@ -100,6 +100,27 @@ function Scroller(options) {
 	}
 	reset();
 	setTimeout(reset, 1);
+	
+	var friction = 15;
+	var f = 1 - 1 / friction;
+	var inertiaTimer;
+	function _inertialScroll(dx, dy) {
+		if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+			move(dx, dy);
+			inertiaTimer = setTimeout(function () {
+				_inertialScroll(dx * f, dy * f);
+			}, 10);
+		}
+	}
+	function inertialScroll(dx, dy, dt) {
+		if (inertiaTimer) {
+			clearTimeout(inertiaTimer);
+		}
+		var hold = 10 / (dt);
+		if (hold > 0 && hold <= 1) {
+			_inertialScroll(dx * hold, dy * hold);
+		}
+	}
 
 	scroller.addEventListener("scroll", function (e) {
 		if (selfScroll) return;
@@ -117,17 +138,23 @@ function Scroller(options) {
 		outer.addEventListener("mousedown", function (e) {
 			var prevX = e.pageX;
 			var prevY = e.pageY;
+			var prevT = Date.now();
+			var dx, dy;
 			function onMouseMove(e) {
-				var dx = e.pageX - prevX;
+				dx = e.pageX - prevX;
 				prevX = e.pageX;
-				var dy = e.pageY - prevY;
+				dy = e.pageY - prevY;
 				prevY = e.pageY;
+				prevT = Date.now();
 				move(dx, dy, e);
 			}
 			function onMouseUp(e) {
 				document.removeEventListener("mouseup", onMouseUp, false);
 				document.removeEventListener("mousemove", onMouseMove, false);
 				outer.removeEventListener("contextmenu", onMouseUp, false);
+				// dt only matters for inertial scroll
+				var dt = Date.now() - prevT;
+				inertialScroll(dx, dy, dt);
 			}
 			document.addEventListener("mouseup", onMouseUp, false);
 			document.addEventListener("mousemove", onMouseMove, false);
