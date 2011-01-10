@@ -105,7 +105,7 @@ function Scroller(options) {
 	var f = 1 - 1 / friction;
 	var inertiaTimer;
 	function _inertialScroll(dx, dy) {
-		if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+		if (Math.abs(dx) > 0.3 || Math.abs(dy) > 0.3) {
 			move(dx, dy);
 			inertiaTimer = setTimeout(function () {
 				_inertialScroll(dx * f, dy * f);
