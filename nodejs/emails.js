@@ -122,13 +122,14 @@ function sendNewTileEmail(tile, username, email) {
 	sys.puts("Sending new tile email to " + username + (debug ? " (debug)" : "")
 		+ ": " + JSON.stringify(tile));
 	var link = siteRoot + '#' + tile.location.join(',');
+	var creator = tile.creator ? '"' + tile.creator + '"' : 'Someone';
 	mail.message({
 		from: sender,
 		to: '"' + username + '" <' + (debugAddress || email) + '>',
 		subject: 'New maze drawing',
 		'Content-Type': 'text/html'
 	})
-	.body('Hi ' + username + ',<br><br>"' + tile.creator + '" drew something next to one of your drawings in the maze.<br><br><a href="' + link + '">See what they drew.</a><br><br>-TheInfiniteMaze.com')
+	.body('Hi ' + username + ',<br><br>' + creator + ' drew something next to one of your drawings in the maze.<br><br><a href="' + link + '">See what they drew.</a><br><br>-TheInfiniteMaze.com')
 	.send(function (er) {
 		if (er) {
 			sys.debug('Error on tile to '+username+': '+er);
