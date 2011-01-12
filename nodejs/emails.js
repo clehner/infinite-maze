@@ -111,7 +111,7 @@ function sendNewUserEmail(user) {
 	.body('Welcome to The Infinite Maze, the collaborative maze drawing site.<br><br>You signed up with the username "' + name + '".<br><br>Have fun!<br><br><a href="' + siteRoot + '">www.theinfinitemaze.com<br><br><img src="' + siteRoot + 'images/welcome-email-logo.png" alt="TheInfiniteMaze.com"></a>')
 	.send(function (er) {
 		if (er) {
-			sys.debug('Error to '+username+': '+er);
+			sys.debug('Error to '+name+': '+er);
 			throw er;
 		}
 		sys.debug('Sent!');
