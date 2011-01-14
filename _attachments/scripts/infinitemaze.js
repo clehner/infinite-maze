@@ -902,7 +902,8 @@ constructor: function (viewer) {
 	sizePicker.extend($("bucket-tool"), [bucketTool]);
 	
 	// Init buttons.
-	$("save-btn").onclick = save;
+	var saveButton = $("save-btn");
+	saveButton.onclick = save;
 	$("discard-btn").onclick = discard;
 	$("login-signup-link").onclick = function (e) {
 		e.preventDefault();
@@ -1103,23 +1104,41 @@ constructor: function (viewer) {
 		return false;
 	}
 	
+	var loader = new Loader($("save-loader"));
+	loader.start = function () {
+		Loader.prototype.start.call(this);
+		saveButton.disabled = "disabled";
+	};
+	loader.stop = function () {
+		Loader.prototype.stop.call(this);
+		saveButton.disabled = "";
+	};
+	
 	function save() {
 		if (!InfiniteMaze.getUsername()) {
 			alert("You must be logged in to save your drawing.");
 			return;
 		}
-		var ruleBroken = checkRules();
-		if (ruleBroken) {
-			alert(ruleBroken);
-			return;
-		}
-		else return; // debugging
-		
+		loader.start();
+		setTimeout(function () {
+			var ruleBroken = checkRules();
+			if (ruleBroken) {
+				loader.stop();
+				alert(ruleBroken);
+			} else {
+				//return setTimeout(save2, 100);
+				save2();
+			}
+		}, 1);
+	}
+	function save2() {
 		InfiniteMaze.loader.saveTileDrawing(tile, tileCoords,
 			function onError(status, error, reason) {
 				alert("There was an error: " + reason);
+				loader.stop();
 			},
 			function success() {
+				loader.stop();
 				close();
 				// show a help window if it is the user's first drawing
 				var firstDrawing = !InfiniteMaze.prefs.get("first-drawing");
