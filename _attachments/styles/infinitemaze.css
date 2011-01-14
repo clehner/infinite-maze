@@ -222,6 +222,19 @@ body {
 	color: #4d4; /*#00b*/
 }
 
+.tile-box.draw-here button {
+	background-color: #6f0;
+	border: 1px solid #582;
+	color: #030;
+	font-size: 1.8em;
+	padding: 6px;
+	cursor: pointer;
+	        border-radius: 10px;
+	   -moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	outline: none;
+}
+
 .tile-box.drawing {
 	cursor: url(../images/blank.cur), none;
 	border: 1px dotted rgba(200, 200, 200, 0.6);
@@ -323,10 +336,15 @@ body {
 	background-color: #6f0;
 	border-color: #693;
 	border-width: 1px;
-	font-size: 75%;
+	font-size: 1em;
 	-webkit-border-radius: 8px;
 	   -moz-border-radius: 8px;
 	        border-radius: 8px;
+}
+#save-btn:disabled {
+	border-color: #786;
+	background-color: #9C8;
+	color: #363;
 }
 
 .picker, .picker-btn {

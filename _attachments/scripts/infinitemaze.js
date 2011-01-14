@@ -193,7 +193,7 @@ var InfoTileBox = Classy(TileBox, {
 			if (confirm("Did you draw this tile?")) {
 				InfiniteMaze.claimer.claimTile(this.tile);
 				this.tile.claimSubmitted = true;
-				alert("Thank you. Your claim has been submitted.");
+				alert("Thank you. Your claim has been submitted for approval.");
 			}
 		} else {
 			if (confirm("Did you draw this tile? Log in to claim it.")) {
@@ -244,11 +244,13 @@ var DrawHereTileBox = Classy(TileBox, {
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "draw-here");
+		/*
 		this.inner.innerHTML =
 			"<p>Now that you have made it to this square, " +
 			"you can draw in it!</p>";
+		*/
 		var button = document.createElement("button");
-		button.innerHTML = "Draw";
+		button.innerHTML = "Draw Here";
 		button.onclick = this.onButtonClick.bind(this);
 		this.inner.appendChild(button);
 		
@@ -1067,6 +1069,7 @@ constructor: function (viewer) {
 	// check if the tile drawing follows the rules.
 	// returns false if it is ok, otherwise returns an error string.
 	function checkRules() {
+		//return false;
 		
 		// If the tile under edit has more than one empty adjacent tile,
 		// it must connect to at least one of them.
@@ -1915,6 +1918,7 @@ InfiniteMaze.init3 = function (info, cb) {
 	var update_seq = info.update_seq;
 	
 	this.sessionManager = new SessionManager(this.db, userCtx);
+	//this.minimap = 
 	this.loader = new InfiniteMazeLoader(this.db, mazeDoc, tiles, update_seq);
 	var viewer = this.viewer = new GridMazeViewer({
 		loader: this.loader,
