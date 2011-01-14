@@ -67,6 +67,7 @@ body {
 }
 .window h2 {
 	font-size: 125%;
+	text-align: center;
 }
 .window h1:first-child, .window h2:first-child {
 	margin-top: 0;
@@ -178,16 +179,25 @@ body {
 	left: 50%;
 	position: absolute;
 }
+
 .error {
 	color: #c40;
 }
 .loading {
 	background-image: url(../images/loading.gif);
 	background-repeat: no-repeat;
+}
+.window.loading {
 	background-position: 98% 4%;
 }
 #dummy-frame {
 	display: none;
+}
+
+.loader {
+	width: 16px;
+	height: 16px;
+	display: inline-block;
 }
 
 /* Tile boxes */

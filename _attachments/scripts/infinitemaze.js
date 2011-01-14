@@ -1386,11 +1386,26 @@ var HeaderBar = function () {
 	this.updateForUser = updateForUser;
 };
 
-var AccountSettingsWindow = Classy(Box, {
+// a dialog overlay with a close button.
+var Dialog = Classy(Box, {
+	constructor: function () {
+		Box.call(this);
+		
+		// add the close button.
+		var closeButton = document.createElement("div");
+		closeButton.className = "close";
+		closeButton.appendChild(document.createTextNode("X")); //×
+		closeButton.onclick = this.hide.bind(this);
+		this.element.appendChild(closeButton);
+	}
+});
+Dialog.ificate = Box.ificate;
+
+var AccountSettingsWindow = Classy(Dialog, {
 constructor: function () {
 	var self = this;
 	var container = $("settings-window");
-	Box.ificate(this, container);
+	Dialog.ificate(this, container);
 	
 	var userDoc;
 	
@@ -1499,10 +1514,10 @@ constructor: function () {
 }
 });
 
-var LoginSignupWindow = Classy(Box, {
+var LoginSignupWindow = Classy(Dialog, {
 constructor: function () {
 	var container = $("login-signup-window");
-	Box.ificate(this, container);
+	Dialog.ificate(this, container);
 	
 	this.show = function () {
 		Box.prototype.show.call(this);
@@ -1834,24 +1849,10 @@ constructor: function (viewer) {
 }
 });
 
-var ClosableDialog = Classy(Box, {
-	constructor: function () {
-		Box.call(this);
-		this.addCloseButton();
-	},
-	addCloseButton: function () {
-		var closeButton = document.createElement("div");
-		closeButton.className = "close";
-		closeButton.appendChild(document.createTextNode("X")); //×
-		closeButton.onclick = this.hide.bind(this);
-		this.element.appendChild(closeButton);
-	}
-});
-
-var PostSaveWindow = Classy(ClosableDialog, {
+var PostSaveWindow = Classy(Dialog, {
 constructor: function () {
 	this.element = $("post-save-window");
-	ClosableDialog.call(this);
+	Dialog.call(this);
 }
 });
 
