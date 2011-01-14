@@ -538,9 +538,9 @@ MazeViewer.prototype = {
 			var prevPageX = this.pageX;
 			var prevPageY = this.pageY;
 			this.updateTouch(e);
-			this.scrollTo(
-				0 + prevPageX - this.pageX,
-				0 + prevPageY - this.pageY
+			this.scroller.move(
+				0 - prevPageX + this.pageX,
+				0 - prevPageY + this.pageY
 			);
 		}
 	},

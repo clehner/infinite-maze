@@ -50,7 +50,7 @@ function Scroller(options) {
 		self.x = (x += +dx);
 		self.y = (y += +dy);
 		if (onScroll && !selfScroll) {
-			onScroll(x, y);
+			onScroll(~~x, ~~y);
 		}
 		if (scrollContents) {
 			mover.style.left = x + "px";
