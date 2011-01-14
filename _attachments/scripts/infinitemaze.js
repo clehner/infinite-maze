@@ -1239,13 +1239,15 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	},
 	
 	makeTileDoc: function (cb) {
-		cb({
-			_id: Couch.newUUID(),
-			//_id: "tile:" + this.mazeId + ":" + location,
-			type: "tile",
-			maze_id: this.mazeId,
-			creator: InfiniteMaze.getUsername()
-		});
+		Couch.newUUID(5, function (uuid) {
+			cb({
+				_id: uuid,
+				//_id: "tile:" + this.mazeId + ":" + location,
+				type: "tile",
+				maze_id: this.mazeId,
+				creator: InfiniteMaze.getUsername()
+			});
+		}.bind(this));
 	},
 	
 	getTileDoc: function (tile, cb) {

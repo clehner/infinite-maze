@@ -687,20 +687,22 @@ var Couch = (function() {
       );
     },
 
-    newUUID: function(cacheNum) {
-      if (cacheNum === undefined) {
-        cacheNum = 1;
+    newUUID: function(cacheNum, cb) {
+      function got() {
+      	cb(uuidCache.shift());
       }
-      if (!uuidCache.length) {
-        ajax({url: this.urlPrefix + "/_uuids", data: {count: cacheNum}, async: false}, {
+      if (uuidCache.length) {
+        got();
+      } else {
+        ajax({url: this.urlPrefix + "/_uuids", data: {count: cacheNum || 1}}, {
             success: function(resp) {
               uuidCache = resp.uuids;
+              got();
             }
           },
           "Failed to retrieve UUID batch."
         );
       }
-      return uuidCache.shift();
     }
 
   };
