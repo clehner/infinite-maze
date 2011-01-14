@@ -1026,8 +1026,8 @@ constructor: function (viewer) {
 		// taken into account.
 		return point[0] >= tile.offsetX - 1 &&
 			point[1] >= tile.offsetY - 1 &&
-			point[0] <= tile.offsetX + tileSize[0] + 1 &&
-			point[1] <= tile.offsetY + tileSize[1] + 1;
+			point[0] < tile.offsetX + tileSize[0] + 2 &&
+			point[1] < tile.offsetY + tileSize[1] + 2;
 	}
 	
 	// Get a line segment corresponding to the edge of our tile that is next
@@ -1042,7 +1042,7 @@ constructor: function (viewer) {
 			x: x0 + (x1 > x0 ? 255 : 0),
 			y: y0 + (y1 > y0 ? 255 : 0),
 			vertical: vertical,
-			length: vertical ? x1 - x0 : y1 - y0
+			length: Math.abs(vertical ? x1 - x0 : y1 - y0)
 		};
 	}
 
