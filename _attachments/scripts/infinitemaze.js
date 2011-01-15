@@ -291,6 +291,8 @@ var GetHereTileBox = Classy(TileBox, {
 // placed over a tile being edited
 var DrawingTileBox = Classy(TileBox, {
 	cursor: null,
+	bufferCanvas: null,
+	
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "drawing");
@@ -302,15 +304,29 @@ var DrawingTileBox = Classy(TileBox, {
 			false);
 		this.element.addEventListener("mouseout", this.removeCursor.bind(this),
 			false);
+			
+		this.bufferCanvas = document.createElement("canvas");
+		this.bufferCanvas.className = "layer";
+		this.bufferCtx = this.bufferCanvas.getContext("2d");
+		this.element.appendChild(this.bufferCanvas);
 	},
+	
 	addCursor: function () {
 		document.body.appendChild(this.cursor);
 	},
+	
 	removeCursor: function () {
 		if (this.cursor.parentNode == document.body) {
 			document.body.removeChild(this.cursor);
 		}
 	},
+	
+	coverTile: function (tile) {
+		TileBox.prototype.coverTile.call(this, tile);
+		this.bufferCanvas.width = tile.element.width;
+		this.bufferCanvas.height = tile.element.height;
+	},
+	
 	hide: function () {
 		this.removeCursor();
 		TileBox.prototype.hide.call(this);
@@ -666,9 +682,9 @@ var Picker = Classy(Box, {
 		var tableId = this.data.length;
 		this.data[tableId] = data;
 		data.forEach(function (dataRow, i) {
-			var row = table.insertRow(i);
+			var row = table.rows[i] || table.insertRow(i);
 			dataRow.forEach(function (value, j) {
-				var cell = row.insertCell(j);
+				var cell = row.cells[j] || row.insertCell(j);
 				cell.tableId = tableId;
 				cell.row = i;
 				cell.col = j;
@@ -807,6 +823,18 @@ constructor: function (viewer) {
 		cursorStyle.top = e.clientY - s + "px";
 	}
 	tileBox.element.addEventListener("mousemove", onMouseMove, false);
+	
+	// Buffer
+	var bufferCtx = tileBox.bufferCtx;
+	function clearBuffer() {
+		tileBox.bufferCanvas.width += 0;
+	}
+	function commitBuffer() {
+		// move the image from the buffer to the tile canvas.
+		console.log("commit");
+		tile.ctx.drawImage(tileBox.bufferCanvas, 0, 0);
+		clearBuffer();
+	}
 
 	// Mouse dragging, which will be attached to different tool behaviors
 	var mouseControl = new DragBehavior({
