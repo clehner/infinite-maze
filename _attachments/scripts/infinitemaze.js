@@ -882,6 +882,26 @@ constructor: function (viewer) {
 			e.stopPropagation();
 		}
 	};
+	
+	// line tool behavior
+	var lineTool = {
+		onDragStart: function (e) {
+			e.stopPropagation();
+			saveForUndo();
+			this.x = e._x;
+			this.y = e._y;
+		},
+		onDrag: function (e) {
+			clearBuffer();
+			bufferCtx.beginPath();
+			bufferCtx.lineWidth = 2;
+			bufferCtx.strokeStyle = selectedColor;
+			bufferCtx.moveTo(this.x, this.y);
+			bufferCtx.lineTo(e._x, e._y);
+			bufferCtx.stroke();
+		},
+		onDragEnd: commitBuffer
+	};
 
 	// Init color picker
 	function hexToColor(hexInt) {
@@ -917,9 +937,16 @@ constructor: function (viewer) {
 			sizePicker.uncircle(cursor);
 			return;
 		}
+		removeClass(cursor, "bucket");
+		removeClass(cursor, "line");
+		if (size == lineTool) {
+			mouseControl.setBehavior(lineTool);
+			addClass(cursor, "line");
+			sizePicker.uncircle(cursor);
+			return;
+		}
 		
 		mouseControl.setBehavior(drawingTool);
-		removeClass(cursor, "bucket");
 		
 		pencilSize = +size;
 		if (tile) {
@@ -930,6 +957,7 @@ constructor: function (viewer) {
 	sizePicker.select(0);
 	
 	sizePicker.extend($("bucket-tool"), [bucketTool]);
+	//sizePicker.extend($("line-tool"), [lineTool]);
 	
 	// Init buttons.
 	var saveButton = $("save-btn");
