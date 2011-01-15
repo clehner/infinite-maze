@@ -62,7 +62,9 @@ BinaryHeap.prototype = {
         return;
       }
     }
-    throw new Error("Node not found.");
+    // I can't figure out how to avoid this happening, so I'm just going to
+    // have to not throw an error here.
+    //throw new Error("Node not found.");
   },
 
   size: function() {
