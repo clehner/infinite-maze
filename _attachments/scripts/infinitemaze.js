@@ -831,7 +831,6 @@ constructor: function (viewer) {
 	}
 	function commitBuffer() {
 		// move the image from the buffer to the tile canvas.
-		console.log("commit");
 		tile.ctx.drawImage(tileBox.bufferCanvas, 0, 0);
 		clearBuffer();
 	}
@@ -1915,6 +1914,29 @@ constructor: function () {
 }
 });
 
+function Updater(db) {
+
+	function refreshPageSoon() {
+		var busy = (InfiniteMaze.viewer.inEditMode ||
+			InfiniteMaze.welcomeWindow.visible ||
+			InfiniteMaze.loginSignupWindow.visible ||
+			InfiniteMaze.postSaveWindow.visible ||
+			InfiniteMaze.accountSettingsWindow.visible);
+		if (!busy) {
+			location.reload();
+		} else {
+			setTimeout(refreshPageSoon, 1000);
+		}
+	}
+
+	this.listenForUpdates = function () {
+		db.changes(null, {filter: "maze/design_doc"}).onChange(refreshPageSoon);
+	};
+	
+	this.listenForUpdatesSafe = function () {
+		setTimeout(this.listenForUpdates, 3000);
+	};
+}
 
 // The App
 
@@ -2015,6 +2037,9 @@ InfiniteMaze.init3 = function (info, cb) {
 		this.loader.listenForChangesSafe();
 	}
 	
+	this.updater = new Updater(this.db);
+	this.updater.listenForUpdatesSafe();
+		
 	function updateLocationFromHash(e, fast) {
 		var hash = location.hash.substr(1);
 		if (!hash) return;
