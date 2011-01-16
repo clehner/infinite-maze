@@ -1235,17 +1235,16 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		this.update_seq = update_seq;
 	},
 	
-	listenForChanges: function () {
+	listenForChanges: function (since) {
 		var self = this;
 		var tilesInfo = this.tilesInfo;
 		// Start listening for tile changes
-		var promise = this.changesPromise = this.db.changes(this.update_seq, {
+		var promise = this.changesPromise = this.db.changes(since, {
 			filter: "maze/tiles",
 			maze_id: this.mazeId,
 			include_docs: true
 		});
 		promise.onChange(function (resp) {
-			self.update_seq = resp.last_seq;
 			resp.results.forEach(function (change) {
 				// a new, updated, or deleted tile doc
 				var doc = change.doc;
@@ -1271,9 +1270,9 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		window.addEventListener("offline", promise.stop, false);
 	},
 	
-	listenForChangesSafe: function () {
+	listenForChangesSafe: function (since) {
 		// Allow a timeout so the browser doesn't display a loader
-		setTimeout(this.listenForChanges.bind(this), 3000);
+		setTimeout(this.listenForChanges.bind(this, since), 5000);
 	},
 	
 	stopListeningForChanges: function () {
@@ -1914,9 +1913,8 @@ constructor: function () {
 }
 });
 
-function Updater(db) {
-
-	function refreshPageSoon() {
+function Updater(db, since) {
+	function refreshSoon() {
 		var busy = (InfiniteMaze.viewer.inEditMode ||
 			InfiniteMaze.welcomeWindow.visible ||
 			InfiniteMaze.loginSignupWindow.visible ||
@@ -1925,16 +1923,16 @@ function Updater(db) {
 		if (!busy) {
 			location.reload();
 		} else {
-			setTimeout(refreshPageSoon, 1000);
+			setTimeout(refreshSoon, 1000);
 		}
 	}
 
 	this.listenForUpdates = function () {
-		db.changes(null, {filter: "maze/design_doc"}).onChange(refreshPageSoon);
+		db.changes(since, {filter: "maze/design_doc"}).onChange(refreshSoon);
 	};
 	
 	this.listenForUpdatesSafe = function () {
-		setTimeout(this.listenForUpdates, 3000);
+		setTimeout(this.listenForUpdates, 8000);
 	};
 }
 
@@ -2002,7 +2000,7 @@ InfiniteMaze.init3 = function (info, cb) {
 	
 	this.sessionManager = new SessionManager(this.db, userCtx);
 	//this.minimap = 
-	this.loader = new InfiniteMazeLoader(this.db, mazeDoc, tiles, update_seq);
+	this.loader = new InfiniteMazeLoader(this.db, mazeDoc, tiles);
 	var viewer = this.viewer = new GridMazeViewer({
 		loader: this.loader,
 		container: $("maze"),
@@ -2039,10 +2037,10 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.claimer = new TileClaimer(this.db);
 	
 	if (info.listen_changes !== false) {
-		this.loader.listenForChangesSafe();
+		this.loader.listenForChangesSafe(update_seq);
 	}
 	
-	this.updater = new Updater(this.db);
+	this.updater = new Updater(this.db, update_seq);
 	this.updater.listenForUpdatesSafe();
 		
 	function updateLocationFromHash(e, fast) {
