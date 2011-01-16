@@ -83,19 +83,17 @@ Tile.prototype = {
 	loadImageSrc: function (src) {
 		var clearFirst = !this.isEmpty;
 		var self = this;
-		var img = new Image();
-		// Draw the image once it is loaded.
-		img.onload = function () {
+		loadImage(src, function success(img) {
 			if (clearFirst) self.clear();
 			self.drawImage(img);
+			self._stopLoader();
 			self._loaded();
-		};
-		// We can't say the image is empty until it has loaded,
-		// but if it is a 404, then it is empty.
-		img.onerror = this.empty.bind(this);
+		}, function error(e) {
+			console.log("Error loading image", e);
+			self.empty();
+			self._loaded();
+		});
 		this.isEmpty = false;
-		img.src = src;
-		// to do: show a loading sign?
 	},
 	
 	// call a function when the tile is loaded
@@ -112,6 +110,14 @@ Tile.prototype = {
 			this._onLoad();
 			delete this._onLoad;
 		}
+	},
+	
+	_startLoader: function () {
+		addClass(this.element, "loading");
+	},
+	
+	_stopLoader: function () {
+		removeClass(this.element, "loading");
 	},
 	
 	drawImage: function (img) {
@@ -726,6 +732,7 @@ var MazeLoader = Classy({
 	},
 	
 	queueLoadTile: function (tile, src) {
+		tile._startLoader();
 		this.tileLoadingQueue.push([tile, src]);
 		if (!this._queueing) {
 			setTimeout(this._emptyQueue.bind(this), 1);

@@ -1977,10 +1977,15 @@ InfiniteMaze.init = function (cb) {
 // Load the maze data.
 InfiniteMaze.init2 = function (cb) {
 	var self = this;
+	
+	var loader = new Loader($("maze"));
+	loader.start();
+	
 	shim(window.JSON, "scripts/json2.js", function () {
 		self.db.list("maze/maze", "maze_and_tiles", {
 			key: self.mazeId,
 			success: function (data) {
+				loader.stop();
 				self.init3(data, cb);
 			}
 		});

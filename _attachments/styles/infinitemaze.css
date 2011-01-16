@@ -183,10 +183,16 @@ body {
 .error {
 	color: #c40;
 }
+
 .loading {
 	background-image: url(../images/loading.gif);
 	background-repeat: no-repeat;
 }
+
+.tile.loading, #maze.loading {
+	background: #222 url(../images/loading-big.gif) no-repeat center;
+}
+
 .window.loading {
 	background-position: 98% 4%;
 }

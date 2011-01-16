@@ -27,6 +27,13 @@ function loadScript(url, callback) {
 	head.insertBefore(script, head.firstChild);
 }
 
+function loadImage(src, success, error) {
+	var img = new Image();
+	img.onload = success.curry(img);
+	img.onerror = error;
+	img.src = src;
+}
+
 // Conditionally load a script
 function shim(feature, url, callback) {
 	if (feature) {
