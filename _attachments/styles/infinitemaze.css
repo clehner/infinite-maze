@@ -325,18 +325,19 @@ body {
 }
 
 .toolbox-palette .picker {
-	margin: 4px 2px 4px 4px;
+	margin: 2px 2px 4px 4px;
 }
 
 #save-btns {
-	margin-top: 8px;
+	margin-top: 3px;
 }
 
 #save-btn {
+	color: #030;
 	background-color: #6f0;
 	border-color: #693;
 	border-width: 1px;
-	font-size: 1em;
+	font-size: 1.15em;
 	-webkit-border-radius: 8px;
 	   -moz-border-radius: 8px;
 	        border-radius: 8px;
@@ -355,7 +356,7 @@ body {
 }
 
 .picker td, .picker-btn {
-	font-size: 18px;
+	font-size: 21px;
 	width: 1em;
 	height: 1em;
 	line-height: 1em;
