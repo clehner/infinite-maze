@@ -593,7 +593,7 @@ MazeViewer.prototype = {
 		//this.updateViewport();
 	},
 	
-	scrollTo: function (x, y, slow) {x
+	scrollTo: function (x, y, slow) {
 		this.scroller.moveTo(x, y, slow);
 		if (slow) {
 			this.updateViewport(-x, -y, slow);

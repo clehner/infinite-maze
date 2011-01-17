@@ -1810,7 +1810,7 @@ Prefs.prototype = {
 	},
 	set: function (key, value) {
 		this.backend.set(this.prefix + key, value);
-	}.throttled(50)
+	}
 };
 
 
@@ -2044,6 +2044,9 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.updater.listenForUpdatesSafe();
 		
 	function updateLocationFromHash(e, fast) {
+		if (location.hash == myHash) {
+			return;
+		}
 		var hash = location.hash.substr(1);
 		if (!hash) return;
 		var loc = hash.split(",");
@@ -2055,10 +2058,10 @@ InfiniteMaze.init3 = function (info, cb) {
 	updateLocationFromHash(null, true);
 	window.addEventListener("hashchange", updateLocationFromHash, false);
 	
-	if (cb) {
-		cb.call(this);
-	}
+	if (cb) cb.call(this);
 };
+
+var myHash = "";
 
 InfiniteMaze.getUsername = function () {
 	return this.sessionManager.userCtx.name;
@@ -2086,9 +2089,18 @@ InfiniteMaze.getRandomStartPoint = function (cb) {
 
 // store and retrieve positions
 
+var scrollX, scrollY;
 InfiniteMaze.onScroll = function (x, y) {
 	this.prefs.set("scroll-position-" + this.mazeId, x + "," + y);
-};
+	if (Math.abs(scrollX - x) + Math.abs(scrollY - y) < 127) {
+		return;
+	}
+	scrollX = x;
+	scrollY = y;
+	location.hash = myHash = "#" +
+		+(x / 256 - .5).toFixed(2) + "," +
+		+(y / 256 - .5).toFixed(2);
+}.throttled(250);
 InfiniteMaze.onMove = function (x, y) {
 	this.prefs.set("player-position-" + this.mazeId, x + "," + y);
 };
