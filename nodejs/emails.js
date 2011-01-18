@@ -71,7 +71,10 @@ db.changesStream({
 			// Update the tile doc so duplicate emails aren't sent later.
 			doc.emailed_neighbors = true;
 			saveDoc(doc, function (er, ok) {
-				if (er) throw er;
+				if (er) {
+					sys.debug("Error updating doc " + JSON.stringify(doc));
+					return;
+				}
 				usernames.forEach(function (username) {
 					// Don't notify a user of their own drawing.
 					if (username != doc.creator) {
@@ -110,8 +113,9 @@ function sendNewUserEmail(user) {
 		subject: 'Welcome to the Infinite Maze!',
 		'Content-Type': 'text/html'
 	})
-	//.body('Welcome to The Infinite Maze, the collaborative maze drawing site!<br><br>Your username is "' + name + '". You signed up a while ago, but this your official welcome email.<br><br>New features added recently:<br><br>- <b>More colors</b> to choose from. And a bucket tool.<br>- <b>You don\'t have to start over.</b> When you come back to the site, you now continue from where you were last time.<br>- <b>Teleport to your tiles</b> - You can now jump directly to any tile you have drawn. Just scroll to it and then click the green circle to teleport to it.<br><br>Have fun!<br><br><a href="' + siteRoot + '">www.theinfinitemaze.com<br><br><img src="' + siteRoot + 'images/welcome-email-logo.png" alt="TheInfiniteMaze.com"></a>')
+	//.body('Welcome to The Infinite Maze, the collaborative maze drawing site!<br><br>Your username is "' + name + '". You signed up a while ago, but this is your official welcome email.<br><br>New features added recently:<br><br>- <b>More colors</b> to choose from. And a bucket tool.<br>- <b>You don\'t have to start over.</b> When you come back to the site, you now continue from where you were last time.<br>- <b>Teleport to your tiles</b> - You can now jump directly to any tile you have drawn. Just scroll to it and then click the green circle to teleport to it.<br><br>Have fun!<br><br><a href="' + siteRoot + '">www.theinfinitemaze.com<br><br><img src="' + siteRoot + 'images/welcome-email-logo.png" alt="TheInfiniteMaze.com"></a>')
 	.body('Welcome to The Infinite Maze, the collaborative maze drawing site.<br><br>You signed up with the username "' + name + '".<br><br>Have fun!<br><br><a href="' + siteRoot + '">www.theinfinitemaze.com<br><br><img src="' + siteRoot + 'images/welcome-email-logo.png" alt="TheInfiniteMaze.com"></a>')
+	//.body('Welcome to The Infinite Maze, the collaborative maze drawing site.<br><br>You signed up with the username "' + name + '".<br><br>Have fun! (This is a test)')
 	.send(function (er) {
 		if (er) {
 			sys.debug('Error to '+name+': '+er);
@@ -125,14 +129,13 @@ function sendNewTileEmail(tile, username, email) {
 	sys.puts("Sending new tile email to " + username + (debug ? " (debug)" : "")
 		+ ": " + JSON.stringify(tile));
 	var link = siteRoot + '#' + tile.location.join(',');
-	var creator = tile.creator ? '"' + tile.creator + '"' : 'Someone';
 	mail.message({
 		from: sender,
 		to: '"' + username + '" <' + (debugAddress || email) + '>',
 		subject: 'New maze drawing',
 		'Content-Type': 'text/html'
 	})
-	.body('Hi ' + username + ',<br><br>' + creator + ' drew something next to one of your drawings in the maze.<br><br><a href="' + link + '">See what they drew.</a><br><br>-TheInfiniteMaze.com')
+	.body('Hi ' + username + ',<br><br>"' + tile.creator + '" drew something next to one of your drawings in the maze.<br><br><a href="' + link + '">See what they drew.</a><br><br>-TheInfiniteMaze.com')
 	.send(function (er) {
 		if (er) {
 			sys.debug('Error on tile to '+username+': '+er);
