@@ -176,7 +176,7 @@ TiledCanvas.prototype = {
 	tileWidth: NaN,
 	tileHeight: NaN,
 	tiles: null, // 2d array
-	visibleTiles: null, // array
+	visibleTiles: [], // array
 	
 	getTileAtPixel: function (x, y) {
 		return this.getTile(
@@ -276,7 +276,7 @@ TiledCanvas.prototype = {
 	},
 	
 	getVisibleTiles: function () {
-		return this.visibleTiles || (this.visibleTiles = this.getAllTiles());
+		return this.visibleTiles;
 	},
 	
 	getTilesInRect: function (x0, y0, w, h) {
@@ -405,6 +405,7 @@ MazeViewer.prototype = {
 	inViewMode: true,
 	pathColor: "#0f0",
 	loader: null, // MazeLoader, for saving and getting tiles
+	moving: false, // whether a scroll move is in progress
 	
 	// Amount of pixels by which the pathfinding algorithm may deviate
 	// from a straight line.
@@ -446,6 +447,25 @@ MazeViewer.prototype = {
 		var tileInfo = this.loader.getTileInfo(x, y);
 		if (tileInfo) {
 			tile.info = tileInfo;
+		}
+	},
+	
+	resetMazeTile: function (tile, x, y) {
+		// If the tile is in view, reload it.
+		if (this.mazeCanvas.getVisibleTiles().contains(tile)) {
+			this.initMazeTile(tile, x, y);
+		} else {
+			// otherwise empty it and reload it when it comes into view.
+			tile.clear();
+			// this is hackish.
+			// todo: mark the tile as old.
+			var self = this;
+			var prevTileShow = tile.show;
+			tile.show = function () {
+				prevTileShow.call(this);
+				this.show = prevTileShow;
+				self.initMazeTile(tile, x, y);
+			};
 		}
 	},
 	
@@ -626,7 +646,10 @@ MazeViewer.prototype = {
 			var combinedTiles = [].concat(oldTiles, newTiles);
 			mazeCanvas.setVisibleTiles(combinedTiles);
 			var self = this;
-			setTimeout(function () {
+			if (this.moving) {
+				clearTimeout(this.moving);
+			}
+			this.moving = setTimeout(function () {
 				mazeCanvas.setVisibleTiles(newTiles);
 				self.updateOffset();
 			}, 500);

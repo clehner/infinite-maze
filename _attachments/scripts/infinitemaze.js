@@ -1264,7 +1264,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 					nocache: !tile.isEmpty
 				};
 				// update the tile with the new doc
-				InfiniteMaze.viewer.initMazeTile(tile, x, y);
+				InfiniteMaze.viewer.resetMazeTile(tile, x, y);
 			});
 		});
 		window.addEventListener("online", promise.start, false);
