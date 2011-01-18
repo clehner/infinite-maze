@@ -1,4 +1,3 @@
-Make the account settings window work.
 Make tiled layered canvas.
 Add a license to the code.
 When in edit mode, the tile is temporarily locked from other people editing it.
