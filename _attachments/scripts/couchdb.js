@@ -105,9 +105,9 @@ var Couch = (function() {
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4) {
         opt.complete(xhr);
-		  if (opt.async) {
-			 xhr = null;
-		  }
+        if (opt.async) {
+         xhr = null;
+        }
       }
     }
     
@@ -165,7 +165,7 @@ var Couch = (function() {
     return encodeURIComponent(docID);
   }
 
-  function prepareUserDoc(user_doc, new_password) {    
+  function prepareUserDoc(user_doc, new_password, callback) {    
     if (typeof hex_sha1 == "undefined") {
       alert("creating a user doc requires sha1.js to be loaded in the page");
       return;
@@ -174,14 +174,21 @@ var Couch = (function() {
     user_doc._id = user_doc._id || user_prefix + user_doc.name;
     if (new_password) {
       // handle the password crypto
-      user_doc.salt = Couch.newUUID();
-      user_doc.password_sha = hex_sha1(new_password + user_doc.salt);
+      Couch.newUUID(1, function (salt) {
+        user_doc.salt = salt;
+        user_doc.password_sha = hex_sha1(new_password + salt);
+        next();
+      });
+    } else {
+      next();
     }
-    user_doc.type = "user";
-    if (!user_doc.roles) {
-      user_doc.roles = []
+    function next() {
+      user_doc.type = "user";
+      if (!user_doc.roles) {
+        user_doc.roles = []
+      }
+      callback(user_doc);
     }
-    return user_doc;
   }
 
   var uuidCache = [];
@@ -245,10 +252,11 @@ var Couch = (function() {
     signup: function(user_doc, password, options) {      
       options = options || {};
       // prepare user doc based on name and password
-      user_doc = prepareUserDoc(user_doc, password);
-      Couch.userDb(function(db) {
-        db.saveDoc(user_doc, options);
-      })
+      prepareUserDoc(user_doc, password, function (user_doc) {
+        Couch.userDb(function(db) {
+          db.saveDoc(user_doc, options);
+        })
+      });
     },
     
     login: function(options) {
@@ -687,9 +695,9 @@ var Couch = (function() {
       );
     },
 
-    newUUID: function(cacheNum, cb) {
+    newUUID: function(cacheNum, callback) {
       function got() {
-      	cb(uuidCache.shift());
+        callback(uuidCache.shift());
       }
       if (uuidCache.length) {
         got();

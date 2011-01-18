@@ -160,6 +160,9 @@ function (doc, oldDoc, userCtx) {
 	} else if (type == "user-info") {
 		// User info
 		validate([
+			doc.name == userCtx.name || isAdmin,
+				"User info can only be changed by the user or an admin.",
+			
 			doc._id == "user-info:" + doc.name,
 				"Id must be in the format user-info:{name}",
 			
@@ -187,7 +190,9 @@ function (doc, oldDoc, userCtx) {
 				doc.tiles.every(isPoint),
 					"There must be tiles in the list."
 		]);
-	} else {
+	//} else if (type == "minimap-tile") {
+		
+	} else if (!isAdmin) {
 		throw {forbidden:
 			"Document must be a valid type (maze, tile, user-info, or claim)."};
 	}

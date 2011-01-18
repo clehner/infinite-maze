@@ -818,7 +818,7 @@ constructor: function (viewer) {
 	
 	// move the fake cursor on mousemove
 	function onMouseMove(e) {
-		var s = pencilSize / 2 - 2;
+		var s = Math.floor(pencilSize / 2);
 		cursorStyle.left = e.clientX - s + "px";
 		cursorStyle.top = e.clientY - s + "px";
 	}
@@ -845,7 +845,7 @@ constructor: function (viewer) {
 	function onDrawDrag(e) {
 		var ctx = tile.ctx;
 		// draw on pixels, not in between them.
-		var offset = 1.5;
+		var offset = -0.5;
 		ctx.beginPath();
 		ctx.moveTo(this.x + offset, this.y + offset);
 		this.x = e._x;
@@ -921,6 +921,7 @@ constructor: function (viewer) {
 			tile.ctx.strokeStyle = color;
 		}
 		cursorStyle.borderColor = color;
+		cursorStyle.backgroundColor = color;
 	};
 	colorPicker.selectCoord(0, 0);
 	
@@ -951,7 +952,7 @@ constructor: function (viewer) {
 		if (tile) {
 			tile.ctx.lineWidth = pencilSize;
 		}
-		sizePicker.resizeCircle(cursor, size - 3);
+		sizePicker.resizeCircle(cursor, size);
 	};
 	sizePicker.select(0);
 	
@@ -1250,7 +1251,6 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 				var doc = change.doc;
 				var x = doc.location[0];
 				var y = doc.location[1];
-				//console.log(doc);
 				var tile = InfiniteMaze.viewer.mazeCanvas.getTile(x, y);
 				if (doc._deleted) {
 					tile.clear();
@@ -1263,7 +1263,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 					nocache: !tile.isEmpty
 				};
 				// update the tile with the new doc
-				InfiniteMaze.viewer.initMazeTile(tile, x, y);
+				InfiniteMaze.viewer.resetMazeTile(tile, x, y);
 			});
 		});
 		window.addEventListener("online", promise.start, false);
@@ -1453,6 +1453,7 @@ var Dialog = Classy(Box, {
 		closeButton.className = "close";
 		closeButton.appendChild(document.createTextNode("X")); //×
 		closeButton.onclick = this.hide.bind(this);
+		closeButton.title = "Close";
 		this.element.appendChild(closeButton);
 	}
 });
@@ -1463,65 +1464,87 @@ constructor: function () {
 	var self = this;
 	var container = $("settings-window");
 	Dialog.ificate(this, container);
-	
-	var userDoc;
-	
-	function error(msg) {
-		$("settings-result").innerHTML = msg;
-	}
-	
-	// save changes
-	function save() {
-		Couch.userDb(function (db) {
-			
-		});
-	}
-	
 	var form = $("settings-form");
 	var loader = new Loader(container);
 	
+	function saveEmailInfo(success, error) {
+		InfiniteMaze.sessionManager.updateUserInfo({
+			email: $("settings-email").value,
+			opt_out_emails: !!$("settings-get-emails-no").checked
+		}, success, error);
+	}
+	
+	function savePassword(success, error) {
+		if (!changingPassword) return success(false);
+		
+		InfiniteMaze.sessionManager.changePassword({
+			currentPass: $("settings-password-current").value,
+			newPass: $("settings-password-new").value,
+			confirmNewPass: $("settings-password-confirm").value
+		}, success, error);
+	}
+	
+	function success() {
+		loader.stop();
+		alert("Success!");
+		self.hide();
+	}
+	
+	function error(msg) {
+		loader.stop();
+		$("settings-result").innerHTML = msg;
+	}
+	
+	var changingPassword = false;
+	$("change-password-link").onclick = function (e) {
+		e.preventDefault();
+		addClass(this, "hidden");
+		removeClass($("change-password-stuff"), "hidden");
+		changingPassword = true;
+	};
+	
 	this.show = function () {
-		$("settings-username").innerHTML = InfiniteMaze.getUsername();
+		var user = InfiniteMaze.getUsername();
+		if (!user) {
+			alert("You must be logged in to change settings.");
+		}
+		
+		$("settings-username").innerHTML = user;
 		loader.start();
-		InfiniteMaze.sessionManager.userDoc(function (userDoc) {
-			$("settings-email").value = userDoc.email;
+		InfiniteMaze.sessionManager.getUserInfo(function (info) {
+			$("settings-email").value = info.email;
+			var getEmails = !info.opt_out_emails;
+			$("settings-get-emails-no").checked = !getEmails && "checked";
+			$("settings-get-emails-yes").checked = getEmails && "checked";
 			loader.stop();
+		}, function err(msg) {
+			error("Unable to get user info. " + msg);
 		});
 		Box.prototype.show.call(this);
 	};
 	
+	function error(msg) {
+		loader.stop();
+		$("settings-result").innerHTML = msg;
+	}
+	
 	form.onsubmit = function (e) {
 		e.preventDefault();
-		alert("Not working yet. Sorry!");
-		/*loader.start();
+		//alert("Not working yet. Sorry!");
+		//return;
 		
-		var currentPass = $("settings-password-current").value;
-		var newPass = $("settings-password-new").value;
-		var confirmNewPass = $("settings-password-confirm").value;
-		var email = $("settings-email").value;
-		
-		if (confirmNewPass != newPass) {
-			return error("You must retype your new password the same way to confirm it.");
-		}
-		
-		save({
-			currentPass: currentPass,
-			newPass: newPass,
-			email: email,
-			success: function () {
-				loader.stop();
-				self.hide();
-			},
-			error: function (msg) {
-				loader.stop();
-				error(msg);
-			}
-		});*/
+		loader.start();
+		savePassword(function ok() {
+			saveEmailInfo(success, error);
+		}, error);
 	};
 	
-	form.onreset = function (e) {
-		e.preventDefault();
+	form.onreset = function () {
 		self.hide();
+		
+		removeClass($("change-password-link"), "hidden");
+		addClass($("change-password-stuff"), "hidden");
+		changingPassword = false;
 	};
 }
 });
@@ -1577,6 +1600,8 @@ constructor: function () {
 	Dialog.ificate(this, container);
 	
 	this.show = function () {
+		onLoginError("");
+		onSignupError("");
 		Box.prototype.show.call(this);
 		$("login-username").focus();
 	};
@@ -1744,19 +1769,70 @@ function SessionManager(db, userCtx) {
 	
 	var getUserDb = Couch.userDb.memoized();
 	
-	this.userDoc = function (cb) {
-		cb({
-			email: '?',
-			name: InfiniteMaze.getUsername()
-		});
-		/*
+	this.changePassword = function (info, success, error) {
+		if (info.confirmNewPass != info.newPass) {
+			return error("You must retype your new password the same way to confirm it.");
+		}
+		
+		if (info.currentPass == info.newPass) {
+			// nothing to change
+			return success();
+		}
+		
+		var dbError = error && function (status, err, reason) {
+			error(reason);
+		};
+		
+		var userName = InfiniteMaze.getUsername();
 		getUserDb(function (db) {
 			var userPrefix = "org.couchdb.user:";
 			var id = userPrefix + userName;
-			//db.openDoc(id);
-			cb(db);
+			db.openDoc(id, {
+				success: gotDoc,
+				error: dbError
+			});
 		});
-		*/
+		
+		function gotDoc(doc) {
+			shim(window.hex_sha1, "scripts/sha1.js", function () {
+				if (doc.password_sha == hex_sha1(info.currentPass + doc.salt)) {
+					doc.password_sha = hex_sha1(info.newPass + doc.salt);
+					getUserDb(function (db) {
+						db.saveDoc(doc, {
+							success: success,
+							error: dbError
+						});
+					});
+				} else {
+					error("Current password was incorrect.");
+				}
+			});
+		}
+	};
+	
+	this.getUserInfo = function (cb, error) {
+		var username = InfiniteMaze.getUsername();
+		db.openDoc("user-info:" + username, {
+			success: cb,
+			//success: setTimeout.bind(window, cb, 1000),
+			error: error && function (status, err, reason) {
+				error(reason);
+			}
+		});
+	};
+	
+	this.updateUserInfo = function (props, success, error) {
+		this.getUserInfo(function (doc) {
+			for (var prop in props) {
+				doc[prop] = props[prop];
+			}
+			db.saveDoc(doc, {
+				success: success,
+				error: error && function (status, err, reason) {
+					error(reason);
+				}
+			});
+		}, error);
 	};
 	
 	this.isAdmin = function () {
@@ -1810,7 +1886,7 @@ Prefs.prototype = {
 	},
 	set: function (key, value) {
 		this.backend.set(this.prefix + key, value);
-	}.throttled(50)
+	}
 };
 
 
@@ -1965,7 +2041,7 @@ InfiniteMaze.init = function (cb) {
 		this.startScrollPos = this.getStoredScrollPosition();
 		this.init2(cb);
 	} else {
-		this.getRandomStartPoint(function (coords) {
+		this.pickStartPoint(function (coords) {
 			this.startTileCoords = coords;
 			this.init2(cb);
 		}.bind(this));
@@ -2044,31 +2120,41 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.updater.listenForUpdatesSafe();
 		
 	function updateLocationFromHash(e, fast) {
+		if (location.hash == myHash) {
+			return;
+		}
 		var hash = location.hash.substr(1);
 		if (!hash) return;
 		var loc = hash.split(",");
-		var x = (loc[0] * 256 || 0) + 127;
-		var y = (loc[1] * 256 || 0) + 127;
+		var x = (0.5 + (loc[0] || 0)) * 256;
+		var y = (0.5 + (loc[1] || 0)) * 256;
 		viewer.scrollTo(x, y, !fast);
 		viewer.updateOffset();
 	}
 	updateLocationFromHash(null, true);
 	window.addEventListener("hashchange", updateLocationFromHash, false);
 	
-	if (cb) {
-		cb.call(this);
-	}
+	if (cb) cb.call(this);
 };
 
+var myHash = "";
+
+// get the username of the logged in user
 InfiniteMaze.getUsername = function () {
 	return this.sessionManager.userCtx.name;
 };
 
-InfiniteMaze.getUserEmail = function () {
-	return 'asdf@asdf';
-};
+InfiniteMaze.pickStartPoint = function (cb) {
+	// If the location has a hash, use that as the start point.
+	/*
+	Actually we can't do this; it might start you in an unreachable place.
+	var hashStart = location.hash.substr(1).split(",").map(Math.floor);
+	if (hashStart.length == 2 && !hashStart.some(isNaN)) {
+		return cb(hash);
+	}
+	*/
 
-InfiniteMaze.getRandomStartPoint = function (cb) {
+	// Otherwise, pick a start point from the database.
 	//setTimeout(cb.curry([-1,1]), 200);
 	this.db.openDoc("start-tiles:" + this.mazeId, {
 		success: function (doc) {
@@ -2086,9 +2172,18 @@ InfiniteMaze.getRandomStartPoint = function (cb) {
 
 // store and retrieve positions
 
+var scrollX, scrollY;
 InfiniteMaze.onScroll = function (x, y) {
 	this.prefs.set("scroll-position-" + this.mazeId, x + "," + y);
-};
+	if (Math.abs(scrollX - x) + Math.abs(scrollY - y) < 127) {
+		return;
+	}
+	scrollX = x;
+	scrollY = y;
+	location.hash = myHash = "#" +
+		+(x / 256 - .5).toFixed(2) + "," +
+		+(y / 256 - .5).toFixed(2);
+}.debounce(250);
 InfiniteMaze.onMove = function (x, y) {
 	this.prefs.set("player-position-" + this.mazeId, x + "," + y);
 };
@@ -2102,13 +2197,16 @@ InfiniteMaze.playerHasEntered = function () {
 InfiniteMaze.playerPositionStored = function () {
 	return !!this.prefs.get("player-position-" + this.mazeId);
 };
+function number(n) {
+	return +n || 0;
+}
 InfiniteMaze.getStoredPlayerPosition = function () {
 	var str = this.prefs.get("player-position-" + this.mazeId);
-	return str && str.split(",").map(Number);
+	return str && str.split(",").map(number);
 };
 InfiniteMaze.getStoredScrollPosition = function () {
 	var str = this.prefs.get("scroll-position-" + this.mazeId);
-	return str && str.split(",").map(Number);
+	return str && str.split(",").map(number);
 };
 
 
