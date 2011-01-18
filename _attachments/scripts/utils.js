@@ -208,7 +208,7 @@ function addClass(element, className) {
 function removeClass(element, className) {
 	var old = element.className;
 	element.className = (old == className) ? '' :
-		old.replace(getClassRegex(className), '');
+		old.replace(getClassRegex(className), ' ');
 }
 
 function toggleClass(element, className, on) {
@@ -422,7 +422,7 @@ var Cookie = {
 	}
 };
 
-// don't execute a function more than once every @threshold ms
+// caps invokation frequency at @threshold ms
 Function.prototype.throttled = function (threshold) {
 	var func = this,
 		throttling, args,
@@ -446,11 +446,34 @@ Function.prototype.throttled = function (threshold) {
 	};
 };
 
+// debounce, by John Hann
+// http://unscriptable.com/index.php/2009/03/20/debouncing-javascript-methods/
+// discard close invokations for the last one.
+Function.prototype.debounce = function (threshold, execAsap) {
+	var func = this, timeout;
+	return function debounced() {
+		var obj = this, args = arguments;
+		function delayed() {
+			if (!execAsap)
+				func.apply(obj, args);
+			timeout = null; 
+		}
+ 
+		if (timeout)
+			clearTimeout(timeout);
+		else if (execAsap)
+			func.apply(obj, args);
+ 
+		timeout = setTimeout(delayed, threshold || 100); 
+	};
+}
+
+
 // pythagorean distance formula
 function distance(x, y) {
 	return Math.sqrt(x*x + y*y);
 }
 
-String.prototype.contains = function (str) {
-	return this.indexOf(str) != -1;
+String.prototype.contains = Array.prototype.contains = function (thing) {
+	return this.indexOf(thing) != -1;
 };
