@@ -80,15 +80,27 @@
 		</div>
 		
 		<div id="settings-window" class="window hidden">
-			<h2>Your account</h2>
-			<div class="error">This area is not working yet.</div>
+			<h2>Your account settings</h2>
 			<form id="settings-form">
-				<p>Username: <span id="settings-username" class="field"></span></p>
-				<p>Current password to change: <input type="password" id="settings-password-current" class="field"></p>
-				<p>New password: <input type="password" id="settings-password-new" class="field"></p>
-				<p>Confirm new password: <input type="password" id="settings-password-confirm" class="field"></p>
-				<p>Email: <input id="settings-email" class="field"></p>
-				<p><input type="reset" value="Cancel"> <input type="submit" value="Update"></p>
+				<p>Username: <span id="settings-username" class="field"></span><br>
+				Email: <input id="settings-email" value="loading…"></p>
+				<p>When someone draws next to one of your drawings:
+					<label><input id="settings-get-emails-yes" type="radio" name="get-emails">Get an email</label>
+					<label><input id="settings-get-emails-no" type="radio" name="get-emails">Don't get an email</label>
+				</p>
+				<p><a href="" id="change-password-link">Change password</a></p>
+				<p id="change-password-stuff" class="hidden">
+					Current password:
+						<input type="password" id="settings-password-current" class="field"><br>
+					New password:
+						<input type="password" id="settings-password-new" class="field"><br>
+					Confirm new password:
+						<input type="password" id="settings-password-confirm" class="field">
+				</p>
+				<p>
+					<input type="reset" value="Cancel">
+					<input type="submit" value="Save settings">
+				</p>
 			</form>
 			<div id="settings-result" class="error"></div>
 		</div>

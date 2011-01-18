@@ -40,7 +40,7 @@ body {
 	   -moz-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	-webkit-box-shadow: 10px 10px 8px rgba(0, 0, 0, 0.40);
 	background: white;
-	background: rgba(255, 255, 255, 0.9);
+	background: rgba(255, 255, 255, 0.95);
 	z-index: 20;
 }
 
@@ -80,6 +80,7 @@ body {
 
 #welcome {
 	text-align: center;
+	background: rgba(255, 255, 255, 0.9);
 }
 #welcome .subtitle {
 }
@@ -406,20 +407,26 @@ body {
 
 /* Account Settings Window */
 
-#settings-form {
-	float: left;
-	text-align: right;
+#settings-window {
+	max-height: 295px;
+	margin-top: -160px;
+}
+#settings-window h2 {
+	margin-bottom: 0;
+}
+#settings-window p {
+	margin: .75em 0 0;
+}
+#settings-email {
+	width: 18em;
 }
 #settings-username {
 	text-decoration: underline;
 	display: inline-block;
 	text-align: left;
 }
-#settings-window .field {
-	width: 150px;
-}
-#settings-form + * {
-	clear: both;
+#settings-window label {
+	display: block;
 }
 
 /* "You are here" marker */
