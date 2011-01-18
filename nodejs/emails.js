@@ -6,7 +6,8 @@ var sys = require('sys'),
 		cred.couchdb.user, cred.couchdb.pass),
 	db = client.db('maze'),
 	debug = cred.debug,
-	wait = 4000; // ms in between emails
+	wait = 4000, // ms in between emails
+	update_seq = ~~process.argv[2];
 
 // queuing sending mails
 
@@ -40,7 +41,8 @@ function saveDoc(doc, cb) {
 
 db.changesStream({
 	filter: 'maze/new_users_to_email',
-	include_docs: true
+	include_docs: true,
+	since: update_seq
 }).addListener('data', function (change) {
 	var doc = change.doc;
 	doc.emailed_welcome = true;
@@ -52,7 +54,8 @@ db.changesStream({
 
 db.changesStream({
 	filter: 'maze/tiles_to_email',
-	include_docs: true
+	include_docs: true,
+	since: update_seq
 }).addListener('data', function (change) {
 	// Get the changed tile
 	var doc = change.doc;
