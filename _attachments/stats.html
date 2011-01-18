@@ -33,17 +33,16 @@ Height: <em id="physical-height">0</em> ft</p>
 	<script type="text/javascript">
 		function $(id) { return document.getElementById(id); }
 		
-		// Physical tile size in feet
-		// tile pixels / ppi / ft
-		var aspect = 256/113/12;
+		// Feet per tile (tile pixels / ppi / ft/in)
+		var feet = 256/113/12;
 		
 		function render(stats) {
 			$("tiles").innerHTML = stats.area;
 			$("tiles-width").innerHTML = stats.width;
 			$("tiles-height").innerHTML = stats.height;
-			$("area").innerHTML = (stats.area * aspect * aspect).toFixed(2);
-			$("physical-width").innerHTML = (stats.width * aspect).toFixed(2);
-			$("physical-height").innerHTML = (stats.height * aspect).toFixed(2);
+			$("area").innerHTML = (stats.area * feet * feet).toFixed(2);
+			$("physical-width").innerHTML = (stats.width * feet).toFixed(2);
+			$("physical-height").innerHTML = (stats.height * feet).toFixed(2);
 		}
 		
 		Couch.urlPrefix = "./";
