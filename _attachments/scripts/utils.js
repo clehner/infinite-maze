@@ -477,3 +477,7 @@ function distance(x, y) {
 String.prototype.contains = Array.prototype.contains = function (thing) {
 	return this.indexOf(thing) != -1;
 };
+
+function number(n) {
+	return +n || 0;
+}

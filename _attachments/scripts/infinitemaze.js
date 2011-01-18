@@ -2126,8 +2126,8 @@ InfiniteMaze.init3 = function (info, cb) {
 		var hash = location.hash.substr(1);
 		if (!hash) return;
 		var loc = hash.split(",");
-		var x = (0.5 + (loc[0] || 0)) * 256;
-		var y = (0.5 + (loc[1] || 0)) * 256;
+		var x = (0.5 + number(loc[0])) * 256;
+		var y = (0.5 + number(loc[1])) * 256;
 		viewer.scrollTo(x, y, !fast);
 		viewer.updateOffset();
 	}
@@ -2197,9 +2197,6 @@ InfiniteMaze.playerHasEntered = function () {
 InfiniteMaze.playerPositionStored = function () {
 	return !!this.prefs.get("player-position-" + this.mazeId);
 };
-function number(n) {
-	return +n || 0;
-}
 InfiniteMaze.getStoredPlayerPosition = function () {
 	var str = this.prefs.get("player-position-" + this.mazeId);
 	return str && str.split(",").map(number);
