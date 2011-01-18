@@ -441,7 +441,7 @@ MazeViewer.prototype = {
 	initMazeTile: function (tile, x, y) {
 		var tileSrc = this.loader.getTileSrc(x, y);
 		if (tileSrc) {
-			this.loader.queueLoadTile(tile, tileSrc);
+			this.loader.loadTile(tile, tileSrc);
 		}
 		// add creator info, and other stuff
 		var tileInfo = this.loader.getTileInfo(x, y);
@@ -722,14 +722,11 @@ var MazeLoader = Classy({
 	db: null,
 	mazeDoc: null,
 	mazeId: "",
-	tileLoadingQueue: null,
-	_queueing: false,
 	
 	constructor: function (db, doc) {
 		this.db = db;
 		this.mazeDoc = doc;
 		this.mazeId = doc._id;
-		this.tileLoadingQueue = [];
 	},
 	
 	getTileSrc: function (x, y) {},
@@ -754,35 +751,7 @@ var MazeLoader = Classy({
 		onError(0, "Saving is not yet implemented.");
 	},
 	
-	queueLoadTile: function (tile, src) {
-		tile._startLoader();
-		this.tileLoadingQueue.push([tile, src]);
-		if (!this._queueing) {
-			setTimeout(this._emptyQueue.bind(this), 1);
-			this._queueing = true;
-		}
-	},
-	
-	// load the tiles in the queue
-	_emptyQueue: function () {
-		this._queueing = false;
-		var centerX = -127-InfiniteMaze.viewer.scroller.x;
-		var centerY = -127-InfiniteMaze.viewer.scroller.y;
-		this.tileLoadingQueue.map(function (item) {
-			var tile = item[0];
-			item.distance = distance(
-				tile.offsetX - centerX,
-				tile.offsetY - centerY
-			);
-			return item;
-		}).sort(function (a, b) {
-			return a.distance - b.distance;
-		}).forEach(function (item, i) {
-			var tile = item[0];
-			var src = item[1];
-			tile.loadImageSrc(src);
-		});
-		// empty the queue
-		this.tileLoadingQueue = [];
+	loadTile: function (tile, src) {
+		tile.loadImageSrc(src);
 	}
 });

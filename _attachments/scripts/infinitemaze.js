@@ -1228,12 +1228,48 @@ constructor: function (viewer) {
 var InfiniteMazeLoader = Classy(MazeLoader, {
 	tilesInfo: null,
 	changesPromise: null,
+	tileLoadingQueue: null,
+	_queueing: false,
 	
 	constructor: function (db, doc, tilesInfo, update_seq) {
 		MazeLoader.call(this, db, doc);
 		// {0:{0:tileinfo}}
 		this.tilesInfo = tilesInfo;
 		this.update_seq = update_seq;
+		this.tileLoadingQueue = [];
+	},
+	
+	// queue load tile
+	loadTile: function (tile, src) {
+		tile._startLoader();
+		this.tileLoadingQueue.push([tile, src]);
+		if (!this._queueing) {
+			setTimeout(this._emptyQueue.bind(this), 1);
+			this._queueing = true;
+		}
+	},
+	
+	// load the tiles in the queue
+	_emptyQueue: function () {
+		this._queueing = false;
+		var centerX = -127-InfiniteMaze.viewer.scroller.x;
+		var centerY = -127-InfiniteMaze.viewer.scroller.y;
+		this.tileLoadingQueue.map(function (item) {
+			var tile = item[0];
+			item.distance = distance(
+				tile.offsetX - centerX,
+				tile.offsetY - centerY
+			);
+			return item;
+		}).sort(function (a, b) {
+			return a.distance - b.distance;
+		}).forEach(function (item, i) {
+			var tile = item[0];
+			var src = item[1];
+			tile.loadImageSrc(src);
+		});
+		// empty the queue
+		this.tileLoadingQueue = [];
 	},
 	
 	listenForChanges: function (since) {
@@ -1976,7 +2012,7 @@ constructor: function (viewer) {
 		self.show();
 		element.style.left = markerX + "px";
 		element.style.top = markerY + "px";
-	}.throttled(30)
+	}.throttle(30)
 
 	link.onmouseover = this.update;
 }
@@ -2186,7 +2222,7 @@ InfiniteMaze.onScroll = function (x, y) {
 }.debounce(250);
 InfiniteMaze.onMove = function (x, y) {
 	this.prefs.set("player-position-" + this.mazeId, x + "," + y);
-};
+}.throttle(100);
 
 InfiniteMaze.hasPlayerEntered = function () {
 	return !!this.prefs.get("entered");
