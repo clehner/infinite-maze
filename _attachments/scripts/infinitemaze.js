@@ -818,7 +818,7 @@ constructor: function (viewer) {
 	
 	// move the fake cursor on mousemove
 	function onMouseMove(e) {
-		var s = pencilSize / 2 - 2;
+		var s = Math.floor(pencilSize / 2);
 		cursorStyle.left = e.clientX - s + "px";
 		cursorStyle.top = e.clientY - s + "px";
 	}
@@ -845,7 +845,7 @@ constructor: function (viewer) {
 	function onDrawDrag(e) {
 		var ctx = tile.ctx;
 		// draw on pixels, not in between them.
-		var offset = 1.5;
+		var offset = -0.5;
 		ctx.beginPath();
 		ctx.moveTo(this.x + offset, this.y + offset);
 		this.x = e._x;
@@ -921,6 +921,7 @@ constructor: function (viewer) {
 			tile.ctx.strokeStyle = color;
 		}
 		cursorStyle.borderColor = color;
+		cursorStyle.backgroundColor = color;
 	};
 	colorPicker.selectCoord(0, 0);
 	
@@ -951,7 +952,7 @@ constructor: function (viewer) {
 		if (tile) {
 			tile.ctx.lineWidth = pencilSize;
 		}
-		sizePicker.resizeCircle(cursor, size - 3);
+		sizePicker.resizeCircle(cursor, size);
 	};
 	sizePicker.select(0);
 	
