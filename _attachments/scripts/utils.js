@@ -423,7 +423,7 @@ var Cookie = {
 };
 
 // caps invokation frequency at @threshold ms
-Function.prototype.throttled = function (threshold) {
+Function.prototype.throttle = function (threshold) {
 	var func = this,
 		throttling, args,
 		apply = this.apply;
