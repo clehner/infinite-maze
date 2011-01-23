@@ -481,3 +481,16 @@ String.prototype.contains = Array.prototype.contains = function (thing) {
 function number(n) {
 	return +n || 0;
 }
+
+// a loader image thing
+function Loader(element) {
+	this.element = element;
+}
+Loader.prototype = {
+	start: function () {
+		addClass(this.element, "loading");
+	},
+	stop: function () {
+		removeClass(this.element, "loading");
+	}
+};

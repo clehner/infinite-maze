@@ -25,21 +25,22 @@ function isPointRadius(obj) {
 }
 
 function (doc, oldDoc, userCtx) {
-	// Generic validation
-	
 	var isAdmin = userCtx.roles.indexOf('_admin') != -1;
-
-	if (!userCtx.name) {
-		throw {unauthorized: "You must be logged in."};
-	}
+	var type = doc.type || (oldDoc && oldDoc.type);
 	
 	//if (isAdmin) return;
 	
-	if (doc._deleted) {
-		validate([
-			isAdmin, "Only admin can delete stuff."
-		]);
-		return;
+	if (type != 'password-reset-request') {
+		if (!userCtx.name) {
+			throw {unauthorized: "You must be logged in."};
+		}
+		
+		if (doc._deleted) {
+			validate([
+				isAdmin, "Only admin can delete stuff."
+			]);
+			return;
+		}
 	}
 		
 	if (oldDoc && !isAdmin) {
@@ -57,8 +58,6 @@ function (doc, oldDoc, userCtx) {
 			]);
 		}
 	}
-	
-	var type = doc.type;
 	
 	if (type == "maze") {
 		// Maze validation
@@ -175,7 +174,6 @@ function (doc, oldDoc, userCtx) {
 			isAdmin || (!doc.emailed_welcome ==
 				!(oldDoc && oldDoc.emailed_welcome)),
 				"Only admin can say whether emails were sent."
-			
 		]);
 	} else if (type == "start-tiles") {
 		// List of start tiles
@@ -192,8 +190,44 @@ function (doc, oldDoc, userCtx) {
 		]);
 	//} else if (type == "minimap-tile") {
 		
+	} else if (type == "password-reset-request") {
+		if (doc._deleted) {
+			validate([
+				isAdmin || oldDoc.user == userCtx.name,
+					"A password reset request can only be deleted by its " + "account holder or an admin."
+			]);
+			return;
+		}
+		validate([
+			isAdmin || (!doc.emailed == !(oldDoc && oldDoc.emailed)),
+				"Only admin can mark an email as sent.",
+			
+			doc.user,
+				"Password reset request must have a user.",
+			
+			doc.expires,
+				"Password reset request must have an expiration timestamp.",
+			
+			isAdmin || (!oldDoc && !doc.recieved) ||
+				(doc.recieved == oldDoc.recieved),
+				"Only admin can mark a password reset request as received."
+		]);
+		
+		if (doc.token) {
+			validate([
+				doc.emailed,
+					"Hasn't been emailed yet.",
+					
+				doc.password_sha,
+					"Needs password_sha.",
+					
+				doc.salt,
+					"Needs some salt."
+			]);
+		}
 	} else if (!isAdmin) {
 		throw {forbidden:
-			"Document must be a valid type (maze, tile, user-info, or claim)."};
+			"Document must be a valid type (maze, tile, user-info, claim, " +
+			"or password-reset-request)."};
 	}
 }

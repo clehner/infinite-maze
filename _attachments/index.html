@@ -75,15 +75,37 @@
 				<p>Password: <input id="login-password" type="password" name="password"></p>
 				<p><input type="submit" value="Log in">
 					<input type="reset" value="Cancel"></p>
-				<div id="login-result" class="error"></div>
+				<p id="login-result" class="error"></p>
+				<p id="forgot-links">
+				<a href="" id="forgot-username-link">Forgot username?</a><br>
+				<a href="" id="forgot-password-link">Forgot password?</a></p>
 			</form>
 		</div>
+		
+		<form id="forgot-username-window" class="window hidden">
+			<h2>Forgot username</h2>
+			<p>Email: <input id="forgot-username-email" class="email"></p>
+			<p>
+				<span id="forgot-username-result"></span>
+				<button id="forgot-password-login" class="hidden">Log in</button>
+			</p>
+			<p><input type="submit" value="Find username">
+			<input type="reset" value="Close"></p>
+		</form>
+		
+		<form id="forgot-password-window" class="window hidden">
+			<h2>Forgot password</h2>
+			<p>Username: <input id="forgot-password-username"></p>
+			<p><input type="submit" value="Request reset password">
+			<input type="reset" value="Cancel"></p>
+			<p id="forgot-password-result"></p>
+		</form>
 		
 		<div id="settings-window" class="window hidden">
 			<h2>Your account settings</h2>
 			<form id="settings-form">
 				<p>Username: <span id="settings-username" class="field"></span><br>
-				Email: <input id="settings-email" value="loading…"></p>
+				Email: <input id="settings-email" class="email" value="loading…"></p>
 				<p>When someone draws next to one of your drawings:
 					<label><input id="settings-get-emails-yes" type="radio" name="get-emails">Get an email</label>
 					<label><input id="settings-get-emails-no" type="radio" name="get-emails">Don't get an email</label>

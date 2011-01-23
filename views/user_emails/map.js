@@ -1,5 +1,5 @@
 function (doc) {
-	if (doc.type == 'user-info' && !doc.opt_out_emails) {
-		emit(doc.name, doc.email);
+	if (doc.type == 'user-info') {
+		emit(doc.name, [doc.email, !doc.opt_out_emails]);
 	}
 }

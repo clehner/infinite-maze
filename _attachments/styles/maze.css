@@ -1,3 +1,7 @@
+body {
+	font: 12pt Helvetica, sans-serif;
+}
+
 .hidden {
 	display: none;
 }
@@ -80,4 +84,21 @@ canvas, .maze .layer {
 	border: 3px solid #f00;
 	margin: -2px 0 0 -2px;
 	z-index: 2;
+}
+
+.error {
+	color: #c40;
+}
+
+.good {
+	color: #082;
+}
+
+.loading {
+	background-image: url(../images/loading.gif);
+	background-repeat: no-repeat;
+}
+
+p.loading {
+	padding-left: 1.5em;
 }

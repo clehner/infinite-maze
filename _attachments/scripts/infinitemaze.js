@@ -764,19 +764,6 @@ var SizePicker = Classy(Picker, {
 });
 SizePicker.ify = Picker.ify;
 
-// a loader image thing
-function Loader(element) {
-	this.element = element;
-}
-Loader.prototype = {
-	start: function () {
-		addClass(this.element, "loading");
-	},
-	stop: function () {
-		removeClass(this.element, "loading");
-	}
-};
-
 var InfiniteMaze = {};
 
 function $(id) {
@@ -1547,21 +1534,21 @@ constructor: function () {
 		
 		$("settings-username").innerHTML = user;
 		loader.start();
-		InfiniteMaze.sessionManager.getUserInfo(function (info) {
+		InfiniteMaze.sessionManager.getUserInfo(user, function (info) {
 			$("settings-email").value = info.email;
 			var getEmails = !info.opt_out_emails;
 			$("settings-get-emails-no").checked = !getEmails && "checked";
 			$("settings-get-emails-yes").checked = getEmails && "checked";
 			loader.stop();
-		}, function err(msg) {
-			error("Unable to get user info. " + msg);
+		}, function (err) {
+			error("Unable to get user info. " + err);
 		});
 		Box.prototype.show.call(this);
 	};
 	
-	function error(msg) {
+	function error(status, error, reason) {
 		loader.stop();
-		$("settings-result").innerHTML = msg;
+		$("settings-result").innerHTML = reason;
 	}
 	
 	form.onsubmit = function (e) {
@@ -1644,10 +1631,20 @@ constructor: function () {
 	
 	var loader = new Loader(container);
 	
-	function onLogin(result) {
+	function populateLogin(username) {
+		if (!username) username = InfiniteMaze.prefs.get("last-login-username");
+		$("login-username").value = username;
+		$("login-password").value = "";
+		$("login-password").focus();
+	}
+	this.populateLogin = populateLogin;
+	
+	function onLogin(username, result) {
 		loader.stop();
 		loginForm.reset();
 		signupForm.reset();
+		populateLogin(username);
+		InfiniteMaze.prefs.set("last-login-username", username);
 		alert("Login success.");
 	}
 	
@@ -1667,7 +1664,8 @@ constructor: function () {
 		var username = $("login-username").value;
 		var password = $("login-password").value;
 		loader.start();
-		InfiniteMaze.sessionManager.login(username, password, onLogin, onLoginError);
+		InfiniteMaze.sessionManager.login(username, password,
+			onLogin.curry(username), onLoginError);
 		// This form must be allowed to submit for some browsers to remember the login.
 		// so we submit it into a dummy iframe.
 	};
@@ -1679,7 +1677,18 @@ constructor: function () {
 		var password = $("signup-password").value;
 		var email = $("signup-email").value;
 		loader.start();
-		InfiniteMaze.sessionManager.signup(username, password, email, onLogin, onSignupError);
+		InfiniteMaze.sessionManager.signup(username, password, email,
+			onLogin.curry(username), onSignupError);
+	};
+	
+	$("forgot-username-link").onclick = function (e) {
+		e.preventDefault();
+		InfiniteMaze.forgotUsernameWindow.show();
+	};
+	
+	$("forgot-password-link").onclick = function (e) {
+		e.preventDefault();
+		InfiniteMaze.forgotPasswordWindow.show();
 	};
 }
 });
@@ -1707,13 +1716,13 @@ function SessionManager(db, userCtx) {
 	function setUserCtx(ctx) {
 		var oldUsername = self.userCtx.name;
 		if (ctx) {
-			self.userCtx = ctx;
+			self.userCtx = userCtx = ctx;
 		} else {
 			// use prototypal value
 			delete self.userCtx;
-			ctx = self.userCtx;
+			userCtx = self.userCtx;
 		}
-		if (ctx.name != oldUsername) {
+		if (userCtx.name != oldUsername) {
 			dealWithNewUser();
 		}
 	}
@@ -1815,17 +1824,13 @@ function SessionManager(db, userCtx) {
 			return success();
 		}
 		
-		var dbError = error && function (status, err, reason) {
-			error(reason);
-		};
-		
 		var userName = InfiniteMaze.getUsername();
 		getUserDb(function (db) {
 			var userPrefix = "org.couchdb.user:";
 			var id = userPrefix + userName;
 			db.openDoc(id, {
 				success: gotDoc,
-				error: dbError
+				error: error
 			});
 		});
 		
@@ -1836,7 +1841,7 @@ function SessionManager(db, userCtx) {
 					getUserDb(function (db) {
 						db.saveDoc(doc, {
 							success: success,
-							error: dbError
+							error: error
 						});
 					});
 				} else {
@@ -1846,27 +1851,24 @@ function SessionManager(db, userCtx) {
 		}
 	};
 	
-	this.getUserInfo = function (cb, error) {
-		var username = InfiniteMaze.getUsername();
+	this.getUserInfo = function (username, success, error) {
 		db.openDoc("user-info:" + username, {
-			success: cb,
-			//success: setTimeout.bind(window, cb, 1000),
-			error: error && function (status, err, reason) {
-				error(reason);
+			success: success,
+			//success: setTimeout.bind(window, success, 1000),
+			error: error && function (status, err, message) {
+				error(err);
 			}
 		});
 	};
 	
 	this.updateUserInfo = function (props, success, error) {
-		this.getUserInfo(function (doc) {
+		this.getUserInfo(userCtx.name, function (doc) {
 			for (var prop in props) {
 				doc[prop] = props[prop];
 			}
 			db.saveDoc(doc, {
 				success: success,
-				error: error && function (status, err, reason) {
-					error(reason);
-				}
+				error: error
 			});
 		}, error);
 	};
@@ -1874,6 +1876,46 @@ function SessionManager(db, userCtx) {
 	this.isAdmin = function () {
 		return self.userCtx.roles.indexOf("_admin") != -1;
 	};
+	
+	this.lookupUsername = function (email, cb) {
+		db.view("maze/users_by_email", {
+			key: email,
+			success: function (resp) {
+				cb(resp && resp.rows && resp.rows[0] && resp.rows[0].value);
+			},
+			error: function (a, b, c) {
+				cb(null);
+			}
+		});
+	};
+	
+	var expireTime = 3600000 * 12; // 12 hours
+	
+	this.requestResetPassword = function (username, cb) {
+		this.getUserInfo(username, function () {
+			// user exists.
+			// save this doc and the daemon will pick it up and send the email.
+			db.saveDoc({
+				type: "password-reset-request",
+				user: username,
+				expires: Date.now() + expireTime,
+				emailed: false
+			}, {
+				success: function (a) {
+					cb(true, "An email will be sent to you with a link to reset your password.");
+				},
+				error: function (status, err, reason) {
+					cb(false, "Something went wrong. :(" + reason);
+				}
+			});
+		}, function (err) {
+			if (err == "not_found") {
+				cb(false, "There is no account with that username.");
+			} else {
+				cb(false, "Error. :(");
+			}
+		});
+	}
 }
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
@@ -2025,12 +2067,103 @@ constructor: function () {
 }
 });
 
+var ForgotUsernameWindow = Classy(Dialog, {
+constructor: function () {
+	var form = $("forgot-username-window");
+	Dialog.ificate(this, form);
+	var loader = new Loader(form);
+	var self = this;
+	var resultElement = $("forgot-username-result");
+	var loginButton = $("forgot-password-login");
+	
+	var usernameFound;
+	loginButton.onclick = function (e) {
+		e.preventDefault();
+		form.reset();
+		InfiniteMaze.loginSignupWindow.show();
+		InfiniteMaze.loginSignupWindow.populateLogin(usernameFound);
+	};
+	
+	function success(msg) {
+		resultElement.className = "good";
+		resultElement.innerHTML = msg;
+		removeClass(loginButton, "hidden");
+	}
+	
+	function fail(msg) {
+		resultElement.className = "error";
+		resultElement.innerHTML = msg;
+		addClass(loginButton, "hidden");
+	}
+	
+	form.onreset = function () {
+		self.hide();
+		fail("");
+	};
+	
+	form.onsubmit = function (e) {
+		e.preventDefault();
+		var email = $("forgot-username-email").value;
+		if (!email) return;
+		loader.start();
+		InfiniteMaze.sessionManager.lookupUsername(email, function (username) {
+			usernameFound = username;
+			loader.stop();
+			if (username) {
+				success("Username: <u>" + username + "</u>");
+			} else {
+				fail("No user has that email.");
+			}
+		});
+	};
+}
+});
+
+var ForgotPasswordWindow = Classy(Dialog, {
+constructor: function () {
+	var form = $("forgot-password-window");
+	Dialog.ificate(this, form);
+	var loader = new Loader(form);
+	var self = this;
+	var resultElement = $("forgot-password-result");
+	
+	function response(success, msg) {
+		loader.stop();
+		resultElement.className = success ? "good" : "error";
+		resultElement.innerHTML = msg;
+		if (success) {
+			var btn = document.createElement("button");
+			btn.innerHTML = "Okay";
+			resultElement.appendChild(document.createElement("br"));
+			resultElement.appendChild(btn);
+			btn.onclick = self.hide.bind(self);
+		}
+	}
+	
+	this.hide = function () {
+		response(false, "");
+		Dialog.prototype.hide.call(this);
+	}
+	form.onreset = this.hide.bind(this);
+	
+	form.onsubmit = function (e) {
+		e.preventDefault();
+		loader.start();
+		var user = $("forgot-password-username").value;
+		if (!user) return;
+		InfiniteMaze.sessionManager.requestResetPassword(user, response);
+	};
+}
+});
+
 function Updater(db, since) {
 	function refreshSoon() {
 		var busy = (InfiniteMaze.viewer.inEditMode ||
 			InfiniteMaze.welcomeWindow.visible ||
 			InfiniteMaze.loginSignupWindow.visible ||
 			InfiniteMaze.postSaveWindow.visible ||
+			InfiniteMaze.forgotUsernameWindow.visible ||
+			InfiniteMaze.forgotPasswordWindow.visible ||
 			InfiniteMaze.accountSettingsWindow.visible);
 		if (!busy) {
 			location.reload();
@@ -2144,8 +2277,12 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.editor = new GridMazeTileEditor(this.viewer);
 	this.headerBar.updateForUser();
 	this.loginSignupWindow = new LoginSignupWindow();
+	this.loginSignupWindow.populateLogin();
 	this.postSaveWindow = new PostSaveWindow();
 	this.accountSettingsWindow = new AccountSettingsWindow();
+	this.forgotUsernameWindow = new ForgotUsernameWindow();
+	this.forgotPasswordWindow = new ForgotPasswordWindow();
+	
 	this.claimer = new TileClaimer(this.db);
 	
 	if (info.listen_changes !== false) {
