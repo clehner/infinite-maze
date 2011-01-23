@@ -1150,16 +1150,8 @@ constructor: function (viewer) {
 		return false;
 	}
 	
-	var loader = new Loader($("save-loader"));
-	loader.start = function () {
-		Loader.prototype.start.call(this);
-		saveButton.disabled = "disabled";
-	};
-	loader.stop = function () {
-		Loader.prototype.stop.call(this);
-		saveButton.disabled = "";
-	};
-	
+	var loader = new DisablingLoader($("save-loader"), saveButton);
+
 	function save() {
 		if (!InfiniteMaze.getUsername()) {
 			alert("You must be logged in to save your drawing.");
@@ -2126,6 +2118,7 @@ constructor: function () {
 	var loader = new Loader(form);
 	var self = this;
 	var resultElement = $("forgot-password-result");
+	var usernameInput = $("forgot-password-username");
 	
 	function response(success, msg) {
 		loader.stop();
@@ -2140,6 +2133,11 @@ constructor: function () {
 		}
 	}
 	
+	this.show = function () {
+		Dialog.prototype.show.call(this);
+		usernameInput.focus();
+	};
+	
 	this.hide = function () {
 		response(false, "");
 		Dialog.prototype.hide.call(this);
@@ -2149,7 +2147,7 @@ constructor: function () {
 	form.onsubmit = function (e) {
 		e.preventDefault();
 		loader.start();
-		var user = $("forgot-password-username").value;
+		var user = usernameInput.value;
 		if (!user) return;
 		InfiniteMaze.sessionManager.requestResetPassword(user, response);
 	};

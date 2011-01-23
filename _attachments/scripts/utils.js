@@ -487,6 +487,7 @@ function Loader(element) {
 	this.element = element;
 }
 Loader.prototype = {
+	element: null,
 	start: function () {
 		addClass(this.element, "loading");
 	},
@@ -494,3 +495,19 @@ Loader.prototype = {
 		removeClass(this.element, "loading");
 	}
 };
+
+var DisablingLoader = Classy(Loader, {
+	elementToDisable: null,
+	constructor: function (elementToLoad, elementToDisable) {
+		Loader.call(this, elementToLoad);
+		this.elementToDisable = elementToDisable;
+	},
+	start: function () {
+		Loader.prototype.start.call(this);
+		this.elementToDisable.disabled = "disabled";
+	},
+	stop: function () {
+		Loader.prototype.stop.call(this);
+		this.elementToDisable.disabled = "";
+	}
+});
