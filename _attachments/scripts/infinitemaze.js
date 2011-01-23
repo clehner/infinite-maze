@@ -2115,7 +2115,7 @@ var ForgotPasswordWindow = Classy(Dialog, {
 constructor: function () {
 	var form = $("forgot-password-window");
 	Dialog.ificate(this, form);
-	var loader = new Loader(form);
+	var loader = new DisablingLoader(form, $("forgot-password-submit"));
 	var self = this;
 	var resultElement = $("forgot-password-result");
 	var usernameInput = $("forgot-password-username");
