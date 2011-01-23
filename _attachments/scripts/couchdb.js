@@ -697,7 +697,7 @@ var Couch = (function() {
 
     newUUID: function(cacheNum, callback) {
       function got() {
-        callback(uuidCache.shift());
+        callback && callback(uuidCache.shift());
       }
       if (uuidCache.length) {
         got();
