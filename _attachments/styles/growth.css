@@ -1,0 +1,43 @@
+body {
+	font: 14px Arial, sans;
+	background-color: #666;
+	color: #0f0;
+	margin: 0;
+}
+
+#msg {
+	margin: 8px;
+}
+
+#wrapper {
+	position: absolute;
+	width: 100%;
+	top: 0;
+	bottom: 1.5em;
+	overflow: hidden;
+}
+#tiles {
+	position: absolute;
+}
+
+#tiles img {
+	position: absolute;
+	background-color: black;
+}
+
+#controls {
+	position: absolute;
+	bottom: 0;
+	left: 1.5em;
+	right: 8px;
+	background-color: #aaa;
+}
+
+#date-slider {
+	width: 100%;
+}
+
+#control {
+	margin-left: -1.5em;
+	position: absolute;
+}
