@@ -292,6 +292,9 @@ var GetHereTileBox = Classy(TileBox, {
 var DrawingTileBox = Classy(TileBox, {
 	cursor: null,
 	bufferCanvas: null,
+	bufferCtx: null,
+	width: null,
+	height: null,
 	
 	constructor: function () {
 		TileBox.apply(this, arguments);
@@ -323,13 +326,23 @@ var DrawingTileBox = Classy(TileBox, {
 	
 	coverTile: function (tile) {
 		TileBox.prototype.coverTile.call(this, tile);
-		this.bufferCanvas.width = tile.element.width;
-		this.bufferCanvas.height = tile.element.height;
+		this.width = this.bufferCanvas.width = tile.element.width;
+		this.height = this.bufferCanvas.height = tile.element.height;
 	},
 	
 	hide: function () {
 		this.removeCursor();
 		TileBox.prototype.hide.call(this);
+	},
+	
+	clearBuffer: function () {
+		this.bufferCtx.clearRect(0, 0, this.width, this.height);
+	},
+	
+	commitBuffer: function () {
+		// move the image from the buffer to the tile canvas.
+		this.tile.ctx.drawImage(this.bufferCanvas, 0, 0);
+		this.clearBuffer();
 	}
 });
 
@@ -485,6 +498,9 @@ var GridMazeViewer = Classy(MazeViewer, {
 		
 		// Open the editor toolbox.
 		InfiniteMaze.editor.openForTile(tile, entrance);
+		
+		// prevent scrolling
+		//setTimeout(this.scroller.freeze.bind(this.scroller), 500);
 	},
 	
 	exitDrawTileMode: function () {
@@ -493,6 +509,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.inViewMode = true;
 		this.inEditMode = false;
 		addClass(this.centerer, "in");
+		//this.scroller.unfreeze();
 	},
 	
 	// called on scroll
@@ -677,7 +694,7 @@ var Picker = Classy(Box, {
 		var self = this;
 		addClass(table, "picker");
 		table.addEventListener("click", this.onClick.bind(this), false);
-		if (!isArray(data)) throw new Error("Data must be an array.");
+		if (!isArray(data)) data = [];
 		if (data.length && !isArray(data[0])) data = [data];
 		var tableId = this.data.length;
 		this.data[tableId] = data;
@@ -813,14 +830,8 @@ constructor: function (viewer) {
 	
 	// Buffer
 	var bufferCtx = tileBox.bufferCtx;
-	function clearBuffer() {
-		tileBox.bufferCanvas.width += 0;
-	}
-	function commitBuffer() {
-		// move the image from the buffer to the tile canvas.
-		tile.ctx.drawImage(tileBox.bufferCanvas, 0, 0);
-		clearBuffer();
-	}
+	var clearBuffer = tileBox.clearBuffer.bind(tileBox);
+	var commitBuffer = tileBox.commitBuffer.bind(tileBox);
 
 	// Mouse dragging, which will be attached to different tool behaviors
 	var mouseControl = new DragBehavior({
@@ -828,49 +839,70 @@ constructor: function (viewer) {
 		context: this
 	});
 	
-	// mouse dragging for drawing
-	function onDrawDrag(e) {
-		var ctx = tile.ctx;
-		// draw on pixels, not in between them.
-		var offset = -0.5;
-		ctx.beginPath();
-		ctx.moveTo(this.x + offset, this.y + offset);
-		this.x = e._x;
-		this.y = e._y;
-		ctx.lineTo(this.x + offset, this.y + offset);
-		ctx.stroke();
-		
-		// Stop dragging the tile or other funny stuff happening.
-		e.stopPropagation();
-		e.preventDefault();
-		// but still allow the fake cursor to move
-		onMouseMove(e);
-	}
-	
 	// the set of event listeners (a behavior) for the drawing tool
 	var drawingTool = {
+		pick: function () {
+			sizePicker.update();
+		},
+		unpick: function () {
+			sizePicker.uncircle(cursor);
+		},
 		onDragStart: function (e) {
 			saveForUndo();
 			this.x = e._x - .01;
 			this.y = e._y - .01;
-			onDrawDrag.call(this, e);
+			this.onDrag(e);
 		},
-		onDrag: onDrawDrag,
+		onDrag: function (e) {
+			var ctx = tile.ctx;
+			// draw on pixels, not in between them.
+			var offset = -0.5;
+			ctx.beginPath();
+			ctx.moveTo(this.x + offset, this.y + offset);
+			this.x = e._x;
+			this.y = e._y;
+			ctx.lineTo(this.x + offset, this.y + offset);
+			ctx.stroke();
+			
+			// Stop dragging the tile or other funny stuff happening.
+			e.stopPropagation();
+			e.preventDefault();
+			// but still allow the fake cursor to move
+			onMouseMove(e);
+		},
 		onDragEnd: null
 	};
 	
 	// bucket tool behavior
 	var bucketTool = {
+		pick: function () {
+			pencilSize = 0;
+			addClass(cursor, "bucket");
+			addClass(tileBox.element, "hide-cursor");
+		},
+		unpick: function () {
+			removeClass(cursor, "bucket");
+			removeClass(tileBox.element, "hide-cursor");
+		},
 		onDragStart: function (e) {
 			saveForUndo();
 			// bucket flood fill
-			floodFill(tile.ctx, e._x, e._y, selectedColor, 30);
+			floodFill(tile.ctx, e._x, e._y, selectedColor, 49);
 			e.stopPropagation();
 		}
 	};
 	
 	// line tool behavior
 	var lineTool = {
+		pick: function () {
+			addClass(cursor, "line");
+			sizePicker.update();
+			bufferCtx.lineCap = bufferCtx.lineJoin = "round";
+		},
+		unpick: function () {
+			removeClass(cursor, "line");
+			sizePicker.uncircle(cursor);
+		},
 		onDragStart: function (e) {
 			e.stopPropagation();
 			saveForUndo();
@@ -880,15 +912,13 @@ constructor: function (viewer) {
 		onDrag: function (e) {
 			clearBuffer();
 			bufferCtx.beginPath();
-			bufferCtx.lineWidth = 2;
-			bufferCtx.strokeStyle = selectedColor;
 			bufferCtx.moveTo(this.x, this.y);
 			bufferCtx.lineTo(e._x, e._y);
 			bufferCtx.stroke();
 		},
 		onDragEnd: commitBuffer
 	};
-
+	
 	// Init color picker
 	function hexToColor(hexInt) {
 		var hex = hexInt.toString(16);
@@ -900,10 +930,12 @@ constructor: function (viewer) {
 		dark: [0x000000, 0x9f0000, 0x5e320b, /*0x716101,*/ 0x005c00, 0x0000ff, 0x63006d, 0x555555]
 	};
 	var selectedColor;
-	var colorPicker = ColorPicker.ify($("color-picker-light"), colors.light.map(hexToColor));
+	var colorPicker = ColorPicker.ify($("color-picker-light"),
+		colors.light.map(hexToColor));
 	colorPicker.extend($("color-picker-dark"), colors.dark.map(hexToColor));
 	colorPicker.onSelect = function setPencilColor(color) {
 		selectedColor = color;
+		bufferCtx.strokeStyle = selectedColor;
 		if (tile) {
 			tile.ctx.strokeStyle = color;
 		}
@@ -917,25 +949,11 @@ constructor: function (viewer) {
 	var sizePicker = SizePicker.ify($("size-picker"), pencilSizes);
 	var pencilSize;
 	sizePicker.onSelect = function setPencilSize(size) {
-		if (size == bucketTool) {
-			pencilSize = 2;
-			mouseControl.setBehavior(bucketTool);
-			addClass(cursor, "bucket");
-			sizePicker.uncircle(cursor);
-			return;
-		}
-		removeClass(cursor, "bucket");
-		removeClass(cursor, "line");
-		if (size == lineTool) {
-			mouseControl.setBehavior(lineTool);
-			addClass(cursor, "line");
-			sizePicker.uncircle(cursor);
-			return;
-		}
-		
-		mouseControl.setBehavior(drawingTool);
-		
 		pencilSize = +size;
+		if (activeTool == bucketTool) {
+			return;
+		}
+		bufferCtx.lineWidth = pencilSize;
 		if (tile) {
 			tile.ctx.lineWidth = pencilSize;
 		}
@@ -943,9 +961,18 @@ constructor: function (viewer) {
 	};
 	sizePicker.select(0);
 	
-	sizePicker.extend($("bucket-tool"), [bucketTool]);
-	//sizePicker.extend($("line-tool"), [lineTool]);
-	
+	// Init tool picker
+	var toolPicker = Picker.ify($("tool-picker"),
+		[[drawingTool, lineTool, bucketTool]]);
+	var activeTool;
+	toolPicker.onSelect = function (tool) {
+		activeTool && activeTool.unpick();
+		activeTool = tool;
+		tool.pick();
+		mouseControl.setBehavior(tool);
+	};
+	toolPicker.selectCoord(0, 0);
+
 	// Init buttons.
 	var saveButton = $("save-btn");
 	saveButton.onclick = save;
@@ -988,6 +1015,7 @@ constructor: function (viewer) {
 		viewer.centerer.appendChild(tileBox.element);
 		tileBox.coverTile(tile);
 		
+		toolPicker.update();
 		colorPicker.update();
 		sizePicker.update();
 		

@@ -249,8 +249,11 @@ body {
 	outline: none;
 }
 
-.tile-box.drawing {
+.hide-cursor {
 	cursor: url(../images/blank.cur), none;
+}
+
+.tile-box.drawing {
 	border: 1px dotted rgba(200, 200, 200, 0.6);
 }
 .tile-box.drawing:hover {
@@ -367,6 +370,7 @@ body {
 	border: 3px solid #999;
 	background-color: black;
 	border-spacing: 1px;
+	-webkit-user-select: none;
 }
 
 .picker td, .picker-btn {
@@ -379,7 +383,12 @@ body {
 }
 
 .picker td.selected {
-	outline: 1px dotted white;
+	outline: 1px solid white;
+	background-color: #bbb;
+}
+.picker td:active, .picker-btn:active {
+	outline: 1px solid #999;
+	background-color: #999;
 }
 
 #size-picker td {
@@ -393,12 +402,14 @@ body {
 	z-index: -1;
 }
 
-#bucket-tool td {
+#pencil-tool {
+	height: 1em;
+	background-image: url(../images/pencil.gif);
+}
+
+#bucket-tool {
 	line-height: 1em;
 	background-image: url(../images/bucket.gif);
-}
-#bucket-tool td.selected {
-	background-color: #999;
 }
 
 #line-tool {
@@ -407,9 +418,6 @@ body {
 
 #undo-btn {
 	background-image: url(../images/undo.gif);
-}
-.picker td:active, .picker-btn:active {
-	background-color: #aaa;
 }
 
 /* Account Settings Window */
