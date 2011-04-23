@@ -19,6 +19,14 @@ function Scroller(options) {
 	var scrollContents = contents && options.scrollContents;
 	var dragToScroll = options.dragToScroll;
 	var start = options.start;
+
+	var frozen = false;
+	this.freeze = function () {
+		frozen = true;
+	};
+	this.unfreeze = function () {
+		frozen = false;
+	};
 	
 	function div(className, child) {
 		var element = document.createElement("div");
@@ -28,7 +36,6 @@ function Scroller(options) {
 		}
 		return element;
 	}
-	
 	var mover = div("mover", contents);
 	var fixer = div("fixer", mover);
 	var inner = div("inner", fixer);
@@ -46,6 +53,9 @@ function Scroller(options) {
 	function move(dx, dy, e) {
 		if (!dx && !dy) {
 			return false;
+		}
+		if (frozen) {
+			return true;
 		}
 		self.x = (x += +dx);
 		self.y = (y += +dy);
@@ -170,5 +180,7 @@ Scroller.prototype = {
 	y: 0,
 	innerElement: null,
 	move: null,
-	reset: null
+	reset: null,
+	freeze: null,
+	unfreeze: null
 };

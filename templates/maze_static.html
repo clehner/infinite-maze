@@ -10,6 +10,9 @@
 		padding: 0;
 		background-color: black;
 	}
+	body.white {
+		background-color: white;
+	}
 	#maze {
 		border-spacing: 0;
 	}
@@ -19,10 +22,18 @@
 		line-height: 0;
 		width: {{TILE_WIDTH}}px;
 		height: {{TILE_HEIGHT}}px;
+		background-color: black;
+	}
+	body.white #maze td:empty {
+		background-color: white;
+		border-color: white;
 	}
 	</style>
 </head>
 <body>
+<script>
+document.body.className = location.search.substr(1).replace(",", " ");
+</script>
 <table id="maze">{{TBODY}}</table>
 <script>
 var startX = {{START_X}};

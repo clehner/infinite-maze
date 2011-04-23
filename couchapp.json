@@ -1,1 +1,5 @@
-{"description": "yeah!", "name": "The Infinite Maze"}
+{
+	"name": "The Infinite Maze",
+	"description": "Collaborative maze drawing app. yeah!",
+	"index": "_rewrite/"
+}

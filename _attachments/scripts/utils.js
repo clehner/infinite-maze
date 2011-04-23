@@ -272,6 +272,7 @@ function DragBehavior(options) {
 		onDragStart = opt.onDragStart;
 		onDrag = opt.onDrag;
 		onDragEnd = opt.onDragEnd;
+		context = opt;
 	};
 }
 

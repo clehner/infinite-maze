@@ -689,7 +689,7 @@ MazeViewer.prototype = {
 		var fg = (r + g + b) * a;
 		// change 0 to 765 for passable bg
 		var bg = 0 * (255 - a);
-		return fg + bg > 82000; //97537;
+		return fg + bg > 70000; //97537 = 50%;
 	},
 
 	// get passable neighboring points

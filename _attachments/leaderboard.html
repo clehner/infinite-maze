@@ -27,7 +27,7 @@ db.view("maze/tiles_by_creator", {
 				tiles: row.value
 			};
 		}).sort(function (a, b) {
-			return b.name - a.name;
+			return b.name > a.name;
 		}).sort(function (a, b) {
 			return b.tiles - a.tiles;
 		}).map(function (user, i) {
