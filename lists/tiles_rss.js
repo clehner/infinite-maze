@@ -29,7 +29,7 @@ function(head, req) {
 		//var newest_date = new Date(0);
 		//send(JSON.stringify(req));
 		while (row = getRow()) {
-			var value = row.value;
+			var value = row.doc;
 			var date = new Date(value.created_at);
 			/*if (date > newest_date) {
 				newest_date = date;

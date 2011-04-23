@@ -13,7 +13,8 @@
 		"query": {
 			"id": ":id",
 			"limit": 10,
-			"descending": true
+			"descending": true,
+			"include_docs": true
 		}
 	},
 	{
