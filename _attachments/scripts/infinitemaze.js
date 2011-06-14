@@ -2408,7 +2408,8 @@ InfiniteMaze.getStoredScrollPosition = function () {
 
 // Google Analytics
 if (location.hostname != "localhost") {
-	loadScript("http://www.google-analytics.com/ga.js", function () {		 
+	var gaPrefix = ("https:" == document.location.protocol) ? "https://ssl" : "http://www";
+	loadScript(gaPrefix + ".google-analytics.com/ga.js", function () {		 
 		_gat._getTracker("UA-11963387-3")._trackPageview();		 
 	});
 }
