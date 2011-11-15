@@ -12,9 +12,9 @@
 		"to": "_list/tiles_rss/tiles_by_creation",
 		"query": {
 			"id": ":id",
-			"limit": 10,
-			"descending": true,
-			"include_docs": true
+			"limit": "10",
+			"descending": "true",
+			"include_docs": "true"
 		}
 	},
 	{
@@ -22,15 +22,15 @@
 		"to": "_list/maze_static/maze_and_tiles",
 		"query": {
 			"id": ":id",
-			"descending": true
+			"descending": "true"
 		}
 	},
 	{
 		"from": "claims.xml",
 		"to": "_list/claims_rss/claims",
 		"query": {
-			"limit": 10,
-			"descending": true
+			"limit": "10",
+			"descending": "true"
 		}
 	},
 	{
