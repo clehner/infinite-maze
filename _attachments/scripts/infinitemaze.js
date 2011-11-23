@@ -498,7 +498,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		
 		// Open the editor toolbox.
 		InfiniteMaze.editor.openForTile(tile, entrance);
-		
+
 		// prevent scrolling
 		//setTimeout(this.scroller.freeze.bind(this.scroller), 500);
 	},
@@ -1033,6 +1033,8 @@ constructor: function (viewer) {
 				viewer.updateViewport();
 			});
 		}, 0);
+
+		InfiniteMaze.tracker.trackTileEvent(tile, "Open");
 	};
 	
 	function close() {
@@ -1212,6 +1214,7 @@ constructor: function (viewer) {
 					InfiniteMaze.prefs.set("first-drawing", "1");
 					InfiniteMaze.postSaveWindow.show();
 				}
+				InfiniteMaze.tracker.trackTileEvent(tile, "Save");
 			}
 		);
 	}
@@ -1222,6 +1225,7 @@ constructor: function (viewer) {
 			if (!confirm("You really want to discard what you drew?")) return;
 			restore();
 		}
+		InfiniteMaze.tracker.trackTileEvent(tile, "Cancel");
 		close();
 	}
 	this.discard = discard;
@@ -1658,7 +1662,17 @@ constructor: function () {
 		$("login-password").focus();
 	}
 	this.populateLogin = populateLogin;
-	
+
+	function onLogin(username, result) {
+		onLoginSignup(username, result);
+		InfiniteMaze.tracker.trackLogin();
+	}
+
+	function onSignup(username, result) {
+		onLoginSignup(username, result);
+		InfiniteMaze.tracker.trackSignup();
+	}
+
 	function onLogin(username, result) {
 		loader.stop();
 		loginForm.reset();
@@ -1698,7 +1712,7 @@ constructor: function () {
 		var email = $("signup-email").value;
 		loader.start();
 		InfiniteMaze.sessionManager.signup(username, password, email,
-			onLogin.curry(username), onSignupError);
+			onSignup.curry(username), onSignupError);
 	};
 	
 	$("forgot-username-link").onclick = function (e) {
@@ -2333,6 +2347,8 @@ InfiniteMaze.init3 = function (info, cb) {
 	updateLocationFromHash(null, true);
 	window.addEventListener("hashchange", updateLocationFromHash, false);
 	
+	InfiniteMaze.tracker.trackPageView();
+
 	if (cb) cb.call(this);
 };
 
@@ -2405,11 +2421,67 @@ InfiniteMaze.getStoredScrollPosition = function () {
 	return str && str.split(",").map(number);
 };
 
-
 // Google Analytics
+InfiniteMaze.tracker = (function () {
+	var pageTracker;
+	var username = '';
+	var trackedPageView;
+	var trackWhenLoaded;
+	var self = this;
+
+	function init() {
+		pageTracker = _gat._createTracker("UA-11963387-3");
+		if (trackWhenLoaded) {
+			self.trackPageView();
+		}
+	}
+
+	function updateUsername() {
+		username = InfiniteMaze.getUsername();
+		if (!pageTracker) return;
+		pageTracker._setCustomVar(1, "username", username, 2);
+	}
+
+	return {
+		load: function () {
+			if (pageTracker) return;
+			var ga = ("https:" == document.location.protocol ?
+				"https://ssl" : "http://www") + ".google-analytics.com/ga.js";
+			loadScript(ga, init);
+		},
+
+		trackPageView: function () {
+			if (trackedPageView) return;
+			if (!pageTracker) {
+				trackWhenLoaded = true;
+				return;
+			}
+			updateUsername();
+			pageTracker._trackPageview();
+		},
+
+		trackTileEvent: function (tile, action) {
+			if (!pageTracker) return;
+			pageTracker._trackEvent("Drawing", action,
+				tile.offsetX/256 + "," + tile.offsetY/256);
+		},
+
+		trackLogin: function () {
+			if (!pageTracker) return;
+			updateUsername();
+			pageTracker._trackEvent("Session", "Login", username);
+		},
+
+		trackSignup: function () {
+			if (!pageTracker) return;
+			updateUsername();
+			pageTracker._trackEvent("Session", "Signup", username);
+		}
+	};
+}());
+
+// Start analytics.
 if (location.hostname != "localhost") {
-	var gaPrefix = ("https:" == document.location.protocol) ? "https://ssl" : "http://www";
-	loadScript(gaPrefix + ".google-analytics.com/ga.js", function () {		 
-		_gat._getTracker("UA-11963387-3")._trackPageview();		 
-	});
+	InfiniteMaze.tracker.load();
 }
+
