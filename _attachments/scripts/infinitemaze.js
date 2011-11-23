@@ -1664,16 +1664,16 @@ constructor: function () {
 	this.populateLogin = populateLogin;
 
 	function onLogin(username, result) {
-		onLoginSignup(username, result);
 		InfiniteMaze.tracker.trackLogin();
+		onLoginSignup(username, result);
 	}
 
 	function onSignup(username, result) {
-		onLoginSignup(username, result);
 		InfiniteMaze.tracker.trackSignup();
+		onLoginSignup(username, result);
 	}
 
-	function onLogin(username, result) {
+	function onLoginSignup(username, result) {
 		loader.stop();
 		loginForm.reset();
 		signupForm.reset();
