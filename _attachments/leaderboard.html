@@ -3,8 +3,10 @@
 <head>
 	<title>Leaderboard</title>
 	<meta charset="utf-8">
-	<link rel="alternate" type="application/atom+xml" href="claims.xml">
 	<style type="text/css">
+		.data {
+			color: #aaa;
+		}
 	</style>
 	<script src="scripts/couchdb.js"></script>
 </head>
@@ -16,7 +18,7 @@ Couch.urlPrefix = "./";
 var db = Couch.db("db");
 function $(id) { return document.getElementById(id); }
 var mazeId = "1";
-db.view("maze/tiles_by_creator", {
+db.view("maze/tile_content_by_creator", {
 	group: true,
 	startkey: [mazeId],
 	endkey: [mazeId, {}],
@@ -24,14 +26,18 @@ db.view("maze/tiles_by_creator", {
 		$("result").innerHTML = resp.rows.map(function (row) {
 			return {
 				name: row.key[1] || "anonymous",
-				tiles: row.value
+				points: row.value[0],
+				kbs: row.value[1],
+				tiles: row.value[2]
 			};
 		}).sort(function (a, b) {
 			return b.name > a.name;
 		}).sort(function (a, b) {
-			return b.tiles - a.tiles;
+			return b.points - a.points;
 		}).map(function (user, i) {
-			return "<li>" + user.name + " (" + user.tiles + ")<\/li>";
+			return "<li>" + user.name + " <span class=\"data\">" +
+				user.kbs.toFixed(0) + "KB, " +
+				user.tiles + " tiles<\/span><\/li>";
 		}).join("");
 	},
 	error: function(a,b,c) {
