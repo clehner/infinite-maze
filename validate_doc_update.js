@@ -31,7 +31,7 @@ function (doc, oldDoc, userCtx) {
 	//if (isAdmin) return;
 	
 	if (type != 'password-reset-request') {
-		if (!userCtx.name) {
+		if (!userCtx.name && userCtx.roles.length == 0) {
 			throw {unauthorized: "You must be logged in."};
 		}
 		
