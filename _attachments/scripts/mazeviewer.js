@@ -474,16 +474,16 @@ MazeViewer.prototype = {
 			x: this.startPos[0],
 			y: this.startPos[1]
 		});
+		marker.element.addEventListener("mouseover",
+			this.enterMaze.bind(this), false);
 		if (supportsTouch) {
 			marker.element.addEventListener("touchmove",
 			function (e) {
+				// prevent the mouseover event from firing
 				e.preventDefault();
 				this.enterMaze();
 				this.onTouchStart(e);
 			}.bind(this), false);
-		} else {
-			marker.element.addEventListener("mouseover",
-				this.enterMaze.bind(this), false);
 		}
 		this.centerer.appendChild(marker.element);
 	},
@@ -513,13 +513,12 @@ MazeViewer.prototype = {
 		this.overlay.element.style.opacity = 0.6;
 		this.centerer.appendChild(this.overlay.element);
 		
+		this.updateOffset();
+		this.centerer.addEventListener("mousedown", this.onMouseDown, false);
+		this.centerer.addEventListener("mousemove", this.onMouseMove, false);
 		if (supportsTouch) {
 			this.centerer.addEventListener("touchstart",
 				this.onTouchStart, false);
-		} else {
-			this.updateOffset();
-			this.centerer.addEventListener("mousedown", this.onMouseDown, false);
-			this.centerer.addEventListener("mousemove", this.onMouseMove, false);
 		}
 		
 		// add player marker (red dot)
@@ -538,6 +537,7 @@ MazeViewer.prototype = {
 		
 		this.updateOffset();
 		this.onTouchMove(e);
+		e.preventDefault();
 	},
 	
 	updateTouch: function (e) {
