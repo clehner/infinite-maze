@@ -1,30 +1,31 @@
-function validate(conditions) {
-	for (var i = 0; i < conditions.length; i++) {
-		if (!conditions[i++]) {
-			throw {forbidden: conditions[i]};
+function (doc, oldDoc, userCtx) {
+	function validate(conditions) {
+		for (var i = 0; i < conditions.length; i++) {
+			if (!conditions[i++]) {
+				throw {forbidden: conditions[i]};
+			}
 		}
 	}
-}
 
-function isArray(obj) {
-	return Object.prototype.toString.call(obj) == "[object Array]";
-}
+	function isArray(obj) {
+		return Object.prototype.toString.call(obj) == "[object Array]";
+	}
 
-function isVector(obj, dimensions) {
-	return isArray(obj) &&
-		obj.length == dimensions &&
-		!obj.some(isNaN);
-}
+	function isVector(obj, dimensions) {
+		return isArray(obj) &&
+			obj.length == dimensions &&
+			!obj.some(isNaN);
+	}
 
-function isPoint(obj) {
-	return isVector(obj, 2);
-}
+	function isPoint(obj) {
+		return isVector(obj, 2);
+	}
 
-function isPointRadius(obj) {
-	return isVector(obj, 3);
-}
+	function isPointRadius(obj) {
+		return isVector(obj, 3);
+	}
 
-function (doc, oldDoc, userCtx) {
+
 	var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 	var type = doc.type || (oldDoc && oldDoc.type);
 	
