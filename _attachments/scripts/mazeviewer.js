@@ -1,4 +1,4 @@
-var supportsTouch = !!window.Touch;
+var supportsTouch = ('ontouchstart' in document.documentElement);
 
 // Maze stuff
 
