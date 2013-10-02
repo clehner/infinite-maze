@@ -45,6 +45,15 @@ $("form").onsubmit = function (e) {
 		success: function (d) {
 			doc = d
 			saveDoc();
+		},
+		error: function () {
+			doc = {
+				_id: "start-tiles:" + mazeId,
+				type: "start-tiles",
+				maze_id: mazeId,
+				tiles: []
+			};
+			saveDoc();
 		}
 	});
 	
