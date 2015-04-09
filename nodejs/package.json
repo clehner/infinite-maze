@@ -1,0 +1,15 @@
+{
+  "name": "theinfinitemaze",
+  "version": "0.0.1",
+  "description": "nodejs stuff for theinfinitemaze",
+  "main": "emails.js",
+  "keywords": [
+    "maze"
+  ],
+  "author": "Charles Lehner <cel@celehner.com> (http://celehner.com/)",
+  "license": "AGPLv3+",
+  "dependencies": {
+    "felix-couchdb": "^1.0.7",
+    "mail": "git://github.com/huetsch/node-mail"
+  }
+}

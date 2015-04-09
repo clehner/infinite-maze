@@ -1,9 +1,10 @@
 var sys = require('sys'),
-	couchdb = require('./node-couchdb'),
+	couchdb = require('felix-couchdb'),
 	cred = require('./credentials'),
-	mail = require('./node-mail/lib/mail').Mail(cred.mail),
-	couch = couchdb.createClient(cred.couchdb.port || 5984, cred.couchdb.host, 
-		cred.couchdb.user, cred.couchdb.pass),
+	mail = require('mail').Mail(cred.mail),
+	couch = couchdb.createClient(cred.couchdb.port || 5984,
+		cred.couchdb.host, cred.couchdb.user, cred.couchdb.pass,
+		NaN, cred.couchdb.secure),
 	db = couch.db('maze'),
 	debug = cred.debug,
 	wait = 4000, // ms in between emails
@@ -45,11 +46,13 @@ function removeDoc(doc, cb) {
 }
 
 function changes(name, handler) {
+	console.log('opening changes stream', name);
 	db.changesStream({
 		filter: "maze/" + name,
 		include_docs: true,
 		since: update_seq
 	}).addListener("data", function (change) {
+		console.log('change', change.seq, change.doc && change.doc.type);
 		handler(change.doc);
 	}).addListener("error", function (msg) {
 		sys.debug("Error: " + msg);
@@ -96,32 +99,35 @@ changes("tiles_to_email", function (doc) {
 		key: [doc.maze_id].concat(doc.location),
 		group: true
 	}, function (er, result) {
-		if (er) throw er;
-		var row = result.rows[0];
-		if (row) {
-			var usernames = row.value;
-			// Update the tile doc so duplicate emails aren't sent later.
-			doc.emailed_neighbors = true;
-			saveDoc(doc, function (er, ok) {
-				if (er) {
-					sys.debug("Error updating doc " + JSON.stringify(doc));
-					return;
-				}
-				usernames.forEach(function (username) {
-					// Don't notify a user of their own drawing.
-					if (username != doc.creator) {
-						// Get the email address for a username
-						getUserEmail(username, function (er, email, prefs) {
-							if (er) throw er;
-							if (prefs.receive_tile_notifications) {
-								// Send the email
-								queue(sendNewTileEmail, doc, username, email);
-							}
-						});
-					}
-				});
-			});
+		if (er || !result || !result.rows) {
+			console.error("Unable to get adjacent tile creators:", er,
+				result);
+			return;
 		}
+		var row = result.rows[0];
+		if (!row) return;
+		var usernames = row.value;
+		// Update the tile doc so duplicate emails aren't sent later.
+		doc.emailed_neighbors = true;
+		saveDoc(doc, function (er, ok) {
+			if (er) {
+				sys.debug("Error updating doc " + JSON.stringify(doc));
+				return;
+			}
+			usernames.forEach(function (username) {
+				// Don't notify a user of their own drawing.
+				if (username != doc.creator) {
+					// Get the email address for a username
+					getUserEmail(username, function (er, email, prefs) {
+						if (er) throw er;
+						if (prefs.receive_tile_notifications) {
+							// Send the email
+							queue(sendNewTileEmail, doc, username, email);
+						}
+					});
+				}
+			});
+		});
 	});
 });
 
@@ -140,6 +146,10 @@ function getUserDoc(username, cb) {
 
 function makePasswordResetToken(requestDoc, cb) {
 	getUserDoc(requestDoc.user, function (er, userDoc) {
+		if (er || !userDoc) {
+			console.error('unable to get user doc:', er, userDoc);
+			return;
+		}
 		var data = requestDoc._id + "-" + userDoc._rev;
 		cb(hex_hmac_sha1(cred.password_reset_secret, data));
 	});
@@ -228,7 +238,7 @@ changes("password_reset_requests", function (doc) {
 
 // sending the mails
 
-var debugAddress = debug && 'theinfinitemaze-debug.cel@lehnerstudios.com';
+var debugAddress = debug && 'theinfinitemaze-debug.cel@celehner.com';
 var sender = cred.mail.address;
 var siteRoot = 'http://www.theinfinitemaze.com/';
 
