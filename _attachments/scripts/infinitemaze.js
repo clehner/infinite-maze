@@ -413,6 +413,9 @@ var GridMazeViewer = Classy(MazeViewer, {
 			this._onTileAdjacent(x, y - tileHeight);
 		} else if (yInTile == -1 || yInTile == tileHeight - 1) {
 			this._onTileAdjacent(x, y + tileHeight);
+		} else if (x == 127 && y == 127) {
+			// this hack allows creating the first tile in a new maze
+			this._onTileAdjacent(x, y);
 		} else {
 			this._onTileAdjacent(null);
 		}
@@ -781,7 +784,9 @@ var SizePicker = Classy(Picker, {
 });
 SizePicker.ify = Picker.ify;
 
-var InfiniteMaze = {};
+var InfiniteMaze = {
+	defaultMazeId: "1"
+};
 
 function $(id) {
 	return document.getElementById(id);
@@ -2231,8 +2236,8 @@ InfiniteMaze.init = function (cb) {
 		Couch.urlPrefix = "";
 	}
 	
-	var defaultMazeId = "1";
-	this.mazeId = parseQuery(location.search.substr(1)).maze || defaultMazeId;
+	this.mazeId = parseQuery(location.search.substr(1)).maze ||
+		this.defaultMazeId;
 	
 	this.prefs = new Prefs("infinitemaze-");
 	this.welcomeWindow = new WelcomeWindow();
@@ -2270,6 +2275,9 @@ InfiniteMaze.init2 = function (cb) {
 			success: function (data) {
 				loader.stop();
 				self.init3(data, cb);
+			},
+			error: function (err) {
+				console.error('Unable to load tiles', err);
 			}
 		});
 	});
@@ -2278,7 +2286,7 @@ InfiniteMaze.init2 = function (cb) {
 // Render the maze and do the real initing
 InfiniteMaze.init3 = function (info, cb) {
 	var self = this;
-	var mazeDoc = info.maze;
+	var mazeDoc = info.maze || {_id: this.defaultMazeId};
 	var tiles = info.tiles;
 	var userCtx = info.userCtx;
 	var update_seq = info.update_seq;
