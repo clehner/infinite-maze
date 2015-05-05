@@ -2110,9 +2110,10 @@ var ForgotUsernameWindow = Classy(Dialog, {
 constructor: function () {
 	var form = $("forgot-username-window");
 	Dialog.ificate(this, form);
-	var loader = new Loader(form);
+	var loader = new DisablingLoader(form, $("forgot-username-submit"));
 	var self = this;
 	var resultElement = $("forgot-username-result");
+	var emailInput = $("forgot-username-email");
 	var loginButton = $("forgot-password-login");
 	
 	var usernameFound;
@@ -2121,6 +2122,11 @@ constructor: function () {
 		form.reset();
 		InfiniteMaze.loginSignupWindow.show();
 		InfiniteMaze.loginSignupWindow.populateLogin(usernameFound);
+	};
+	
+	this.show = function () {
+		Dialog.prototype.show.call(this);
+		emailInput.focus();
 	};
 	
 	function success(msg) {
@@ -2142,7 +2148,7 @@ constructor: function () {
 	
 	form.onsubmit = function (e) {
 		e.preventDefault();
-		var email = $("forgot-username-email").value;
+		var email = emailInput.value;
 		if (!email) return;
 		loader.start();
 		InfiniteMaze.sessionManager.lookupUsername(email, function (username) {
