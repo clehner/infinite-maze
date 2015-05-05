@@ -10,30 +10,30 @@ function Marker(options) {
 	var element = this.element = document.createElement("div");
 	element.className = "marker";
 	var s = element.style;
-	
+
 	s.left = (+options.x || 0) + "px";
 	s.top = (+options.y || 0) + "px";
-	
+
 	var r = +options.radius || 13;
 	s.width = s.height = 2*r - 1 + "px";
 	s.borderRadius = s.MozBorderRadius = s.WebkitBorderRadius = r + "px";
 	s.margin = -r + "px";
-	
+
 	var color = this.colors[options.color] || this.colors.green;
 	s.borderColor = color.border;
 	s.backgroundColor = color.background;
 }
 Marker.prototype = {
 	element: null,
-	
+
 	highlight: function () {
 		this.element.className = "marker highlight";
 	},
-	
+
 	unhighlight: function () {
 		this.element.className = "marker";
 	},
-	
+
 	colors: {
 		green: {
 			border: rgba(0, 200, 0, 1),
@@ -70,7 +70,7 @@ Tile.prototype = {
 	isEmpty: true,
 	info: {},
 	_onLoad: null,
-	
+
 	drawLine: function (x1, y1, x2, y2, color) {
 		var ctx = this.ctx;
 		ctx.strokeStyle = "#0f0";
@@ -79,7 +79,7 @@ Tile.prototype = {
 		ctx.lineTo(x2 - this.offsetX, y2 - this.offsetY);
 		ctx.stroke();
 	},
-	
+
 	loadImageSrc: function (src) {
 		var clearFirst = !this.isEmpty;
 		var self = this;
@@ -95,7 +95,7 @@ Tile.prototype = {
 		});
 		this.isEmpty = false;
 	},
-	
+
 	// call a function when the tile is loaded
 	onLoad: function (cb) {
 		if (this.isEmpty) {
@@ -104,56 +104,56 @@ Tile.prototype = {
 			cb();
 		}
 	},
-	
+
 	_loaded: function () {
 		if (this._onLoad) {
 			this._onLoad();
 			delete this._onLoad;
 		}
 	},
-	
+
 	_startLoader: function () {
 		addClass(this.element, "loading");
 	},
-	
+
 	_stopLoader: function () {
 		removeClass(this.element, "loading");
 	},
-	
+
 	drawImage: function (img) {
 		this.isEmpty = false;
 		this.ctx.drawImage(img, 0, 0);
 	},
-	
+
 	empty: function () {
 		this.isEmpty = true;
 	},
-	
+
 	clear: function () {
 		this.empty();
 		this.ctx.clearRect(0, 0, this.element.width, this.element.height);
 		//this.element.width += 0;
 	},
-	
+
 	hide: function () {
 		this.element.style.display = "none";
 	},
-	
+
 	show: function () {
 		this.element.style.display = "";
 	},
-	
+
 	toString: function () {
 		return "[Tile " + this.offsetX + "," + this.offsetY + "]";
 	},
-	
+
 	// get PNG base64 data
 	exportPNG: function () {
 		var dataURL = this.element.toDataURL("image/png");
 		var imageData = dataURL.substr('data:image/png;base64,'.length);
 		return imageData;
 	},
-	
+
 	// given a point relative to the maze, return it relative to the tile
 	getPointRelative: function (absPoint) {
 		return [absPoint[0] - this.offsetX, absPoint[1] - this.offsetY];
@@ -177,16 +177,16 @@ TiledCanvas.prototype = {
 	tileHeight: NaN,
 	tiles: null, // 2d array
 	visibleTiles: [], // array
-	
+
 	getTileAtPixel: function (x, y) {
 		return this.getTile(
 			Math.floor(x / this.tileWidth),
 			Math.floor(y / this.tileHeight)
 		);
 	},
-	
+
 	initTile: function (tile, x, y) {},
-	
+
 	// tile coords, not pixels
 	getTile: function (x, y) {
 		if (y == null) {
@@ -203,7 +203,7 @@ TiledCanvas.prototype = {
 		this.element.appendChild(tile.element);
 		return tile;
 	},
-	
+
 	drawLine: function (from, to, color) {
 		var w = this.tileWidth;
 		var h = this.tileHeight;
@@ -216,7 +216,7 @@ TiledCanvas.prototype = {
 			self.getTile(x, y).drawLine(x0, y0, x1, y1, color);
 		});
 	},
-	
+
 	// useful buffer
 	_getBufferCtx: (function () {
 		var bufferCanvas = document.createElement("canvas");
@@ -227,7 +227,7 @@ TiledCanvas.prototype = {
 			return bufferCtx;
 		};
 	})(),
-	
+
 	getImageData: function (x, y, w, h) {
 		var tiles = this.getTilesInRect(x, y, w, h);
 		if (tiles.length == 1) {
@@ -254,7 +254,7 @@ TiledCanvas.prototype = {
 		});
 		return buffer.getImageData(0, 0, w, h);
 	},
-	
+
 	putImageData: function (imageData, x, y) {
 		var tiles = this.getTilesInRect(x, y, imageData.width,
 			imageData.height);
@@ -262,7 +262,7 @@ TiledCanvas.prototype = {
 			tile.ctx.putImageData(imageData, x-tile.offsetX, y-tile.offsetY);
 		});
 	},
-	
+
 	getAllTiles: function () {
 		var tiles = [];
 		// Can't use native array methods because of negative indexes.
@@ -274,18 +274,18 @@ TiledCanvas.prototype = {
 		}
 		return tiles;
 	},
-	
+
 	getVisibleTiles: function () {
 		return this.visibleTiles;
 	},
-	
+
 	getTilesInRect: function (x0, y0, w, h) {
 		var tiles = [];
 		var left   = Math.floor(x0 / this.tileWidth);
 		var top    = Math.floor(y0 / this.tileHeight);
 		var right  = Math.ceil((x0 + w) / this.tileWidth);
 		var bottom = Math.ceil((y0 + h) / this.tileHeight);
-		
+
 		for (var x = left; x < right; x++) {
 			for (var y = top; y < bottom; y++) {
 				tiles.push(this.getTile(x, y));
@@ -293,14 +293,14 @@ TiledCanvas.prototype = {
 		}
 		return tiles;
 	},
-	
+
 	setVisibleTiles: function (newTiles) {
 		var oldTiles = this.getVisibleTiles();
 		this.visibleTiles = newTiles;
 		oldTiles.subtract(newTiles).forEach(Tile.hide);
 		newTiles.subtract(oldTiles).forEach(Tile.show);
 	},
-	
+
 	// not pixels!
 	getTileCoords: function (tile) {
 		return [
@@ -308,12 +308,12 @@ TiledCanvas.prototype = {
 			tile.offsetY / this.tileHeight
 		];
 	},
-	
+
 	clearTile: function (tile) {
 		this.clearRect(tile.offsetX, tile.offsetY,
 			this.tileWidth, this.tileHeight);
 	},
-	
+
 	clearRect: function (x, y, w, h) {
 		var tiles = this.getTilesInRect(x, y, w, h);
 		tiles.forEach(function (tile) {
@@ -331,16 +331,16 @@ function MazeViewer(opt) {
 
 	this.element = document.createElement("div");
 	this.element.className = "layer maze";
-	
+
 	this.centerer = document.createElement("div");
 	this.centerer.className = "layer centerer";
 	this.element.appendChild(this.centerer);
-	
+
 	this.pathfinder = new Pathfinder({
 		possibleDirections: this.possibleDirections,
 		maxExtraLength: this.correctionAmount
 	});
-	
+
 	var options = opt || {};
 	if (options.loader) {
 		this.loader = options.loader;
@@ -363,32 +363,32 @@ function MazeViewer(opt) {
 		onScroll: this.updateViewport.bind(this)
 	});
 	this.centerer.appendChild(this.mazeCanvas.element);
-	
+
 	// Create player marker, but don't add it until we enter the maze.
 	this.playerMarker = document.createElement("div");
 	this.playerMarker.className = "player-marker";
-	
+
 	//this.setPosition(this.startPos[0], this.startPos[1]);
 	// Avoid race conditions by only using the base setPosition method here,
 	// and by doing it before onMove is set.
 	MazeViewer.prototype.setPosition.apply(this, this.startPos);
-	
+
 	if (options.onScroll) this._onScroll = options.onScroll.bind(context);
 	if (options.onMove) this._onMove = options.onMove.bind(context);
 
 	this.showStartMarker();
-	
+
 	//this.updateViewport();
 	this.updateOffset();
 }
 
 MazeViewer.prototype = {
 	constructor: MazeViewer,
-	
+
 	element: null, // contains the whole maze viewer
 	centerer: null, // child of element. contains maze
 	overlay: null, // child of centerer. contains player's path and marker
-	
+
 	//title: "",
 	entered: false,
 	mazeCanvas: null, // TiledCanvas
@@ -406,26 +406,26 @@ MazeViewer.prototype = {
 	pathColor: "#0f0",
 	loader: null, // MazeLoader, for saving and getting tiles
 	moving: false, // whether a scroll move is in progress
-	
+
 	// Amount of pixels by which the pathfinding algorithm may deviate
 	// from a straight line.
 	correctionAmount: 5,
-	
+
 	// listeners, overridden by instance options
 	_onScroll: function (x, y) {},
 	_onMove: function (x, y) {},
-	
+
 	load: function () {
 		window.addEventListener("resize", this.onResize, false);
 		window.addEventListener("orientationchange", this.onResize, false);
 		this.updateViewport();
 	},
-	
+
 	unload: function () {
 		window.removeEventListener("resize", this.onResize, false);
 		window.removeEventListener("orientationchange", this.onResize, false);
 	},
-		
+
 	bindMethods: function () {
 		for (var i = 0; i < arguments.length; i++) {
 			var method = arguments[i];
@@ -437,7 +437,7 @@ MazeViewer.prototype = {
 			}
 		}
 	},
-	
+
 	initMazeTile: function (tile, x, y) {
 		var tileSrc = this.loader.getTileSrc(x, y);
 		if (tileSrc) {
@@ -449,7 +449,7 @@ MazeViewer.prototype = {
 			tile.info = tileInfo;
 		}
 	},
-	
+
 	resetMazeTile: function (tile, x, y) {
 		// If the tile is in view, reload it.
 		if (this.mazeCanvas.getVisibleTiles().contains(tile)) {
@@ -468,7 +468,7 @@ MazeViewer.prototype = {
 			};
 		}
 	},
-	
+
 	showStartMarker: function () {
 		var marker = this.startPosMarker = new Marker({
 			x: this.startPos[0],
@@ -487,17 +487,17 @@ MazeViewer.prototype = {
 		}
 		this.centerer.appendChild(marker.element);
 	},
-	
+
 	onResize: function () {
 		this.updateViewport();
 	},
-	
+
 	enterMaze: function (fast) {
 		if (this.entered) return false;
 		this.entered = true;
-		
+
 		addClass(this.centerer, "in");
-		
+
 		// hide start marker
 		var remove = function () {
 			this.centerer.removeChild(this.startPosMarker.element);
@@ -508,11 +508,11 @@ MazeViewer.prototype = {
 		} else {
 			Transition(this.startPosMarker.element, {opacity: 0}, 250, remove);
 		}
-		
+
 		this.overlay = new TiledCanvas(256, 256);
 		this.overlay.element.style.opacity = 0.6;
 		this.centerer.appendChild(this.overlay.element);
-		
+
 		this.updateOffset();
 		this.centerer.addEventListener("mousedown", this.onMouseDown, false);
 		this.centerer.addEventListener("mousemove", this.onMouseMove, false);
@@ -520,13 +520,13 @@ MazeViewer.prototype = {
 			this.centerer.addEventListener("touchstart",
 				this.onTouchStart, false);
 		}
-		
+
 		// add player marker (red dot)
 		this.centerer.appendChild(this.playerMarker);
-		
+
 		this.updateViewport();
 	},
-	
+
 	onTouchStart: function (e) {
 		// only add listeners with the first finger.
 		if (e.targetTouches.length == 1) {
@@ -534,12 +534,12 @@ MazeViewer.prototype = {
 			document.addEventListener("touchend", this.onTouchEnd, false);
 			this.updateTouch(e);
 		}
-		
+
 		this.updateOffset();
 		this.onTouchMove(e);
 		e.preventDefault();
 	},
-	
+
 	updateTouch: function (e) {
 		var x = 0;
 		var y = 0;
@@ -551,7 +551,7 @@ MazeViewer.prototype = {
 		this.pageX = x / numTouches;
 		this.pageY = y / numTouches;
 	},
-	
+
 	onTouchMove: function (e) {
 		e.preventDefault();
 		var numTouches = e.touches.length;
@@ -570,13 +570,13 @@ MazeViewer.prototype = {
 			);
 		}
 	},
-	
+
 	onTouchEnd: function (e) {
 		document.removeEventListener("touchmove", this.onTouchMove, false);
 		document.removeEventListener("touchend", this.onTouchEnd, false);
 		this.updateViewport();
 	},
-	
+
 	// precomputes the maze's page offset, so we can use e.pageX/Y - this.offsetX/Y to determine mouse position relative to the maze.
 	updateOffset: function () {
 		var x = 0, y = 0;
@@ -587,7 +587,7 @@ MazeViewer.prototype = {
 		this.offsetX = x;
 		this.offsetY = y;
 	},
-	
+
 	onMouseMove: function (e) {
 		if (!e.pageX && !e.pageY) return;
 		this.mouseX = e.pageX - this.offsetX;
@@ -596,7 +596,7 @@ MazeViewer.prototype = {
 			this.moveToPixel(this.mouseX, this.mouseY);
 		}
 	},
-	
+
 	onMouseDown: function (e) {
 		this.updateOffset();
 		e.preventDefault();
@@ -604,7 +604,7 @@ MazeViewer.prototype = {
 		this.centerer.removeEventListener("mousemove", this.onMouseMove, false);
 		document.addEventListener("mouseup", this.onMouseUp, false);
 	},
-	
+
 	onMouseUp: function (e) {
 		this.updateOffset();
 		removeClass(this.centerer, 'moving');
@@ -612,7 +612,7 @@ MazeViewer.prototype = {
 		document.removeEventListener("mouseup", this.onMouseUp, false);
 		//this.updateViewport();
 	},
-	
+
 	scrollTo: function (x, y, slow) {
 		this.scroller.moveTo(x, y, slow);
 		if (slow) {
@@ -621,7 +621,7 @@ MazeViewer.prototype = {
 			this.updateOffset();
 		}
 	},
-	
+
 	updateViewport: function (x, y, slow) {
 		this.updateOffset();
 		var mazeCanvas = this.mazeCanvas;
@@ -659,18 +659,18 @@ MazeViewer.prototype = {
 			this._onScroll(x, y);
 		}
 	},
-	
+
 	// directly set the player's position.
 	setPosition: function (x, y) {
 		this.x = x;
 		this.y = y;
-		
+
 		this.playerMarker.style.left = x + "px";
 		this.playerMarker.style.top = y + "px";
-		
+
 		this._onMove(x, y);
 	},
-	
+
 	// move toward a pixel
 	moveToPixel: function (xTo, yTo) {
 		var route = this.pathfinder.findRoute([this.x, this.y], [xTo, yTo]);
@@ -683,7 +683,7 @@ MazeViewer.prototype = {
 			route = prev;
 		}
 	},
-	
+
 	// get passable neighboring points
 	isColorPassable: function (r, g, b, a) {
 		var fg = (r + g + b) * a;
@@ -705,7 +705,7 @@ MazeViewer.prototype = {
 				return [x + dx - 1, y + dy - 1];
 			}
 		}
-		
+
 		var n = pointIfPassable(1, 0);
 		var s = pointIfPassable(1, 2);
 		var w = pointIfPassable(0, 1);
@@ -722,27 +722,27 @@ var MazeLoader = Classy({
 	db: null,
 	mazeDoc: null,
 	mazeId: "",
-	
+
 	constructor: function (db, doc) {
 		this.db = db;
 		this.mazeDoc = doc;
 		this.mazeId = doc._id;
 	},
-	
+
 	getTileSrc: function (x, y) {},
-	
+
 	getTileInfo: function (x, y) {
 		return {};
 	},
-	
+
 	getDocAttachmentsPath: function (id) {
 		return this.db.uri + Couch.encodeDocId(id) + "/";
 	},
-	
+
 	getStartPos: function () {
 		return this.mazeDoc.start || MazeViewer.prototype.startPos;
 	},
-	
+
 	getTileSize: function () {
 		return this.mazeDoc.tile_size || MazeViewer.prototype.tileSize;
 	},
@@ -750,7 +750,7 @@ var MazeLoader = Classy({
 	saveTileDrawing: function (tile, tileCoords, onError, onSuccess) {
 		onError(0, "Saving is not yet implemented.");
 	},
-	
+
 	loadTile: function (tile, src) {
 		tile.loadImageSrc(src);
 	}

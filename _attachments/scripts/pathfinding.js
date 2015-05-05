@@ -147,23 +147,23 @@ Pathfinder.prototype = {
 	// from a straight line.
 	// Override to 0 for straight lines only.
 	maxExtraLength: Infinity,
-	
+
 	samePoint: function samePoint(a, b) {
 		return a[0] == b[0] && a[1] == b[1];
 	},
-	
+
 	// return passable neighborhood points (override)
 	possibleDirections: function (point) {
 		return [];
 	},
-	
+
 	// heuristic (optimistic/admissible = never overestimates)
 	estimatedDistance: function (pointA, pointB) {
 		var dx = pointA[0] - pointB[0];
 		var dy = pointA[1] - pointB[1];
 		return Math.sqrt(dx*dx + dy*dy);
 	},
-	
+
 	routeExists: function (from, to) {
 		var route = this.findRoute(from, to, true);
 		return this.samePoint(route.point, to);
@@ -174,7 +174,7 @@ Pathfinder.prototype = {
 		var samePoint = this.samePoint;
 		var possibleDirections = this.possibleDirections;
 		var estimatedDistance = this.estimatedDistance;
-		
+
 		var open = new BinaryHeap(routeScore);
 		var reached = new PointMap();
 		var firstRoute = {point: from, length: 0};
@@ -183,7 +183,7 @@ Pathfinder.prototype = {
 		var minDistanceLeft = firstScore;
 		var maxScore = this.maxExtraLength + firstScore;
 		var storeEntireRoutes = !forget;
-	
+
 		function routeScore(route) {
 			if (route.score == null)
 				route.score = estimatedDistance(route.point, to) + route.length;
@@ -194,10 +194,10 @@ Pathfinder.prototype = {
 			reached.set(route.point, route);
 		}
 		addOpenRoute(firstRoute);
-	
+
 		while (open.size() > 0) {
 			var route = open.pop();
-			
+
 			if (samePoint(route.point, to))
 				return route;
 			var estDistanceLeft = route.score - route.length;
@@ -205,7 +205,7 @@ Pathfinder.prototype = {
 				closestRoute = route;
 				minDistanceLeft = estDistanceLeft;
 			}
-			
+
 			possibleDirections(route.point).forEach(function(direction) {
 				var known = reached.get(direction);
 				var newLength = route.length + 1;

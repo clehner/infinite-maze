@@ -8,7 +8,7 @@ var memoizer = function (fn) {
 
 // Tween CSS properties (emulating CSS 3 Transitions)
 Transition = (function () {
-	
+
 	// Feature detection for CSS Transforms
 	var cssTransformType = (function () {
 		var s = document.createElement("div").style;
@@ -19,15 +19,15 @@ Transition = (function () {
 			null
 		);
 	})();
-	
+
 	// WebKit has native support for CSS transitions
 	if (window.WebKitTransitionEvent) {
-	
+
 		// Cache regexes, for speed.
 		var compiledRegex1 = memoizer(function (prop) {
 			return new RegExp("(\\s|^)" + prop + "(,\\s|$)");
 		});
-		
+
 		var compiledRegex2 = memoizer(function (prop) {
 			return new RegExp(prop + "(,\\s|$)|(,\\s|^)" + prop +
 				"|^" + prop + "$", "g");
@@ -36,47 +36,47 @@ Transition = (function () {
 		var T = function (elm, css, duration, cb) {
 			// keep track of the transitions for each element
 			if (typeof elm._transitions == "undefined") elm._transitions = {};
-		
+
 			for (var property in css) {
 				(function () { // to do: fix this thing so it doesn't need this
-				
+
 					var startTime = +new Date();
-					
+
 					var style = elm.style; //document.defaultView.getComputedStyle(elm);
-					
+
 					// the value to transition the property to
 					var value = css[property];
-					
+
 					// if an interpolator function is given, use it's final value
 					if (typeof value == "function") value = value(1);
-	
+
 					// ignore if no difference
 					if (style[property] === value) return;
-					
+
 					// change "PropertyName" to "-property-name"
 					var property2 = property.replace(/[A-Z]/g, function (l) {
 						return "-" + l.toLowerCase();
 					});
-					
+
 					// stop any previous transition on the this property of this element.
 					var oldT = elm._transitions[property];
 					if (oldT) oldT.stopWithoutReset();
-					
+
 					// set the transition property.
 					var transProp = style.WebkitTransitionProperty;
 					if (!transProp || transProp == "all" || transProp == "none") {
 						elm.style.WebkitTransitionProperty = property2;
-						
+
 					} else if (!transProp.match(compiledRegex1(property2))) {
-						
+
 						elm.style.WebkitTransitionProperty = transProp + ", " + property2;
 					}
-					
+
 					elm.style.WebkitTransitionDuration = duration+"ms";
 					//elm.style.WebkitTransitionTimingFunction = timingFunctionName;
 					//console.log('prop:'+property+' value: '+value+'. old: '+elm.style[property]);
 					elm.style[property] = value;
-	
+
 					var endTimeout;
 					var t = {};
 					var done = false;
@@ -92,7 +92,7 @@ Transition = (function () {
 							style.WebkitTransitionProperty.
 							replace(compiledRegex2(property2), "") ||
 							"none";
-						
+
 						delete elm._transitions[property];
 						if (cb && !done) cb.call(elm, (new Date - startTime) / duration);
 						done = true;
@@ -104,23 +104,23 @@ Transition = (function () {
 		};
 		T.cssTransformType = cssTransformType;
 		T.isNative = true;
-	
+
 	} else {
 		// Emulate CSS transitions
-	
+
 		var transitions = [], // current transitions
 		timerOn = false, // whether the timer is running
 		timerValue, // id of the timer
-		
+
 		ease = function (t) {
 			return t < .5 ? 2*t*t : 1 - 2*(t-1)*(t-1); // square
 			//return t < .5 ? 4*t*t*t : 1 + 4*(t-1)*(t-1)*(t-1);
 		},
-		
+
 		// global timer that executes the transitions
 		timer = function () {
 			var i, l, t, n, currentTime;
-			
+
 			timerOn = true;
 			currentTime = +new Date;
 			for (i=0, l=transitions.length; i<l; i++) {
@@ -140,7 +140,7 @@ Transition = (function () {
 				timerOn = false;
 			}
 		},
-	
+
 		// helper function for colors
 		colorToArray = function (color) {
 			if (typeof color == "string") {
@@ -155,7 +155,7 @@ Transition = (function () {
 			}
 			return null;
 		},
-		
+
 		// create a function to set the intermediate values during the transition
 		getInterpolator = function (t) {
 			// same
@@ -164,7 +164,7 @@ Transition = (function () {
 					return t.startValue;
 				};
 			}
-			
+
 			// number
 			if (typeof t.startValue == "number") {
 				var delta = t.endValue - t.startValue;
@@ -172,13 +172,13 @@ Transition = (function () {
 					return t.startValue + (delta * n);
 				};
 			}
-			
+
 			// function
 			if (typeof t.endValue == "function") {
 				t.elm.style[t.property] = t.endValue(0);
 				return t.endValue;
 			}
-			
+
 			// color
 			var b = colorToArray(t.endValue)
 			if (b) {
@@ -193,7 +193,7 @@ Transition = (function () {
 					// the +0x1000000 and substring(1) are for padding.
 				}
 			}
-			
+
 			// number with unit
 			var unitValues = {"": 1, px: 1, pt: 1, em: 12, ex:6, "%":15};
 			if (typeof t.endValue == "number") {
@@ -212,16 +212,16 @@ Transition = (function () {
 				};
 				return interpolate;
 			//}
-			
+
 			// function
 			/*
 			var funcRegex = /^(.*?)\((.*?)\)$/,
 			endFunc = funcRegex.exec(t.endValue);
 			if (endFunc) {
-				
+
 			}*/
 		},
-		
+
 		// Transition function
 		T = function (elm, css, duration, endCb) {
 			for (var property in css) {
@@ -239,21 +239,21 @@ Transition = (function () {
 					},
 					i: transitions.length
 				};
-				
+
 				if (typeof t.startValue == "undefined" || typeof t.endValue == "undefined") continue;
-	
+
 				t.interpolate = getInterpolator(t);
 				//if (typeof t.endValue == "function") elm.style[property] = t.interpolate(0);
-				
+
 				transitions[t.i] = t;
-				
+
 				// if the element already has a transition on this property, cancel and replace it.
 				if (!elm._transitions) elm._transitions = {};
 				var oldT = elm._transitions[property];
 				//if (oldT) oldT.stop();
 				elm._transitions[property] = t;
 			}
-			
+
 			if (!timerOn) {
 				timerValue = setInterval(timer, T.speed);
 			}

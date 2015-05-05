@@ -2,7 +2,7 @@ var Box = Classy({
 	element: null,
 	tagName: "div",
 	visible: true,
-	
+
 	constructor: function () {
 		if (this.element) {
 			if (hasClass(this.element, "hidden")) {
@@ -15,14 +15,14 @@ var Box = Classy({
 			}
 		}
 	},
-	
+
 	hide: function () {
 		if (this.visible) {
 			this.visible = false;
 			addClass(this.element, "hidden");
 		}
 	},
-	
+
 	show: function () {
 		if (!this.visible) {
 			this.visible = true;
@@ -41,7 +41,7 @@ Box.ify = function (element /*, [args...] */) {
 // Instantiate a box object with an element.
 Box.ificate = function (obj, element /*, [args...] */) {
 	obj.element = element;
-	
+
 	var ret = this.apply(obj, Array.prototype.slice.call(arguments, 2));
 	return ret instanceof Object ? ret : obj;
 };
@@ -51,7 +51,7 @@ var TileBox = Classy(Box, {
 	maze: null,
 	tile: null,
 	inner: null,
-	
+
 	constructor: function (maze) {
 		Box.call(this);
 		this.maze = maze;
@@ -60,7 +60,7 @@ var TileBox = Classy(Box, {
 		this.element.appendChild(this.inner);
 		this.inner.className = "inner";
 	},
-	
+
 	// move the tile box to a tile's position
 	coverTile: function (tile) {
 		if (this.tile == tile && this.visible) return;
@@ -84,52 +84,52 @@ var InfoTileBox = Classy(TileBox, {
 	editLink: null,
 	claimLink: null,
 	deleteLink: null,
-	
+
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "empty");
-		
+
 		var checkIfInWay = this.checkIfInWay.bind(this);
-		
+
 		var infoLeft = this.infoLeft = this.inner;
 		infoLeft.className = "tile-info left";
 		infoLeft.addEventListener("mouseover", checkIfInWay, false);
 		infoLeft.addEventListener("mouseout", checkIfInWay, false);
 		this.element.appendChild(infoLeft);
-		
+
 		var infoRight = this.infoRight = document.createElement("div");
 		infoRight.className = "tile-info right";
 		infoRight.addEventListener("mouseover", checkIfInWay, false);
 		infoRight.addEventListener("mouseout", checkIfInWay, false);
 		this.element.appendChild(infoRight);
-		
+
 		var nameElement = this.nameElement = document.createElement("span");
 		nameElement.className = "name";
 		infoLeft.appendChild(nameElement);
 		var nameText = this.nameText = document.createTextNode("");
 		nameElement.appendChild(nameText);
-		
+
 		var editLink = this.editLink = document.createElement("a");
 		editLink.href = "";
 		editLink.onclick = this.onEditLinkClick.bind(this);
 		editLink.innerHTML = "Edit";
 		infoRight.appendChild(document.createTextNode(" "));
 		infoRight.appendChild(editLink);
-		
+
 		var claimLink = this.claimLink = document.createElement("a");
 		claimLink.href = "";
 		claimLink.onclick = this.onClaimLinkClick.bind(this);
 		claimLink.innerHTML = "Claim";
 		infoRight.appendChild(document.createTextNode(" "));
 		infoRight.appendChild(claimLink);
-		
+
 		var fixLink = this.fixLink = document.createElement("a");
 		fixLink.href = "";
 		fixLink.onclick = this.onFixLinkClick.bind(this);
 		fixLink.innerHTML = "F";
 		infoRight.appendChild(document.createTextNode(" "));
 		infoRight.appendChild(fixLink);
-		
+
 		var deleteLink = this.deleteLink = document.createElement("a");
 		deleteLink.href = "";
 		deleteLink.onclick = this.onDeleteLinkClick.bind(this);
@@ -137,7 +137,7 @@ var InfoTileBox = Classy(TileBox, {
 		infoRight.appendChild(document.createTextNode(" "));
 		infoRight.appendChild(deleteLink);
 	},
-	
+
 	coverTile: function (tile) {
 		TileBox.prototype.coverTile.call(this, tile);
 
@@ -145,10 +145,10 @@ var InfoTileBox = Classy(TileBox, {
 		var name = tile.info.creator || "anonymous";
 		this.nameText.nodeValue = name;
 		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
-		
+
 		// show or hide links
 		var loader = InfiniteMaze.loader;
-		
+
 		var editable = loader.canEditTile(tile);
 		var claimable = loader.canClaimTile(tile);
 		var fixable = loader.canFixTile(tile);
@@ -160,7 +160,7 @@ var InfoTileBox = Classy(TileBox, {
 		toggleClass(this.deleteLink, "hidden", !deletable);
 		toggleClass(this.infoRight, "hidden", !anything);
 	},
-	
+
 	// Hide info texts if they are in the way of the player.
 	checkIfInWay: function () {
 		var infoLeft = this.infoLeft;
@@ -178,14 +178,14 @@ var InfoTileBox = Classy(TileBox, {
 		toggleClass(infoLeft, "dim", inWayLeft);
 		toggleClass(infoRight, "dim", inWayRight);
 	},
-	
+
 	onEditLinkClick: function (e) {
 		e.preventDefault();
 		if (InfiniteMaze.loader.canEditTile(this.tile)) {
 			InfiniteMaze.viewer.enterDrawTileMode(this.tile);
 		}
 	},
-	
+
 	onClaimLinkClick: function (e) {
 		e.preventDefault();
 		var loggedIn = InfiniteMaze.getUsername();
@@ -201,7 +201,7 @@ var InfoTileBox = Classy(TileBox, {
 			}
 		}
 	},
-	
+
 	onFixLinkClick: function (e) {
 		e.preventDefault();
 		// let the user pick a location
@@ -230,7 +230,7 @@ var InfoTileBox = Classy(TileBox, {
 			InfiniteMaze.loader.setTileStart(tile, point);
 		}, false);
 	},
-	
+
 	onDeleteLinkClick: function (e) {
 		e.preventDefault();
 		if (confirm("Really delete this tile?")) {
@@ -253,24 +253,24 @@ var DrawHereTileBox = Classy(TileBox, {
 		button.innerHTML = "Draw Here";
 		button.onclick = this.onButtonClick.bind(this);
 		this.inner.appendChild(button);
-		
+
 		// while hovering the draw-here box, freeze the player's position
 		this.element.addEventListener("mouseover", this.freezePlayer.bind(this),
 			false);
-		
+
 		// when the mouse leaves this box, allow the player to move again.
 		this.element.addEventListener("mouseout", this.releasePlayer.bind(this),
 			false);
 	},
-	
+
 	onButtonClick: function () {
 		this.maze.enterDrawTileMode(this.tile);
 	},
-	
+
 	freezePlayer: function () {
 		InfiniteMaze.viewer.inViewMode = false;
 	},
-	
+
 	releasePlayer: function () {
 		if (!InfiniteMaze.viewer.inEditMode) {
 			InfiniteMaze.viewer.inViewMode = true;
@@ -295,50 +295,50 @@ var DrawingTileBox = Classy(TileBox, {
 	bufferCtx: null,
 	width: null,
 	height: null,
-	
+
 	constructor: function () {
 		TileBox.apply(this, arguments);
 		addClass(this.element, "drawing");
-		
+
 		var cursor = this.cursor = document.createElement("div");
 		cursor.id = "drawing-cursor";
-		
+
 		this.element.addEventListener("mouseover", this.addCursor.bind(this),
 			false);
 		this.element.addEventListener("mouseout", this.removeCursor.bind(this),
 			false);
-			
+
 		this.bufferCanvas = document.createElement("canvas");
 		this.bufferCanvas.className = "layer";
 		this.bufferCtx = this.bufferCanvas.getContext("2d");
 		this.element.appendChild(this.bufferCanvas);
 	},
-	
+
 	addCursor: function () {
 		document.body.appendChild(this.cursor);
 	},
-	
+
 	removeCursor: function () {
 		if (this.cursor.parentNode == document.body) {
 			document.body.removeChild(this.cursor);
 		}
 	},
-	
+
 	coverTile: function (tile) {
 		TileBox.prototype.coverTile.call(this, tile);
 		this.width = this.bufferCanvas.width = tile.element.width;
 		this.height = this.bufferCanvas.height = tile.element.height;
 	},
-	
+
 	hide: function () {
 		this.removeCursor();
 		TileBox.prototype.hide.call(this);
 	},
-	
+
 	clearBuffer: function () {
 		this.bufferCtx.clearRect(0, 0, this.width, this.height);
 	},
-	
+
 	commitBuffer: function () {
 		// move the image from the buffer to the tile canvas.
 		this.tile.ctx.drawImage(this.bufferCanvas, 0, 0);
@@ -357,16 +357,16 @@ var GridMazeViewer = Classy(MazeViewer, {
 	infoTileBox: null,
 	getHereTileBox: null,
 	drawHereTileBox: null,
-	
+
 	// a tile in draw mode
 	drawingTile: null,
-	
+
 	editor: null,
 	youAreHereMarker: null,
-	
+
 	// what tile the player is in
 	tileIn: null,
-	
+
 	constructor: function (options) {
 		this.infoTileBox = new InfoTileBox(this);
 		this.getHereTileBox = new GetHereTileBox(this);
@@ -381,19 +381,19 @@ var GridMazeViewer = Classy(MazeViewer, {
 		this.centerer.appendChild(this.drawHereTileBox.element);
 		this.centerer.appendChild(this.youAreHereMarker.element);
 	},
-	
+
 	load: function () {
 		MazeViewer.prototype.load.call(this);
 		this.hideTileBoxes();
 		this.enterMaze(true);
 	},
-	
+
 	moveToPixel: function (x, y) {
 		var tile = this.mazeCanvas.getTileAtPixel(x, y);
 		this.onTileMouseOver(tile);
 		MazeViewer.prototype.moveToPixel.call(this, x, y);
 	},
-	
+
 	// set the player's position
 	setPosition: function (x, y) {
 		// Highlight tile adjacent to the current location, if the current
@@ -402,7 +402,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		var tileHeight = this.tileSize[1];
 		var xInTile = x % tileWidth;
 		var yInTile = y % tileHeight;
-		
+
 		// Find any adjacent tiles, and hover them.
 		if (xInTile == 0) {
 			this._onTileAdjacent(x - tileWidth, y);
@@ -419,9 +419,9 @@ var GridMazeViewer = Classy(MazeViewer, {
 		} else {
 			this._onTileAdjacent(null);
 		}
-		
+
 		MazeViewer.prototype.setPosition.call(this, x, y);
-		
+
 		// update what tile the player is in.
 		var prevTileIn = this.tileIn;
 		var tileIn = this.mazeCanvas.getTileAtPixel(x, y);
@@ -429,14 +429,14 @@ var GridMazeViewer = Classy(MazeViewer, {
 			this.tileIn = tileIn;
 			this.onTileEnter(tileIn, prevTileIn);
 		}
-		
+
 		if (this.youAreHereMarker) {
 			//this.youAreHereMarker.update();
 		}
-		
+
 		this.infoTileBox.checkIfInWay();
 	},
-	
+
 	// called when the player's location is one pixel away from an adjacent tile
 	_onTileAdjacent: function (x, y) {
 		if (x == null) {
@@ -446,7 +446,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 		var tile = this.mazeCanvas.getTileAtPixel(x, y);
 		if (tile.isEmpty) {
 			this.drawHereTileBox.coverTile(tile);
-			
+
 			// hide any other tile boxes covering this tile.
 			if (this.getHereTileBox.tile == tile) {
 				this.getHereTileBox.hide();
@@ -456,13 +456,13 @@ var GridMazeViewer = Classy(MazeViewer, {
 			}
 		}
 	},
-	
+
 	// called when the player enters a new tile.
 	onTileEnter: function (tileIn, tileOut) {
 		tileIn.updateTeleporter();
 		tileOut && tileOut.updateTeleporter();
 	},
-	
+
 	// called on mouseover of a tile.
 	onTileMouseOver: function (tile) {
 		// Show the relevant tile box.
@@ -474,38 +474,38 @@ var GridMazeViewer = Classy(MazeViewer, {
 			this.getHereTileBox.hide();
 		}
 	},
-	
+
 	hideTileBoxes: function () {
 		this.infoTileBox.hide();
 		this.getHereTileBox.hide();
 		this.drawHereTileBox.hide();
 	},
-	
+
 	// the user has decided to draw this tile. enter tile drawing mode.
 	enterDrawTileMode: function (tile) {
 		if (this.drawingTile == tile) return;
 		this.drawingTile = tile;
 		this.inViewMode = false;
 		this.inEditMode = true;
-		
+
 		// turn off the cross-hairs cursor outside this tile.
 		removeClass(this.centerer, "in");
-		
+
 		// clear the path above this tile
 		this.overlay.clearTile(tile);
 
 		this.hideTileBoxes();
-		
+
 		// the pixel leading into this cell.
 		var entrance = [this.x, this.y];
-		
+
 		// Open the editor toolbox.
 		InfiniteMaze.editor.openForTile(tile, entrance);
 
 		// prevent scrolling
 		//setTimeout(this.scroller.freeze.bind(this.scroller), 500);
 	},
-	
+
 	exitDrawTileMode: function () {
 		if (!this.drawingTile) return;
 		this.drawingTile = null;
@@ -514,16 +514,16 @@ var GridMazeViewer = Classy(MazeViewer, {
 		addClass(this.centerer, "in");
 		//this.scroller.unfreeze();
 	},
-	
+
 	// called on scroll
 	updateViewport: function (x, y, slow) {
 		MazeViewer.prototype.updateViewport.call(this, x, y, slow);
-		
+
 		if (this.youAreHereMarker) {
 			this.youAreHereMarker.update();
 		}
 	},
-	
+
 	initMazeTile: (function () {
 		// @this {Tile}
 		function tileShow() {
@@ -539,7 +539,7 @@ var GridMazeViewer = Classy(MazeViewer, {
 				this.teleporter.update();
 			//}
 		}
-		
+
 		return function (tile, x, y) {
 			MazeViewer.prototype.initMazeTile.call(this, tile, x, y);
 			if (tile.info.start) {
@@ -561,13 +561,13 @@ var GridMazeViewer = Classy(MazeViewer, {
 			}
 		}
 	})(),
-	
+
 	updateTeleporters: function () {
 		this.mazeCanvas.getVisibleTiles().forEach(function (tile) {
 			tile.updateTeleporter();
 		});
 	},
-	
+
 	// get the tile that the player is in
 	tileWeAreIn: function () {
 		return this.mazeCanvas.getTileAtPixel(this.x, this.y);
@@ -579,18 +579,18 @@ var Teleporter = Classy(Box, {
 	tagName: "a",
 	coords: [0, 0],
 	visible: false,
-	
+
 	constructor: function (mazeViewer, tile) {
 		Box.call(this);
 		this.tile = tile;
-		
+
 		// the teleporter goes to the start point of the tile.
 		var start = tile.info.start || [0, 0];
 		this.coords = [
 			tile.offsetX + start[0],
 			tile.offsetY + start[1]
 		];
-		
+
 		var a = this.element;
 		addClass(a, "marker teleporter");
 		a.style.left = this.coords[0] + "px";
@@ -599,24 +599,24 @@ var Teleporter = Classy(Box, {
 		a.onclick = this.onClick.bind(this);
 		a.title = "Teleport here";
 	},
-	
+
 	onClick: function (e) {
 		e.preventDefault();
 		this.teleport();
 	},
-	
+
 	canShow: function () {
 		var allowed = InfiniteMaze.loader.canTeleportToTile(this.tile);
 		return allowed;
 		//var inSameTile = InfiniteMaze.viewer.tileWeAreIn() == this.tile;
 		//return allowed && !inSameTile;
 	},
-	
+
 	update: function () {
 		if (this.canShow()) this.show();
 		else this.hide();
 	},
-	
+
 	teleport: function (scroll) {
 		var viewer = InfiniteMaze.viewer;
 		var dest = this.coords;
@@ -635,7 +635,7 @@ var Teleporter = Classy(Box, {
 			viewer.scrollTo(dest[0], dest[1]);
 		}
 	},
-	
+
 	// this is a very long function name
 	findNearestPassablePointOnTileEdge: function () {
 		var tile = this.tile;
@@ -679,19 +679,19 @@ var Teleporter = Classy(Box, {
 
 var Picker = Classy(Box, {
 	tagName: "table",
-	
+
 	data: [], // rows/cells
 	selectedCell: null,
 	initCell: function () {}, // override
 	onSelect: null, // override
-	
+
 	constructor: function (data) {
 		Box.call(this);
 		this.data = [];
 		this.extend(this.element, data);
 		this.selectCoord(0, 0);
 	},
-	
+
 	// Connect the picker to a table with some data.
 	extend: function (table, data) {
 		var self = this;
@@ -712,7 +712,7 @@ var Picker = Classy(Box, {
 			});
 		});
 	},
-	
+
 	onClick: function (e) {
 		if (e.target.nodeName == "TD") {
 			this.selectCell(e.target);
@@ -720,7 +720,7 @@ var Picker = Classy(Box, {
 			this.selectCell(e.target.parentNode);
 		}
 	},
-	
+
 	selectCell: function (cell) {
 		if (this.selectedCell) removeClass(this.selectedCell, "selected");
 		this.selectedCell = cell;
@@ -728,11 +728,11 @@ var Picker = Classy(Box, {
 		this.value = this.data[cell.tableId][cell.row][cell.col];
 		this.update();
 	},
-	
+
 	selectCoord: function (row, col) {
 		this.selectCell(this.element.rows[row].cells[col]);
 	},
-	
+
 	update: function () {
 		if (this.onSelect) this.onSelect(this.value);
 	}
@@ -744,7 +744,7 @@ var ColorPicker = Classy(Picker, {
 		Picker.call(this, colors);
 		this.element.id = "color-picker";
 	},
-	
+
 	initCell: function (cell, color) {
 		cell.style.backgroundColor = color;
 	}
@@ -756,18 +756,18 @@ var SizePicker = Classy(Picker, {
 		Picker.call(this, [sizes]);
 		this.element.id = "size-picker";
 	},
-	
+
 	initCell: function (cell, size) {
 		var circle = document.createElement("div");
 		circle.className = "circle";
 		this.resizeCircle(circle, size);
 		cell.appendChild(circle);
 	},
-	
+
 	select: function (x) {
 		this.selectCoord(0, x);
 	},
-	
+
 	resizeCircle: function (element, size) {
 		var s = element.style;
 		s.width = s.height = Math.max(size, 1) + "px";
@@ -775,7 +775,7 @@ var SizePicker = Classy(Picker, {
 			s.MozBorderRadius =
 			s.WebkitBorderRadius = Math.max(size / 2, 1) + "px";
 	},
-	
+
 	uncircle: function (element) {
 		var s = element.style;
 		s.width = s.height = "";
@@ -803,28 +803,28 @@ constructor: function (viewer) {
 	var tileBox = new DrawingTileBox(viewer);
 	var cursor = tileBox.cursor;
 	var cursorStyle = cursor.style;
-	
+
 	// entrance pixel, relative to tile
 	var entrance;
 	var dirty;
-	
+
 	var tileSize;
-	
+
 	// Undo all edits to be undone if the user discards the edit session.
 	var restore = Function.empty;
-	
+
 	var lastSnapshot = Function.empty;
 	function saveForUndo() {
 		dirty = true;
 		lastSnapshot = snapshot();
 	}
-	
+
 	function undo() {
 		var redo = snapshot();
 		lastSnapshot();
 		lastSnapshot = redo;
 	}
-	
+
 	// move the fake cursor on mousemove
 	function onMouseMove(e) {
 		var s = Math.floor(pencilSize / 2);
@@ -832,7 +832,7 @@ constructor: function (viewer) {
 		cursorStyle.top = e.clientY - s + "px";
 	}
 	tileBox.element.addEventListener("mousemove", onMouseMove, false);
-	
+
 	// Buffer
 	var bufferCtx = tileBox.bufferCtx;
 	var clearBuffer = tileBox.clearBuffer.bind(tileBox);
@@ -843,7 +843,7 @@ constructor: function (viewer) {
 		element: tileBox.element,
 		context: this
 	});
-	
+
 	// the set of event listeners (a behavior) for the drawing tool
 	var drawingTool = {
 		pick: function () {
@@ -868,7 +868,7 @@ constructor: function (viewer) {
 			this.y = e._y;
 			ctx.lineTo(this.x + offset, this.y + offset);
 			ctx.stroke();
-			
+
 			// Stop dragging the tile or other funny stuff happening.
 			e.stopPropagation();
 			e.preventDefault();
@@ -877,7 +877,7 @@ constructor: function (viewer) {
 		},
 		onDragEnd: null
 	};
-	
+
 	// bucket tool behavior
 	var bucketTool = {
 		pick: function () {
@@ -896,7 +896,7 @@ constructor: function (viewer) {
 			e.stopPropagation();
 		}
 	};
-	
+
 	// line tool behavior
 	var lineTool = {
 		pick: function () {
@@ -923,13 +923,13 @@ constructor: function (viewer) {
 		},
 		onDragEnd: commitBuffer
 	};
-	
+
 	// Init color picker
 	function hexToColor(hexInt) {
 		var hex = hexInt.toString(16);
 		return '#' + ('00000' + hex).substr(-6);
 	}
-	
+
 	var colors = {
 		light: [0xffffff, 0xf4aece, 0xffaa00, 0xffff00, 0x39ff39, 0x7cdaff, 0xa6a8ff, 0xcccccc],
 		dark: [0x000000, 0x9f0000, 0x5e320b, /*0x716101,*/ 0x005c00, 0x0000ff, 0x63006d, 0x555555]
@@ -948,7 +948,7 @@ constructor: function (viewer) {
 		cursorStyle.backgroundColor = color;
 	};
 	colorPicker.selectCoord(0, 0);
-	
+
 	// Init size picker
 	var pencilSizes = [18, 13, 8, 4, 1.5];
 	var sizePicker = SizePicker.ify($("size-picker"), pencilSizes);
@@ -965,7 +965,7 @@ constructor: function (viewer) {
 		sizePicker.resizeCircle(cursor, size);
 	};
 	sizePicker.select(0);
-	
+
 	// Init tool picker
 	var toolPicker = Picker.ify($("tool-picker"),
 		[[drawingTool, lineTool, bucketTool]]);
@@ -988,7 +988,7 @@ constructor: function (viewer) {
 	};
 	$("undo-btn").onclick = undo;
 
-	
+
 	// returns a point within a tile that is closest to another point
 	function nearestPointInTile(point) {
 		var el = tile.element;
@@ -1019,18 +1019,18 @@ constructor: function (viewer) {
 		// Place the tile box over the tile.
 		viewer.centerer.appendChild(tileBox.element);
 		tileBox.coverTile(tile);
-		
+
 		toolPicker.update();
 		colorPicker.update();
 		sizePicker.update();
-		
+
 		// scroll to center this tile
 		viewer.scrollTo(
 			tile.offsetX + viewer.tileSize[0]/2 + 20,
 			tile.offsetY + viewer.tileSize[1]/2 + 60,
 			true // slowly
 		);
-		
+
 		toolboxElement.style.bottom = "-105px";
 		removeClass(toolboxElement, "hidden");
 		setTimeout(function() {
@@ -1041,7 +1041,7 @@ constructor: function (viewer) {
 
 		InfiniteMaze.tracker.trackTileEvent(tile, "Open");
 	};
-	
+
 	function close() {
 		tileBox.hide();
 
@@ -1053,7 +1053,7 @@ constructor: function (viewer) {
 		viewer.exitDrawTileMode();
 	}
 	this.close = close;
-	
+
 	// Make a function to restore the tile to its current state.
 	function snapshot(couldClear) {
 		// only clear if we are exiting drawing mode
@@ -1070,12 +1070,12 @@ constructor: function (viewer) {
 			};
 		}
 	}
-	
+
 	// for rule checking path finding
-	
+
 	// pathfinder to tile edge.
 	var pathfinder = new Pathfinder();
-	
+
 	pathfinder.samePoint = function (point, line) {
 		var x = point[0];
 		var y = point[1];
@@ -1083,7 +1083,7 @@ constructor: function (viewer) {
 			x == line.x && y > line.y && y < line.y + line.length:
 			y == line.y && x > line.x && x < line.x + line.length;
 	};
-	
+
 	pathfinder.estimatedDistance = function (point, line) {
 		// switch coords for calculation if not vertical
 		var x = point[1 - line.vertical];
@@ -1095,12 +1095,12 @@ constructor: function (viewer) {
 		else
 			return Math.abs(x - line.x);
 	};
-	
+
 	pathfinder.possibleDirections = function (point) {
 		return InfiniteMaze.viewer.possibleDirections(point).filter(
 			pointInTile);
 	};
-	
+
 	function pointInTile(point) {
 		// leave a margin so that the edges of adjacent cells are
 		// taken into account.
@@ -1109,7 +1109,7 @@ constructor: function (viewer) {
 			point[0] < tile.offsetX + tileSize[0] + 2 &&
 			point[1] < tile.offsetY + tileSize[1] + 2;
 	}
-	
+
 	// Get a line segment corresponding to the edge of our tile that is next
 	// to a given adjacent tile.
 	function tileEdge(adjacentTile) {
@@ -1132,23 +1132,23 @@ constructor: function (viewer) {
 		// return whether any of the pixels in the line are passable.
 		return true;
 	}
-	
+
 	function connectsToTile(adjacentTile) {
 		var edge = tileEdge(adjacentTile);
-		return pathfinder.routeExists(entrance, edge); 
+		return pathfinder.routeExists(entrance, edge);
 	}
-	
+
 	function connectsToPathInTile(adjacentTile) {
 		// todo: acknowledge paths
 		var edge = tileEdge(adjacentTile);
-		return pathfinder.routeExists(entrance, edge); 
+		return pathfinder.routeExists(entrance, edge);
 	}
-	
+
 	// check if the tile drawing follows the rules.
 	// returns false if it is ok, otherwise returns an error string.
 	function checkRules() {
 		//return false;
-		
+
 		// If the tile under edit has more than one empty adjacent tile,
 		// it must connect to at least one of them.
 		var mazeCanvas = InfiniteMaze.viewer.mazeCanvas;
@@ -1164,7 +1164,7 @@ constructor: function (viewer) {
 			function (tile) { return tile.isEmpty; }
 		);
 		var accessibleAdjacentTiles = adjacentTiles.filter(tileIsAccessible);
-		
+
 		if (emptyAdjacentTiles.length >= 2) {
 			if (emptyAdjacentTiles.some(connectsToTile)) {
 				return false; // success
@@ -1184,7 +1184,7 @@ constructor: function (viewer) {
 		}
 		return false;
 	}
-	
+
 	var loader = new DisablingLoader($("save-loader"), saveButton);
 
 	function save() {
@@ -1224,7 +1224,7 @@ constructor: function (viewer) {
 		);
 	}
 	this.save = save;
-	
+
 	function discard() {
 		if (dirty) {
 			if (!confirm("You really want to discard what you drew?")) return;
@@ -1234,7 +1234,7 @@ constructor: function (viewer) {
 		close();
 	}
 	this.discard = discard;
-	
+
 	this.getTileEntrance = function () {
 		return entrance;
 	};
@@ -1246,7 +1246,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 	changesPromise: null,
 	tileLoadingQueue: null,
 	_queueing: false,
-	
+
 	constructor: function (db, doc, tilesInfo, update_seq) {
 		MazeLoader.call(this, db, doc);
 		// {0:{0:tileinfo}}
@@ -1254,7 +1254,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		this.update_seq = update_seq;
 		this.tileLoadingQueue = [];
 	},
-	
+
 	// queue load tile
 	loadTile: function (tile, src) {
 		tile._startLoader();
@@ -1264,7 +1264,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			this._queueing = true;
 		}
 	},
-	
+
 	// load the tiles in the queue
 	_emptyQueue: function () {
 		this._queueing = false;
@@ -1287,7 +1287,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		// empty the queue
 		this.tileLoadingQueue = [];
 	},
-	
+
 	listenForChanges: function (since) {
 		var self = this;
 		var tilesInfo = this.tilesInfo;
@@ -1321,24 +1321,24 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		window.addEventListener("online", promise.start, false);
 		window.addEventListener("offline", promise.stop, false);
 	},
-	
+
 	listenForChangesSafe: function (since) {
 		// Allow a timeout so the browser doesn't display a loader
 		setTimeout(this.listenForChanges.bind(this, since), 5000);
 	},
-	
+
 	stopListeningForChanges: function () {
 		var promise = this.changesPromise;
 		promise.stop();
 		window.removeEventListener("online", promise.start, false);
 		window.removeEventListener("offline", promise.stop, false);
 	},
-	
+
 	// {location: [x, y], id: "#"}
 	getTileInfo: function (x, y) {
 		return (this.tilesInfo[x] || {})[y];
 	},
-	
+
 	getTileSrc: function (x, y) {
 		var tileInfo = this.getTileInfo(x, y);
 		if (tileInfo) {
@@ -1346,7 +1346,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 				(tileInfo.nocache ? '?' + Math.random() : '');
 		}
 	},
-	
+
 	makeTileDoc: function (cb) {
 		Couch.newUUID(5, function (uuid) {
 			cb({
@@ -1358,7 +1358,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			});
 		}.bind(this));
 	},
-	
+
 	getTileDoc: function (tile, cb) {
 		var id = tile.info.id;
 		if (id) {
@@ -1408,7 +1408,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			});
 		});
 	},
-	
+
 	setTileStart: function (tile, point) {
 		this.getTileDoc(tile, function (doc) {
 			doc.start = point;
@@ -1419,7 +1419,7 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			});
 		}.bind(this));
 	},
-	
+
 	deleteTile: function (tile) {
 		this.getTileDoc(tile, function (doc) {
 			this.db.removeDoc(doc, {
@@ -1432,32 +1432,32 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 			});
 		}.bind(this));
 	},
-	
+
 	isTileMine: function (tile) {
 		var user = InfiniteMaze.getUsername();
 		return user && (user == tile.info.creator);
 	},
-	
+
 	canEditTile: function (tile) {
 		var isAdmin = InfiniteMaze.sessionManager.isAdmin();
 		return isAdmin || this.isTileMine(tile);
 	},
-	
+
 	canClaimTile: function (tile) {
 		var hasCreator = tile.info.creator;
 		var loggedIn = !!InfiniteMaze.getUsername();
 		return loggedIn && !hasCreator && !tile.claimSubmitted;
 	},
-	
+
 	canFixTile: function (tile) {
 		return InfiniteMaze.sessionManager.isAdmin();
 	},
-	
+
 	canTeleportToTile: function (tile) {
 		var isStartTile = tile.offsetX == 0 && tile.offsetY == 0;
 		return isStartTile || this.isTileMine(tile); //canEditTile(tile);
 	},
-	
+
 	canDeleteTile: function (tile) {
 		return InfiniteMaze.sessionManager.isAdmin();
 	}
@@ -1465,13 +1465,13 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 
 var HeaderBar = function () {
 	var container = this.element = $("header");
-	
+
 	var accountNameLink = $("account-name-link");
 	accountNameLink.onclick = function (e) {
 		e.preventDefault();
 		InfiniteMaze.accountSettingsWindow.show();
 	};
-	
+
 	function updateForUser() {
 		var user = InfiniteMaze.getUsername();
 		if (user) {
@@ -1481,7 +1481,7 @@ var HeaderBar = function () {
 			removeClass($("app"), "logged-in");
 		}
 	}
-	
+
 	$("logout-btn").onclick = function () {
 		InfiniteMaze.sessionManager.logout(updateForUser);
 	};
@@ -1491,7 +1491,7 @@ var HeaderBar = function () {
 	$("help-link").onclick = function () {
 		InfiniteMaze.welcomeWindow.show();
 	};
-	
+
 	this.updateForUser = updateForUser;
 };
 
@@ -1499,7 +1499,7 @@ var HeaderBar = function () {
 var Dialog = Classy(Box, {
 	constructor: function () {
 		Box.call(this);
-		
+
 		// add the close button.
 		var closeButton = document.createElement("div");
 		closeButton.className = "close";
@@ -1518,35 +1518,35 @@ constructor: function () {
 	Dialog.ificate(this, container);
 	var form = $("settings-form");
 	var loader = new Loader(container);
-	
+
 	function saveEmailInfo(success, error) {
 		InfiniteMaze.sessionManager.updateUserInfo({
 			email: $("settings-email").value,
 			opt_out_emails: !!$("settings-get-emails-no").checked
 		}, success, error);
 	}
-	
+
 	function savePassword(success, error) {
 		if (!changingPassword) return success(false);
-		
+
 		InfiniteMaze.sessionManager.changePassword({
 			currentPass: $("settings-password-current").value,
 			newPass: $("settings-password-new").value,
 			confirmNewPass: $("settings-password-confirm").value
 		}, success, error);
 	}
-	
+
 	function success() {
 		loader.stop();
 		alert("Success!");
 		self.hide();
 	}
-	
+
 	function error(msg) {
 		loader.stop();
 		$("settings-result").innerHTML = msg;
 	}
-	
+
 	var changingPassword = false;
 	$("change-password-link").onclick = function (e) {
 		e.preventDefault();
@@ -1554,13 +1554,13 @@ constructor: function () {
 		removeClass($("change-password-stuff"), "hidden");
 		changingPassword = true;
 	};
-	
+
 	this.show = function () {
 		var user = InfiniteMaze.getUsername();
 		if (!user) {
 			alert("You must be logged in to change settings.");
 		}
-		
+
 		$("settings-username").innerHTML = user;
 		loader.start();
 		InfiniteMaze.sessionManager.getUserInfo(user, function (info) {
@@ -1574,26 +1574,26 @@ constructor: function () {
 		});
 		Box.prototype.show.call(this);
 	};
-	
+
 	function error(status, error, reason) {
 		loader.stop();
 		$("settings-result").innerHTML = reason;
 	}
-	
+
 	form.onsubmit = function (e) {
 		e.preventDefault();
 		//alert("Not working yet. Sorry!");
 		//return;
-		
+
 		loader.start();
 		savePassword(function ok() {
 			saveEmailInfo(success, error);
 		}, error);
 	};
-	
+
 	form.onreset = function () {
 		self.hide();
-		
+
 		removeClass($("change-password-link"), "hidden");
 		addClass($("change-password-stuff"), "hidden");
 		changingPassword = false;
@@ -1609,10 +1609,10 @@ constructor: function () {
 
 	// dark overlay over maze, behind welcome window
 	var overlay = Box.ify($("overlay"));
-	
+
 	var enterButton = $("enter-btn");
 	enterButton.focus();
-	
+
 	this.show = function () {
 		Box.prototype.show.call(self);
 		overlay.show();
@@ -1622,7 +1622,7 @@ constructor: function () {
 		});
 		enterButton.focus();
 	};
-	
+
 	function fullyHide() {
 		Box.prototype.hide.call(self);
 		overlay.hide();
@@ -1650,16 +1650,16 @@ var LoginSignupWindow = Classy(Dialog, {
 constructor: function () {
 	var container = $("login-signup-window");
 	Dialog.ificate(this, container);
-	
+
 	this.show = function () {
 		onLoginError("");
 		onSignupError("");
 		Box.prototype.show.call(this);
 		$("login-username").focus();
 	};
-	
+
 	var loader = new Loader(container);
-	
+
 	function populateLogin(username) {
 		if (!username) username = InfiniteMaze.prefs.get("last-login-username");
 		$("login-username").value = username;
@@ -1686,17 +1686,17 @@ constructor: function () {
 		InfiniteMaze.prefs.set("last-login-username", username);
 		alert("Login success.");
 	}
-	
+
 	function onLoginError(msg) {
 		loader.stop();
 		$("login-result").innerHTML = msg;
 	}
-	
+
 	function onSignupError(msg) {
 		loader.stop();
 		$("signup-result").innerHTML = msg;
 	}
-	
+
 	var loginForm = $("login-form");
 	loginForm.onreset = this.hide.bind(this);
 	loginForm.onsubmit = function (e) {
@@ -1708,7 +1708,7 @@ constructor: function () {
 		// This form must be allowed to submit for some browsers to remember the login.
 		// so we submit it into a dummy iframe.
 	};
-	
+
 	var signupForm = $("signup-form");
 	signupForm.onsubmit = function (e) {
 		e.preventDefault();
@@ -1719,12 +1719,12 @@ constructor: function () {
 		InfiniteMaze.sessionManager.signup(username, password, email,
 			onSignup.curry(username), onSignupError);
 	};
-	
+
 	$("forgot-username-link").onclick = function (e) {
 		e.preventDefault();
 		InfiniteMaze.forgotUsernameWindow.show();
 	};
-	
+
 	$("forgot-password-link").onclick = function (e) {
 		e.preventDefault();
 		InfiniteMaze.forgotPasswordWindow.show();
@@ -1745,13 +1745,13 @@ function SessionManager(db, userCtx) {
 	if (userCtx) {
 		self.userCtx = userCtx;
 	}
-	
+
 	// after login
 	function dealWithNewUser() {
 		InfiniteMaze.headerBar.updateForUser();
 		InfiniteMaze.viewer.updateTeleporters();
 	}
-	
+
 	function setUserCtx(ctx) {
 		var oldUsername = self.userCtx.name;
 		if (ctx) {
@@ -1765,7 +1765,7 @@ function SessionManager(db, userCtx) {
 			dealWithNewUser();
 		}
 	}
-	
+
 	this.refreshUserCtx = function (done) {
 		Couch.session({
 			success: function (session) {
@@ -1779,7 +1779,7 @@ function SessionManager(db, userCtx) {
 			}
 		});
 	};
-	
+
 	this.logout = function (done) {
 		Couch.logout({
 			success: function (resp) {
@@ -1792,10 +1792,10 @@ function SessionManager(db, userCtx) {
 			}
 		});
 	};
-	
+
 	this.login = function (username, password, onSuccess, onError) {
 		if (!username) return onError("You need to enter a username.");
-		
+
 		Couch.login({
 			name: username,
 			password: password,
@@ -1809,11 +1809,11 @@ function SessionManager(db, userCtx) {
 			}
 		});
 	};
-	
+
 	this.signup = function (username, password, email, onSuccess, onError) {
 		if (!username) return onError("Please choose a username.");
 		if (!email) return onError("Please enter your email address.");
-		
+
 		validateEmailAddress(email,
 			function goodEmail() {
 				// need SHA1 for signup
@@ -1850,19 +1850,19 @@ function SessionManager(db, userCtx) {
 			}
 		);
 	};
-	
+
 	var getUserDb = Couch.userDb.memoized();
-	
+
 	this.changePassword = function (info, success, error) {
 		if (info.confirmNewPass != info.newPass) {
 			return error("You must retype your new password the same way to confirm it.");
 		}
-		
+
 		if (info.currentPass == info.newPass) {
 			// nothing to change
 			return success();
 		}
-		
+
 		var userName = InfiniteMaze.getUsername();
 		getUserDb(function (db) {
 			var userPrefix = "org.couchdb.user:";
@@ -1872,7 +1872,7 @@ function SessionManager(db, userCtx) {
 				error: error
 			});
 		});
-		
+
 		function gotDoc(doc) {
 			shim(window.hex_sha1, "scripts/sha1.js", function () {
 				if (doc.password_sha == hex_sha1(info.currentPass + doc.salt)) {
@@ -1889,7 +1889,7 @@ function SessionManager(db, userCtx) {
 			});
 		}
 	};
-	
+
 	this.getUserInfo = function (username, success, error) {
 		db.openDoc("user-info:" + username, {
 			success: success,
@@ -1899,7 +1899,7 @@ function SessionManager(db, userCtx) {
 			}
 		});
 	};
-	
+
 	this.updateUserInfo = function (props, success, error) {
 		this.getUserInfo(userCtx.name, function (doc) {
 			for (var prop in props) {
@@ -1911,11 +1911,11 @@ function SessionManager(db, userCtx) {
 			});
 		}, error);
 	};
-	
+
 	this.isAdmin = function () {
 		return self.userCtx.roles.indexOf("_admin") != -1;
 	};
-	
+
 	this.lookupUsername = function (email, cb) {
 		db.view("maze/users_by_email", {
 			key: email,
@@ -1927,9 +1927,9 @@ function SessionManager(db, userCtx) {
 			}
 		});
 	};
-	
+
 	var expireTime = 3600000 * 12; // 12 hours
-	
+
 	this.requestResetPassword = function (username, cb) {
 		this.getUserInfo(username, function () {
 			// user exists.
@@ -2012,7 +2012,7 @@ constructor: function (viewer) {
 	var element = document.createElement("div");
 	element.id = "you-are-here";
 	Box.ificate(this, element);
-	
+
 	var link = document.createElement("a");
 	link.href = "";
 	link.onclick = function (e) {
@@ -2022,10 +2022,10 @@ constructor: function (viewer) {
 	element.appendChild(link);
 	var linkText = document.createTextNode("");
 	link.appendChild(linkText);
-	
+
 	// the arrows point to the player's location
 	var arrows = "→↘↓↙←↖↑↗→";
-	
+
 	// depend on proximity to player's location
 	var prepositions = [
 		"",
@@ -2034,7 +2034,7 @@ constructor: function (viewer) {
 		"waayy over",
 		"really far over"
 	];
-	
+
 	// the message changes depending on the distance to the player's location
 	function updateText(x, y) {
 		var angle = Math.atan2(x, y);
@@ -2045,11 +2045,11 @@ constructor: function (viewer) {
 		linkText.nodeValue = "You are " + preposition + " here " + arrow;
 	}
 	updateText(0, 0);
-	
+
 	function constrain(number, min, max) {
 		return Math.min(max, Math.max(min, number));
 	}
-	
+
 	var self = this;
 	this.update = function () {
 		// relative to viewport
@@ -2062,34 +2062,34 @@ constructor: function (viewer) {
 		var viewerH = viewer.element.offsetHeight;
 		var markerW = element.offsetWidth;
 		var markerH = element.offsetHeight;
-		
+
 		var effectiveViewerW = viewerW - markerW;
 		var effectiveViewerH = viewerH - markerH;
-		
+
 		var headerH = InfiniteMaze.headerBar.element.offsetHeight;
 		var headerW = InfiniteMaze.headerBar.element.offsetWidth;
-		
+
 		if (distance(playerX - mouseX, playerY - mouseY) < 250) {
 			// mouse is near player, so don't need to show this pointer.
 			self.hide();
 			return;
 		}
-		
+
 		var top = 0;
 		// move out of the way of the login buttons.
 		if (playerY < headerH &&
 			effectiveViewerW - playerX < headerW) {
 			top += headerH;
 		}
-		
+
 		var markerX = constrain(playerX, 0, effectiveViewerW);
 		var markerY = constrain(playerY, top, effectiveViewerH);
-		
+
 		updateText(
 			markerY - playerY + markerH / 2,
 			markerX - playerX + markerW / 2
 		);
-		
+
 		self.show();
 		element.style.left = markerX + "px";
 		element.style.top = markerY + "px";
@@ -2115,7 +2115,7 @@ constructor: function () {
 	var resultElement = $("forgot-username-result");
 	var emailInput = $("forgot-username-email");
 	var loginButton = $("forgot-password-login");
-	
+
 	var usernameFound;
 	loginButton.onclick = function (e) {
 		e.preventDefault();
@@ -2123,29 +2123,29 @@ constructor: function () {
 		InfiniteMaze.loginSignupWindow.show();
 		InfiniteMaze.loginSignupWindow.populateLogin(usernameFound);
 	};
-	
+
 	this.show = function () {
 		Dialog.prototype.show.call(this);
 		emailInput.focus();
 	};
-	
+
 	function success(msg) {
 		resultElement.className = "good";
 		resultElement.innerHTML = msg;
 		removeClass(loginButton, "hidden");
 	}
-	
+
 	function fail(msg) {
 		resultElement.className = "error";
 		resultElement.innerHTML = msg;
 		addClass(loginButton, "hidden");
 	}
-	
+
 	form.onreset = function () {
 		self.hide();
 		fail("");
 	};
-	
+
 	form.onsubmit = function (e) {
 		e.preventDefault();
 		var email = emailInput.value;
@@ -2172,7 +2172,7 @@ constructor: function () {
 	var self = this;
 	var resultElement = $("forgot-password-result");
 	var usernameInput = $("forgot-password-username");
-	
+
 	function response(success, msg) {
 		loader.stop();
 		resultElement.className = success ? "good" : "error";
@@ -2185,18 +2185,18 @@ constructor: function () {
 			btn.onclick = self.hide.bind(self);
 		}
 	}
-	
+
 	this.show = function () {
 		Dialog.prototype.show.call(this);
 		usernameInput.focus();
 	};
-	
+
 	this.hide = function () {
 		response(false, "");
 		Dialog.prototype.hide.call(this);
 	}
 	form.onreset = this.hide.bind(this);
-	
+
 	form.onsubmit = function (e) {
 		e.preventDefault();
 		loader.start();
@@ -2226,7 +2226,7 @@ function Updater(db, since) {
 	this.listenForUpdates = function () {
 		db.changes(since, {filter: "maze/design_doc"}).onChange(refreshSoon);
 	};
-	
+
 	this.listenForUpdatesSafe = function () {
 		setTimeout(this.listenForUpdates, 8000);
 	};
@@ -2241,21 +2241,21 @@ InfiniteMaze.init = function (cb) {
 	if (!location.pathname.contains("/_attachments/")) {
 		Couch.urlPrefix = "";
 	}
-	
+
 	this.mazeId = parseQuery(location.search.substr(1)).maze ||
 		this.defaultMazeId;
-	
+
 	this.prefs = new Prefs("infinitemaze-");
 	this.welcomeWindow = new WelcomeWindow();
 	this.headerBar = new HeaderBar();
-	
+
 	// on return visits don't show the welcome window.
 	if (this.hasPlayerEntered()) {
 		this.welcomeWindow.hide(true);
 	} else {
 		this.welcomeWindow._onEnter = this.playerHasEntered.bind(this);
 	}
-	
+
 	if (this.playerPositionStored()) {
 		this.startPos = this.getStoredPlayerPosition();
 		this.startScrollPos = this.getStoredScrollPosition();
@@ -2271,10 +2271,10 @@ InfiniteMaze.init = function (cb) {
 // Load the maze data.
 InfiniteMaze.init2 = function (cb) {
 	var self = this;
-	
+
 	var loader = new Loader($("maze"));
 	loader.start();
-	
+
 	shim(window.JSON, "scripts/json2.js", function () {
 		self.db.list("maze/maze", "maze_and_tiles", {
 			key: self.mazeId,
@@ -2296,9 +2296,9 @@ InfiniteMaze.init3 = function (info, cb) {
 	var tiles = info.tiles;
 	var userCtx = info.userCtx;
 	var update_seq = info.update_seq;
-	
+
 	this.sessionManager = new SessionManager(this.db, userCtx);
-	//this.minimap = 
+	//this.minimap =
 	this.loader = new InfiniteMazeLoader(this.db, mazeDoc, tiles);
 	var viewer = this.viewer = new GridMazeViewer({
 		loader: this.loader,
@@ -2309,7 +2309,7 @@ InfiniteMaze.init3 = function (info, cb) {
 		onScroll: this.onScroll,
 		context: this
 	});
-	
+
 	// If we have loaded a random start tile, we must teleport to it.
 	var coords = this.startTileCoords;
 	if (coords) {
@@ -2327,7 +2327,7 @@ InfiniteMaze.init3 = function (info, cb) {
 	} else {
 		this.viewer.load();
 	}
-	
+
 	this.editor = new GridMazeTileEditor(this.viewer);
 	this.headerBar.updateForUser();
 	this.loginSignupWindow = new LoginSignupWindow();
@@ -2336,16 +2336,16 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.accountSettingsWindow = new AccountSettingsWindow();
 	this.forgotUsernameWindow = new ForgotUsernameWindow();
 	this.forgotPasswordWindow = new ForgotPasswordWindow();
-	
+
 	this.claimer = new TileClaimer(this.db);
-	
+
 	if (info.listen_changes !== false) {
 		this.loader.listenForChangesSafe(update_seq);
 	}
-	
+
 	this.updater = new Updater(this.db, update_seq);
 	this.updater.listenForUpdatesSafe();
-		
+
 	function updateLocationFromHash(e, fast) {
 		if (location.hash == myHash) {
 			return;
@@ -2360,7 +2360,7 @@ InfiniteMaze.init3 = function (info, cb) {
 	}
 	updateLocationFromHash(null, true);
 	window.addEventListener("hashchange", updateLocationFromHash, false);
-	
+
 	InfiniteMaze.tracker.trackPageView();
 
 	if (cb) cb.call(this);

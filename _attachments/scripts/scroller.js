@@ -27,7 +27,7 @@ function Scroller(options) {
 	this.unfreeze = function () {
 		frozen = false;
 	};
-	
+
 	function div(className, child) {
 		var element = document.createElement("div");
 		element.className = "scroller-" + className;
@@ -41,11 +41,11 @@ function Scroller(options) {
 	var inner = div("inner", fixer);
 	var scroller = div("middle", inner);
 	var outer = div("outer", scroller);
-	
+
 	this.innerElement = fixer;
-	
+
 	container.appendChild(outer);
-	
+
 	var x = 0;
 	var y = 0;
 	var self = this;
@@ -69,7 +69,7 @@ function Scroller(options) {
 		return true;
 	}
 	this.move = move;
-	
+
 	function moveSlow(dx, dy) {
 		if (scrollContents) {
 			var moved = false;
@@ -87,7 +87,7 @@ function Scroller(options) {
 			move(dx, dy);
 		}
 	}
-	
+
 	this.moveTo = function (x1, y1, slow) {
 		if (slow) {
 			return moveSlow(-x1 - x, -y1 - y);
@@ -95,13 +95,13 @@ function Scroller(options) {
 			return move(-x1 - x, -y1 - y);
 		}
 	};
-	
+
 	if (start) {
 		selfScroll = true;
 		move(start[0], start[1]);
 		selfScroll = false;
 	}
-	
+
 	var fixedX = 75;
 	var fixedY = 75;
 	function reset() {
@@ -110,7 +110,7 @@ function Scroller(options) {
 	}
 	reset();
 	setTimeout(reset, 1);
-	
+
 	var friction = 15;
 	var f = 1 - 1 / friction;
 	var inertiaTimer;
