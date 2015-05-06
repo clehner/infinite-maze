@@ -1,6 +1,7 @@
+/* global Couch */
 Couch.urlPrefix = ".";
 var db = Couch.db("db");
-if (!location.pathname.indexOf("/_attachments/") != -1) {
+if (location.pathname.indexOf("/_attachments/") != -1) {
 	Couch.urlPrefix = "";
 }
 
@@ -86,7 +87,7 @@ function adjustDimensions() {
 	var max = size.max;
 	var range = [max[0] - min[0] + 1, max[1] - min[1] + 1];
 	var outer = [wrapper.clientWidth, wrapper.clientHeight];
-	tileSize = Math.min(256, 
+	tileSize = Math.min(256,
 		outer[0] / range[0],
 		outer[1] / range[1]
 	);
@@ -97,7 +98,7 @@ function adjustDimensions() {
 }
 
 var dayLength = 86400000;
-var start = +new Date('Oct 18 2010') // 1287460800000
+var start = +new Date('Oct 18 2010');
 function getDayRelative(n) {
 	return new Date(start + dayLength * n);
 }
@@ -169,7 +170,7 @@ checkbox.onchange = function () {
 	} else {
 		clearTimeout(timer);
 	}
-}
+};
 
 setMsg("loading…");
 

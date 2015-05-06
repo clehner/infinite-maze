@@ -25,7 +25,6 @@ function (doc, oldDoc, userCtx) {
 		return isVector(obj, 3);
 	}
 
-
 	var isAdmin = userCtx.roles.indexOf('_admin') != -1;
 	var type = doc.type || (oldDoc && oldDoc.type);
 	
