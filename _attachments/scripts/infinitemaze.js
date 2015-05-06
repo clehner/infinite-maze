@@ -82,6 +82,7 @@ var InfoTileBox = Classy(TileBox, {
 	nameElement: null,
 	nameText: null,
 	editLink: null,
+	flagLink: null,
 	deleteLink: null,
 
 	constructor: function () {
@@ -102,6 +103,15 @@ var InfoTileBox = Classy(TileBox, {
 		infoRight.addEventListener("mouseout", checkIfInWay, false);
 		this.element.appendChild(infoRight);
 
+		var infoBottomLeft = this.infoBottomLeft =
+			document.createElement("span");
+		infoBottomLeft.className = "tile-info bottom-left";
+		// TODO: check if in way
+		this.element.appendChild(infoBottomLeft);
+
+		this.sizeText = document.createTextNode("");
+		infoBottomLeft.appendChild(this.sizeText);
+
 		var nameElement = this.nameElement = document.createElement("span");
 		nameElement.className = "name";
 		infoLeft.appendChild(nameElement);
@@ -114,6 +124,14 @@ var InfoTileBox = Classy(TileBox, {
 		editLink.innerHTML = "Edit";
 		infoRight.appendChild(document.createTextNode(" "));
 		infoRight.appendChild(editLink);
+
+		var flagLink = this.flagLink = document.createElement("a");
+		flagLink.href = "";
+		flagLink.onclick = this.onFlagLinkClick.bind(this);
+		flagLink.innerHTML = "\u2691";
+		flagLink.title = "Flag this tile for deletion";
+		infoRight.appendChild(document.createTextNode(" "));
+		infoRight.appendChild(flagLink);
 
 		var fixLink = this.fixLink = document.createElement("a");
 		fixLink.href = "";
@@ -136,16 +154,19 @@ var InfoTileBox = Classy(TileBox, {
 		// put the creators name on the tile
 		var name = tile.info.creator || "anonymous";
 		this.nameText.nodeValue = name;
+		this.sizeText.nodeValue = tile.info.size - 1670;
 		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
 
 		// show or hide links
 		var loader = InfiniteMaze.loader;
 
 		var editable = loader.canEditTile(tile);
+		var flaggable = true; //loader.canFlagTile(tile);
 		var fixable = loader.canFixTile(tile);
 		var deletable = loader.canFixTile(tile);
-		var anything = editable || fixable || deletable;
+		var anything = editable || flaggable || fixable || deletable;
 		toggleClass(this.editLink, "hidden", !editable);
+		toggleClass(this.flagLink, "hidden", !flaggable);
 		toggleClass(this.fixLink, "hidden", !fixable);
 		toggleClass(this.deleteLink, "hidden", !deletable);
 		toggleClass(this.infoRight, "hidden", !anything);
@@ -173,6 +194,22 @@ var InfoTileBox = Classy(TileBox, {
 		e.preventDefault();
 		if (InfiniteMaze.loader.canEditTile(this.tile)) {
 			InfiniteMaze.viewer.enterDrawTileMode(this.tile);
+		}
+	},
+
+	onFlagLinkClick: function (e) {
+		e.preventDefault();
+		var loggedIn = InfiniteMaze.getUsername();
+		if (loggedIn) {
+			if (confirm("Flag this tile for deletion?")) {
+				InfiniteMaze.flagger.flagTile(this.tile);
+				this.tile.flagged = true;
+				alert("You have flagged this tile. You will get an email if the tile is deleted.");
+			}
+		} else {
+			if (confirm("Log in to be able to flag this tile.")) {
+				InfiniteMaze.loginSignupWindow.show();
+			}
 		}
 	},
 
@@ -1417,6 +1454,11 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		return isAdmin || this.isTileMine(tile);
 	},
 
+	canFlagTile: function (tile) {
+		var loggedIn = !!InfiniteMaze.getUsername();
+		return loggedIn && !tile.flagged;
+	},
+
 	canFixTile: function (tile) {
 		return InfiniteMaze.sessionManager.isAdmin();
 	},
@@ -1926,6 +1968,27 @@ function SessionManager(db, userCtx) {
 }
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
+// A way for users to flag tiles for deletion.
+function TileFlagger(db) {
+	this.flagTile = function (tile) {
+		var user = InfiniteMaze.getUsername();
+		if (!user) {
+			return false;
+		}
+		db.saveDoc({
+			type: "tile-flag",
+			_id: "tile-flag:" + tile.info.id + ":" + user,
+			tile_id: tile.info.id,
+			user: user,
+			created_at: Date.now()
+		}, {
+			error: function (status, error, reason) {
+				alert("There was an error flagging that tile: " + reason);
+			}
+		});
+	};
+}
+
 // Preferences manager
 
 function Prefs(prefix, expires) {
@@ -2283,6 +2346,8 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.accountSettingsWindow = new AccountSettingsWindow();
 	this.forgotUsernameWindow = new ForgotUsernameWindow();
 	this.forgotPasswordWindow = new ForgotPasswordWindow();
+
+	this.flagger = new TileFlagger(this.db);
 
 	if (info.listen_changes !== false) {
 		this.loader.listenForChangesSafe(update_seq);

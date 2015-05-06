@@ -141,20 +141,24 @@ function (doc, oldDoc, userCtx) {
 			doc._attachments['tile.png'].content_type == 'image/png',
 				"Tile attachment must have mime-type 'image/png'.",
 		]);
-	} else if (type == "claim") {
-		// Claim validation
+	} else if (type == "tile-flag") {
+		// Tile flagged for deletion
 		validate([
-			doc.claim_type,
-				"Claim type must be tile.",
-			
+			doc._id == "tile-flag:" + doc.tile_id + ":" + doc.user,
+				"id must be in the form tile-flag:{tile_id}:{user}",
+
 			doc.tile_id,
-				"Claim must have a tile_id.",
+				"Flag must have a tile_id.",
 			
 			doc.user == userCtx.name || isAdmin,
-				"Claim must be for your own account.",
+				"Flag must be for your own account.",
 
 			typeof doc.created_at == "number",
-				"created_at must be a unix timestamp."
+				"created_at must be a unix timestamp.",
+
+			isAdmin || (!oldDoc && !doc.status) ||
+				(doc.status == oldDoc.status),
+				"Only admin can set a tile flag's status"
 		]);
 	} else if (type == "user-info") {
 		// User info
@@ -227,7 +231,7 @@ function (doc, oldDoc, userCtx) {
 		}
 	} else if (!isAdmin) {
 		throw {forbidden:
-			"Document must be a valid type (maze, tile, user-info, claim, " +
+			"Document must be a valid type (maze, tile, user-info, tile-flag, " +
 			"or password-reset-request)."};
 	}
 }

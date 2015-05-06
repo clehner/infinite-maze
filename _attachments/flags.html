@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+	<title>Tiles Flagged</title>
+	<meta charset="utf-8">
+	<style type="text/css">
+	body {
+		font-family: sans-serif;
+	}
+	img {
+		background: black;
+	}
+	</style>
+	<script src="scripts/couchdb.js"></script>
+</head>
+<body>
+<h1>Tiles Flagged</h1>
+<ul id="flags"></ul>
+<script type="text/javascript">
+Couch.urlPrefix = "./";
+var db = Couch.db("db");
+
+function create(tagName, parent) {
+	var el = document.createElement(tagName);
+	if (parent) {
+		parent.appendChild(el);
+	}
+	return el;
+}
+
+function getFlagDocs(tileId, cb) {
+	db.view("maze/tile_flags", {
+		reduce: false,
+		key: tileId,
+		include_docs: true,
+		success: function (resp) {
+			var tileDoc, flagDocs = [];
+			for (var i = 0; i < resp.rows.length; i++) {
+				var doc = resp.rows[i].doc;
+				if (doc.type == 'tile')
+					tileDoc = doc;
+				else if (doc.type == 'tile-flag')
+					flagDocs.push(doc);
+			}
+			console.log('flag docs', flagDocs);
+			cb(tileDoc, flagDocs);
+		},
+		error: function (err) {
+			alert("Error getting flag docs: " + err);
+		}
+	});
+}
+
+function FlaggedTile(row) {
+	var tileId = this.tileId = row.key;
+	var users = row.value.users;
+	var numFlags = users.length;
+	var latestFlagTime = new Date(row.value.newest);
+	var coords = row.value.location;
+
+	var url = "./#" + coords;
+	var el = this.element = create("li");
+
+	var a = create("a", el);
+	a.appendChild(document.createTextNode("(" + coords + ")"));
+	a.href = url;
+
+	create("div", el).appendChild(document.createTextNode(
+				"Flagged by  " + numFlags + " users: " +
+				users.join(", ")));
+	create("div", el).appendChild(document.createTextNode(
+				"Latest: " + latestFlagTime.toLocaleString()));
+
+	var deleteBtn = create("button", el);
+	deleteBtn.innerHTML = "Delete tile";
+	deleteBtn.onclick = this.deleteTile.bind(this);
+
+	var ignoreBtn = create("button", el);
+	ignoreBtn.innerHTML = "Ignore flags";
+	ignoreBtn.onclick = this.ignoreFlags.bind(this);
+
+	var a = create("a", el);
+	a.href = url;
+	create("img", create("div", a)).src = "db/" + tileId + "/tile.png";
+}
+FlaggedTile.prototype = {
+	show: function () {
+		document.getElementById("flags").appendChild(this.element);
+	},
+	hide: function () {
+		document.getElementById("flags").removeChild(this.element);
+	},
+	deleteTile: function () {
+		getFlagDocs(this.tileId, function (tileDoc, flagDocs) {
+			tileDoc._deleted = true;
+			flagDocs.forEach(function (doc) {
+				doc.status = "tile_deleted";
+			});
+			if (1)
+				console.log(flagDocs.concat(tileDoc));
+			else
+			db.bulkSave(flagDocs.concat(tileDoc), {
+				success: function () {
+					this.hide();
+					alert("Tile deleted and flags queued for notification");
+				}.bind(this),
+				error: function (err) {
+					alert("Error deleting tile and updating flags: " + err);
+				}
+			});
+		}.bind(this));
+	},
+	ignoreFlags: function () {
+		getFlagDocs(this.tileId, function (tileDoc, flagDocs) {
+			flagDocs.forEach(function (doc) {
+				doc.status = "flag_ignored";
+			});
+			if (1)
+				console.log(flagDocs);
+			else
+			db.bulkSave(flagDocs, {
+				success: function () {
+					alert("Flags ignored and queued for notification");
+					this.hide();
+				}.bind(this),
+				error: function (err) {
+					alert("Error deleting tile and updating flags: " + err);
+				}
+			});
+		}.bind(this));
+	}
+};
+
+db.view("maze/tile_flags", {
+	group: true,
+	success: function (resp) {
+		resp.rows.forEach(function (row) {
+			if (row.value.newest)
+				new FlaggedTile(row).show();
+		});
+	}
+});
+
+</script>
+</body>
+</html>
