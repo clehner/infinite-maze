@@ -1,8 +1,8 @@
 var sys = require('sys'),
-	mail = require('mail'),
+	SMTPConnection = require('smtp-connection'),
 	cred = require('./credentials'),
+	smtpConn = new SMTPConnection(cred.mail),
 	fs = require("fs"),
-	mailUtil = require("mail/lib/util"),
 	mustache = require('mustache'),
 	nano = require('nano')(cred.couchdb),
 	db = nano.use('maze_dev'),
@@ -58,10 +58,8 @@ function changes(name, handler) {
 			console.error('changes:', err);
 			return;
 		}
-		var doc = change.doc;
-		delete change.doc;
-		console.log('change', change);
-		handler(doc);
+		console.log('change seq ', change.seq, 'id', change.id);
+		handler(change.doc);
 	});
 }
 
@@ -111,16 +109,20 @@ function mimeBoundary() {
 	return '========' + Math.random().toString(36).substr(2) + '==';
 }
 
+function mailDate() {
+	return new Date().toLocaleString();
+}
+
 function sendMail(to, msg, cb) {
-	var client = mail.createClient(cred.mail);
-	client.on('error', cb);
-	var tx = client.mail(cred.mail.sender_address, to);
-	tx.on('ready', function () {
-		this.end(msg);
-	});
-	tx.on('end', function () {
-		client.quit();
-		cb();
+	smtpConn.send({
+		from: cred.mail.sender_address,
+		to: to
+	}, msg, function (err, info) {
+		if (info.rejected.length) {
+			console.error("Some emails rejected:", info.rejected,
+				"Response:", info.response);
+		}
+		cb(err);
 	});
 }
 
@@ -141,13 +143,26 @@ var api = {
 	usersDb: usersDb,
 	render: render,
 	mimeBoundary: mimeBoundary,
-	mailDate: mailUtil.date,
+	mailDate: mailDate,
 	getTileUrl: getTileUrl,
 };
 
-require('./notifications/flagged_tiles')(api);
-/*
-require('./notifications/new_user')(api);
-require('./notifications/new_neighbors')(api);
-require('./notifications/password_reset')(api);
-*/
+smtpConn.connect(function (er) {
+	if (er) throw er;
+	if (cred.mail.auth) {
+		smtpConn.login(cred.mail.auth, onAuthed);
+	} else {
+		onAuthed(null);
+	}
+});
+
+function onAuthed(er) {
+	if (er) throw er;
+
+	require('./notifications/flagged_tiles')(api);
+	/*
+	require('./notifications/new_user')(api);
+	require('./notifications/new_neighbors')(api);
+	require('./notifications/password_reset')(api);
+	*/
+}

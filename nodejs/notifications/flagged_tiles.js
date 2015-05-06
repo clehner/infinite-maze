@@ -21,7 +21,6 @@ function sendFlagResolutionEmail(api, flagDoc, tileDoc, email, cb) {
 function onFlagResolution(api, flagDoc) {
 	if (!flagDoc) return;
 	var tileDoc;
-	console.log('got flag doc', flagDoc);
 	api.db.get(flagDoc.tile_id, function (er, result) {
 		tileDoc = result;
 		if (er || !tileDoc) {
