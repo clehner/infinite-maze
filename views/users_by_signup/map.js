@@ -1,7 +1,8 @@
-function pad(n) {
-	return n < 10 ? "0" + n : n;
-}
 function(doc) {
+	function pad(n) {
+		return n < 10 ? "0" + n : n;
+	}
+
 	if (doc.type == 'user-info') {
 		var d = new Date(doc.signup);
 		var date = d.getFullYear() + "-" + pad(d.getMonth()) + "-" + pad(d.getDate());
