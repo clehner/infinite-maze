@@ -10,6 +10,8 @@
   "license": "AGPLv3+",
   "dependencies": {
     "felix-couchdb": "^1.0.7",
-    "mail": "git://github.com/huetsch/node-mail"
+    "mail": "git://github.com/huetsch/node-mail",
+    "mustache": "^2.0.0",
+    "nano": "^6.1.2"
   }
 }

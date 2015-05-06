@@ -42,7 +42,6 @@ function getFlagDocs(tileId, cb) {
 				else if (doc.type == 'tile-flag')
 					flagDocs.push(doc);
 			}
-			console.log('flag docs', flagDocs);
 			cb(tileDoc, flagDocs);
 		},
 		error: function (err) {
@@ -96,10 +95,9 @@ FlaggedTile.prototype = {
 			flagDocs.forEach(function (doc) {
 				doc.status = "tile_deleted";
 			});
-			if (1)
-				console.log(flagDocs.concat(tileDoc));
-			else
-			db.bulkSave(flagDocs.concat(tileDoc), {
+			db.bulkSave({
+				docs: flagDocs.concat(tileDoc)
+			}, {
 				success: function () {
 					this.hide();
 					alert("Tile deleted and flags queued for notification");
@@ -113,13 +111,17 @@ FlaggedTile.prototype = {
 	ignoreFlags: function () {
 		getFlagDocs(this.tileId, function (tileDoc, flagDocs) {
 			flagDocs.forEach(function (doc) {
-				doc.status = "flag_ignored";
+				doc._deleted = true;
 			});
-			if (1)
-				console.log(flagDocs);
-			else
-			db.bulkSave(flagDocs, {
-				success: function () {
+			db.bulkSave({
+				docs: flagDocs
+			}, {
+				success: function (resp) {
+					if (resp.some(function (res) { return res.error; })) {
+						console.error(resp);
+						alert('Error saving flag docs.');
+						return;
+					}
 					alert("Flags ignored and queued for notification");
 					this.hide();
 				}.bind(this),

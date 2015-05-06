@@ -1,0 +1,28 @@
+--{{boundary}}
+Content-Type: text/plain; charset=us-ascii
+
+Hi {{name}},
+
+The maze tile ({{location}}) that you flagged has been deleted. Now you
+can try to replace it with something better!
+
+Maze tile URL:
+{{tile_url}}
+
+-- 
+The Infinite Maze
+http//www.theinfinitemaze.com/
+
+--{{boundary}}
+Content-Type: text/html; charset=UTF-8
+
+<p>Hi <u>{{name}}</u>,</p>
+
+<p>The maze tile at <a href="{{tile_url}}">({{location}})</a> that you
+flagged has been deleted. Now you can try to replace it with something
+better!</p>
+
+-- <br/>
+<a href="http//www.theinfinitemaze.com/">The Infinite Maze</a>
+
+--{{boundary}}--

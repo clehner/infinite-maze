@@ -1,9 +1,0 @@
-[submodule "nodejs/node-couchdb"]
-	path = nodejs/node-couchdb
-	url = git://github.com/felixge/node-couchdb.git
-[submodule "nodejs/node-mail"]
-	path = nodejs/node-mail
-	url = git://github.com/weaver/node-mail.git
-[submodule "nodejs/node-canvas"]
-	path = nodejs/node-canvas
-	url = git://github.com/LearnBoost/node-canvas.git
