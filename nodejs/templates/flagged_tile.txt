@@ -1,3 +1,9 @@
+From: "{{sender_name}}" <{{sender_address}}>,
+To: "{{name}}" <{{user_address}}>
+Subject: Maze flagged tile
+MIME-version: 1.0
+Content-Type: multipart/alternative; boundary={{boundary}}
+
 --{{boundary}}
 Content-Type: text/plain; charset=us-ascii
 
@@ -11,7 +17,7 @@ Maze tile URL:
 
 -- 
 The Infinite Maze
-http//www.theinfinitemaze.com/
+http://www.theinfinitemaze.com/
 
 --{{boundary}}
 Content-Type: text/html; charset=UTF-8
@@ -23,6 +29,6 @@ flagged has been deleted. Now you can try to replace it with something
 better!</p>
 
 -- <br/>
-<a href="http//www.theinfinitemaze.com/">The Infinite Maze</a>
+<a href="http://www.theinfinitemaze.com/">The Infinite Maze</a>
 
 --{{boundary}}--

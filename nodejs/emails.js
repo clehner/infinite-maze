@@ -1,7 +1,8 @@
 var sys = require('sys'),
+	mail = require('mail'),
 	cred = require('./credentials'),
 	fs = require("fs"),
-	mail = require('mail').Mail(cred.mail),
+	mailUtil = require("mail/lib/util"),
 	mustache = require('mustache'),
 	nano = require('nano')(cred.couchdb),
 	db = nano.use('maze_dev'),
@@ -57,7 +58,10 @@ function changes(name, handler) {
 			console.error('changes:', err);
 			return;
 		}
-		handler(change.doc);
+		var doc = change.doc;
+		delete change.doc;
+		console.log('change', change);
+		handler(doc);
 	});
 }
 
@@ -91,6 +95,8 @@ function render(templateName, data) {
 	// specify template default values
 	var obj = {
 		siteRoot: siteRoot,
+		sender_name: cred.mail.sender_name,
+		sender_address: cred.mail.sender_address,
 	};
 	for (var key in data)
 		obj[key] = data[key];
@@ -105,11 +111,23 @@ function mimeBoundary() {
 	return '========' + Math.random().toString(36).substr(2) + '==';
 }
 
+function sendMail(to, msg, cb) {
+	var client = mail.createClient(cred.mail);
+	client.on('error', cb);
+	var tx = client.mail(cred.mail.sender_address, to);
+	tx.on('ready', function () {
+		this.end(msg);
+	});
+	tx.on('end', function () {
+		client.quit();
+		cb();
+	});
+}
+
 // sending the mails
 
 var api = {
 	cred: cred,
-	sender: cred.mail.sender,
 	debugAddress: debug && 'theinfinitemaze-debug.cel@celehner.com',
 	siteRoot: siteRoot,
 	changes: changes,
@@ -119,10 +137,11 @@ var api = {
 	removeDoc: removeDoc,
 	queue: queue,
 	db: db,
-	mail: mail,
+	sendMail: sendMail,
 	usersDb: usersDb,
 	render: render,
 	mimeBoundary: mimeBoundary,
+	mailDate: mailUtil.date,
 	getTileUrl: getTileUrl,
 };
 

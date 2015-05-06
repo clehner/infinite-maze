@@ -2,22 +2,14 @@ function sendFlagResolutionEmail(api, flagDoc, tileDoc, email, cb) {
 	var user = flagDoc.user;
 	console.log("Sending flag resolution email to " + user +
 		(api.debug ? " (debug)" : ""));
-	var boundary = api.mimeBoundary();
-	api.mail.message({
-		from: api.sender,
-		to: '"' + user + '" <' + (api.debugAddress || email) + '>',
-		subject: 'Maze flagged tile',
-		'MIME-version': '1.0',
-		'Content-Type': 'multipart/alternative; boundary=' + boundary
-	})
-	.body(api.render('flagged_tile.txt', {
-		username: user,
+	api.sendMail([email], api.render('flagged_tile.txt', {
+		name: user,
+		user_address: email,
+		location: tileDoc.location,
 		tile_url: api.getTileUrl(tileDoc),
-		boundary: boundary
-	}))
-	.send(function (er) {
-		if (er) {
-			console.error('Error sending flag resolution email to',
+		boundary: api.mimeBoundary()
+	}), function (er) {
+		if (er) { console.error('Error sending flag resolution email to',
 				user + ':', er, flagDoc._id, tileDoc._id);
 			return;
 		}
