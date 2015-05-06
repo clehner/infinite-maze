@@ -82,7 +82,6 @@ var InfoTileBox = Classy(TileBox, {
 	nameElement: null,
 	nameText: null,
 	editLink: null,
-	claimLink: null,
 	deleteLink: null,
 
 	constructor: function () {
@@ -116,13 +115,6 @@ var InfoTileBox = Classy(TileBox, {
 		infoRight.appendChild(document.createTextNode(" "));
 		infoRight.appendChild(editLink);
 
-		var claimLink = this.claimLink = document.createElement("a");
-		claimLink.href = "";
-		claimLink.onclick = this.onClaimLinkClick.bind(this);
-		claimLink.innerHTML = "Claim";
-		infoRight.appendChild(document.createTextNode(" "));
-		infoRight.appendChild(claimLink);
-
 		var fixLink = this.fixLink = document.createElement("a");
 		fixLink.href = "";
 		fixLink.onclick = this.onFixLinkClick.bind(this);
@@ -150,12 +142,10 @@ var InfoTileBox = Classy(TileBox, {
 		var loader = InfiniteMaze.loader;
 
 		var editable = loader.canEditTile(tile);
-		var claimable = loader.canClaimTile(tile);
 		var fixable = loader.canFixTile(tile);
 		var deletable = loader.canFixTile(tile);
-		var anything = editable || claimable || fixable || deletable;
+		var anything = editable || fixable || deletable;
 		toggleClass(this.editLink, "hidden", !editable);
-		toggleClass(this.claimLink, "hidden", !claimable);
 		toggleClass(this.fixLink, "hidden", !fixable);
 		toggleClass(this.deleteLink, "hidden", !deletable);
 		toggleClass(this.infoRight, "hidden", !anything);
@@ -183,22 +173,6 @@ var InfoTileBox = Classy(TileBox, {
 		e.preventDefault();
 		if (InfiniteMaze.loader.canEditTile(this.tile)) {
 			InfiniteMaze.viewer.enterDrawTileMode(this.tile);
-		}
-	},
-
-	onClaimLinkClick: function (e) {
-		e.preventDefault();
-		var loggedIn = InfiniteMaze.getUsername();
-		if (loggedIn) {
-			if (confirm("Did you draw this tile?")) {
-				InfiniteMaze.claimer.claimTile(this.tile);
-				this.tile.claimSubmitted = true;
-				alert("Thank you. Your claim has been submitted for approval.");
-			}
-		} else {
-			if (confirm("Did you draw this tile? Log in to claim it.")) {
-				InfiniteMaze.loginSignupWindow.show();
-			}
 		}
 	},
 
@@ -1443,12 +1417,6 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		return isAdmin || this.isTileMine(tile);
 	},
 
-	canClaimTile: function (tile) {
-		var hasCreator = tile.info.creator;
-		var loggedIn = !!InfiniteMaze.getUsername();
-		return loggedIn && !hasCreator && !tile.claimSubmitted;
-	},
-
 	canFixTile: function (tile) {
 		return InfiniteMaze.sessionManager.isAdmin();
 	},
@@ -1958,27 +1926,6 @@ function SessionManager(db, userCtx) {
 }
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
-// A way for users to claim old anonymous tiles.
-function TileClaimer(db) {
-	this.claimTile = function (tile) {
-		var user = InfiniteMaze.getUsername();
-		if (tile.info.creator || !user) {
-			return false;
-		}
-		db.saveDoc({
-			type: "claim",
-			claim_type: "tile",
-			tile_id: tile.info.id,
-			user: user,
-			created_at: Date.now()
-		}, {
-			error: function (status, error, reason) {
-				alert("There was an error claiming that tile: " + reason);
-			}
-		});
-	};
-}
-
 // Preferences manager
 
 function Prefs(prefix, expires) {
@@ -2336,8 +2283,6 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.accountSettingsWindow = new AccountSettingsWindow();
 	this.forgotUsernameWindow = new ForgotUsernameWindow();
 	this.forgotPasswordWindow = new ForgotPasswordWindow();
-
-	this.claimer = new TileClaimer(this.db);
 
 	if (info.listen_changes !== false) {
 		this.loader.listenForChangesSafe(update_seq);
