@@ -29,21 +29,35 @@ function create(tagName, parent) {
 	return el;
 }
 
-function getFlagDocs(tileId, cb) {
+function getFlagDocs(key, cb) {
+	var tileId = key[0];
+	var tileDoc, flagDocs;
+	var count = 0;
+	function check() {
+		if (++count == 2) {
+			cb(tileDoc, flagDocs);
+		}
+	}
+	db.openDoc(tileId, {
+		success: function (resp) {
+			tileDoc = resp;
+			check();
+		},
+		error: function (err) {
+			if (err == 404) {
+				check();
+			} else {
+				alert("Error getting tile doc: " + err);
+			}
+		}
+	});
 	db.view("maze/tile_flags", {
 		reduce: false,
-		key: tileId,
+		key: key,
 		include_docs: true,
 		success: function (resp) {
-			var tileDoc, flagDocs = [];
-			for (var i = 0; i < resp.rows.length; i++) {
-				var doc = resp.rows[i].doc;
-				if (doc.type == 'tile')
-					tileDoc = doc;
-				else if (doc.type == 'tile-flag')
-					flagDocs.push(doc);
-			}
-			cb(tileDoc, flagDocs);
+			flagDocs = resp.rows.map(function (row) { return row.doc; });
+			check();
 		},
 		error: function (err) {
 			alert("Error getting flag docs: " + err);
@@ -52,8 +66,9 @@ function getFlagDocs(tileId, cb) {
 }
 
 function FlaggedTile(row) {
-	var tileId = this.tileId = row.key.shift();
-	var coords = row.key;
+	this.key = row.key;
+	var tileId = this.tileId = row.key[0];
+	var coords = row.key.slice(1);
 	var users = row.value.users;
 	var numFlags = users.length;
 	var latestFlagTime = new Date(row.value.newest);
@@ -92,8 +107,10 @@ FlaggedTile.prototype = {
 		document.getElementById("flags").removeChild(this.element);
 	},
 	deleteTile: function () {
-		getFlagDocs(this.tileId, function (tileDoc, flagDocs) {
-			tileDoc._deleted = true;
+		getFlagDocs(this.key, function (tileDoc, flagDocs) {
+			if (tileDoc) {
+				tileDoc._deleted = true;
+			}
 			flagDocs.forEach(function (doc) {
 				doc.status = "tile_deleted";
 			});
@@ -111,7 +128,7 @@ FlaggedTile.prototype = {
 		}.bind(this));
 	},
 	ignoreFlags: function () {
-		getFlagDocs(this.tileId, function (tileDoc, flagDocs) {
+		getFlagDocs(this.key, function (tileDoc, flagDocs) {
 			flagDocs.forEach(function (doc) {
 				doc._deleted = true;
 			});
