@@ -1350,6 +1350,13 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 		return (this.tilesInfo[x] || {})[y];
 	},
 
+	setTileInfo: function (tile) {
+		var location = InfiniteMaze.viewer.mazeCanvas.getTileCoords(tile);
+		var x = location[0];
+		var y = location[1];
+		(this.tilesInfo[x] || (this.tilesInfo[x] = {}))[y] = tile.info;
+	},
+
 	getTileSrc: function (x, y) {
 		var tileInfo = this.getTileInfo(x, y);
 		if (tileInfo) {
@@ -1411,8 +1418,9 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 					tile.info = {
 						creator: doc.creator,
 						id: doc._id,
-						location: tile.info.location
+						location: tileCoords
 					};
+					InfiniteMaze.loader.setTileInfo(tile);
 					tile.isEmpty = false;
 					onSuccess.apply(this, arguments);
 				}
@@ -1969,7 +1977,7 @@ function SessionManager(db, userCtx) {
 SessionManager.prototype.userCtx = {db:"maze",name:null,roles:[]};
 
 // A way for users to flag tiles for deletion.
-function TileFlagger(db) {
+function TileFlagger(db, viewer) {
 	this.flagTile = function (tile) {
 		var user = InfiniteMaze.getUsername();
 		if (!user) {
@@ -1979,6 +1987,7 @@ function TileFlagger(db) {
 			type: "tile-flag",
 			_id: "tile-flag:" + tile.info.id + ":" + user,
 			tile_id: tile.info.id,
+			tile_location: viewer.mazeCanvas.getTileCoords(tile),
 			user: user,
 			created_at: Date.now()
 		}, {
@@ -2347,7 +2356,7 @@ InfiniteMaze.init3 = function (info, cb) {
 	this.forgotUsernameWindow = new ForgotUsernameWindow();
 	this.forgotPasswordWindow = new ForgotPasswordWindow();
 
-	this.flagger = new TileFlagger(this.db);
+	this.flagger = new TileFlagger(this.db, this.viewer);
 
 	if (info.listen_changes !== false) {
 		this.loader.listenForChangesSafe(update_seq);

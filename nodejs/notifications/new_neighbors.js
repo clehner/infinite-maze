@@ -12,7 +12,7 @@ function sendNewTileEmail(api, tile, username, email) {
 	.body(api.render('new_neighbor.html', {
 		name: username,
 		creator: tile.creator,
-		link: api.getTileUrl(tile),
+		link: api.getTileUrl(tile.location),
 	}))
 	.send(function (er) {
 		if (er) {

@@ -149,7 +149,10 @@ function (doc, oldDoc, userCtx) {
 
 			doc.tile_id,
 				"Flag must have a tile_id.",
-			
+
+			isPoint(doc.tile_location),
+				"Flag must have valid tile location coordinates.",
+
 			doc.user == userCtx.name || isAdmin,
 				"Flag must be for your own account.",
 

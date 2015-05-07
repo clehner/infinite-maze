@@ -1,7 +1,6 @@
 var sys = require('sys'),
-	SMTPConnection = require('smtp-connection'),
 	cred = require('./credentials'),
-	smtpConn = new SMTPConnection(cred.mail),
+	reconSmtp = require('./reconnecting-smtp-client')(cred.mail),
 	fs = require("fs"),
 	mustache = require('mustache'),
 	nano = require('nano')(cred.couchdb),
@@ -43,7 +42,7 @@ function saveDoc(doc, cb) {
 }
 
 function removeDoc(doc, cb) {
-	if (!debug) db.destroy(doc, cb);
+	if (!debug) db.destroy(doc._id, doc._rev, cb);
 	else if (cb) cb(null, true);
 }
 
@@ -89,7 +88,7 @@ function getUserDoc(username, cb) {
 var templates = {};
 function render(templateName, data) {
 	var template = templates[templateName] || (templates[templateName] =
-		fs.readFileSync('templates/' + templateName, 'ascii'));
+		fs.readFileSync('templates/' + templateName, 'utf8'));
 	// specify template default values
 	var obj = {
 		siteRoot: siteRoot,
@@ -101,8 +100,8 @@ function render(templateName, data) {
 	return mustache.render(template, obj);
 }
 
-function getTileUrl(tile) {
-	return siteRoot + '#' + tile.location.join(',');
+function getTileUrl(location) {
+	return siteRoot + '#' + location.join(',');
 }
 
 function mimeBoundary() {
@@ -114,7 +113,7 @@ function mailDate() {
 }
 
 function sendMail(to, msg, cb) {
-	smtpConn.send({
+	reconSmtp.send({
 		from: cred.mail.sender_address,
 		to: to
 	}, msg, function (err, info) {
@@ -147,22 +146,9 @@ var api = {
 	getTileUrl: getTileUrl,
 };
 
-smtpConn.connect(function (er) {
-	if (er) throw er;
-	if (cred.mail.auth) {
-		smtpConn.login(cred.mail.auth, onAuthed);
-	} else {
-		onAuthed(null);
-	}
-});
-
-function onAuthed(er) {
-	if (er) throw er;
-
-	require('./notifications/flagged_tiles')(api);
-	/*
-	require('./notifications/new_user')(api);
-	require('./notifications/new_neighbors')(api);
-	require('./notifications/password_reset')(api);
-	*/
-}
+require('./notifications/flagged_tiles')(api);
+/*
+require('./notifications/new_user')(api);
+require('./notifications/new_neighbors')(api);
+require('./notifications/password_reset')(api);
+*/

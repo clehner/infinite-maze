@@ -13,7 +13,7 @@ The maze tile ({{location}}) that you flagged has been deleted. Now you
 can try to replace it with something better!
 
 Maze tile URL:
-{{tile_url}}
+{{{tile_url}}}
 
 -- 
 The Infinite Maze
