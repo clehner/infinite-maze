@@ -1,12 +1,17 @@
-var sys = require('sys'),
-	cred = require('./credentials'),
-	reconSmtp = require('./reconnecting-smtp-client')(cred.mail),
-	fs = require("fs"),
+var fs = require("fs");
+if (!fs.existsSync('config.js')) {
+	console.error('You need a config file. Copy ' +
+		'config.example.js to config.js and edit it');
+	process.exit(1);
+}
+
+var config = require('./config'),
+	reconSmtp = require('./reconnecting-smtp-client')(config.mail),
 	mustache = require('mustache'),
-	nano = require('nano')(cred.couchdb),
-	db = nano.use('maze'),
+	nano = require('nano')(config.couchdb),
+	db = nano.use(config.maze_db || 'maze'),
 	usersDb = nano.use('_users'),
-	debug = cred.debug,
+	debug = config.debug,
 	wait = 4000, // ms in between emails
 	update_seq = ~~process.argv[2] || 'now',
 	siteRoot = 'http://www.theinfinitemaze.com/';
@@ -26,7 +31,7 @@ function sendLatest() {
 }
 function queue(func /*, args... */) {
 	var args = Array.prototype.slice.call(arguments, 1);
-	sys.debug("Queueing message: " + JSON.stringify(args));
+	console.log("Queueing message: " + JSON.stringify(args));
 	_queued.push([func, args]);
 	if (!queueing) {
 		queueing = true;
@@ -70,7 +75,7 @@ function getUserEmail(username, cb) {
 		}
 		var row = result.rows[0];
 		if (!row) {
-			sys.debug("No email found for username '" + username + "'.");
+			console.error("No email found for username '" + username + "'.");
 			return;
 		}
 		var email = row.value[0];
@@ -91,14 +96,8 @@ function render(templateName, data) {
 		fs.readFileSync('templates/' + templateName, 'utf8'));
 	// specify template default values
 	var obj = {
-		sender: {
-			name: cred.mail.sender.name,
-			address: cred.mail.sender.address,
-		},
-		site: {
-			name: cred.mail.site.name,
-			url: cred.mail.site.url
-		}
+		sender: config.mail.sender,
+		site: config.mail.site
 	};
 	for (var key in data)
 		obj[key] = data[key];
@@ -119,7 +118,7 @@ function mailDate() {
 
 function sendMail(to, msg, cb) {
 	reconSmtp.send({
-		from: cred.mail.sender.address,
+		from: config.mail.sender.address,
 		to: to
 	}, msg, function (err, info) {
 		if (info.rejected.length) {
@@ -133,7 +132,7 @@ function sendMail(to, msg, cb) {
 // sending the mails
 
 var api = {
-	cred: cred,
+	config: config,
 	debugAddress: debug && 'theinfinitemaze-debug.cel@celehner.com',
 	siteRoot: siteRoot,
 	changes: changes,

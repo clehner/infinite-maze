@@ -14,7 +14,7 @@ function makePasswordResetToken(api, requestDoc, cb) {
 			return;
 		}
 		var data = requestDoc._id + "-" + userDoc._rev;
-		cb(hex_hmac_sha1(api.cred.password_reset_secret, data));
+		cb(hex_hmac_sha1(api.config.password_reset_secret, data));
 	});
 }
 
