@@ -41,7 +41,7 @@ function(head, req) {
 			var src = mazeBase + 'db/' + tile_id + '/tile.png';
 			var url = mazeBase + 'flags.html#' + tile_id;
 			send(<entry>
-				<id>urn:uuid:{tile_id}</id>
+				<id>{url}</id>
 				<title>({location.join(',')})</title>
 				<updated>{date.toISOString()}</updated>
 				<link href={url}/>
