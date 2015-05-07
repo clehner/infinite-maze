@@ -16,7 +16,9 @@ function(head, req) {
 		})();
 	}
 
-	var mazeBase = 'http://www.theinfinitemaze.com/';
+	var host = req.headers.Host || 'www.theinfinitemaze.com';
+	var mazeBase = 'http://' + host + '/' +
+		req.requested_path.slice(0, -1).join('/') + '/';
 
 	provides("xml", function() {
 		send('<?xml version="1.0" encoding="utf-8"?>\n' +
