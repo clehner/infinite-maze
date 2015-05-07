@@ -10,7 +10,8 @@ function(doc) {
 			break;
 		case "tile":
 			emit(doc._id, {
-				location: doc.location
+				location: doc.location,
+				creator: doc.creator
 			});
 			break;
 	}

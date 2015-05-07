@@ -3,6 +3,7 @@
 <head>
 	<title>Tiles Flagged</title>
 	<meta charset="utf-8">
+	<link rel="alternate" type="application/atom+xml" href="flags.xml">
 	<style type="text/css">
 	body {
 		font-family: sans-serif;
@@ -63,6 +64,7 @@ function FlaggedTile(row) {
 	var a = create("a", el);
 	a.appendChild(document.createTextNode("(" + coords + ")"));
 	a.href = url;
+	a.name = tileId;
 
 	create("div", el).appendChild(document.createTextNode(
 				"Flagged by  " + numFlags + " users: " +

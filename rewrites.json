@@ -38,6 +38,15 @@
 		}
 	},
 	{
+		"from": "flags.xml",
+		"to": "_list/flags_rss/tile_flags",
+		"query": {
+			"limit": "10",
+			"group": "true",
+			"descending": "true"
+		}
+	},
+	{
 		"from": "favicon.ico",
 		"to": "images/favicon.ico"
 	},
