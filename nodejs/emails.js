@@ -87,7 +87,7 @@ function getUserEmail(username, cb) {
 }
 
 function getUserDoc(username, cb) {
-	db.get('org.couchdb.user:' + username, cb);
+	usersDb.get('org.couchdb.user:' + username, cb);
 }
 
 var templates = {};

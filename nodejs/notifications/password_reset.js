@@ -22,7 +22,7 @@ function changePassword(api, username, password_sha, salt, cb) {
 		if (er) return cb(er);
 		doc.password_sha = password_sha;
 		doc.salt = salt;
-		api.saveDoc(doc, cb);
+		api.usersDb.insert(doc, cb);
 	});
 }
 

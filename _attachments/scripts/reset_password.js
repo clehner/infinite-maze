@@ -88,6 +88,7 @@ var ResetPassword = (function () {
 		});
 		function onDocChange(doc) {
 			//console.log('doc changed', doc);
+			stop();
 			if (doc.failed_token == token) {
 				loader.stop();
 				errorNoStart("Password change failed. This link is invalid.");
@@ -102,7 +103,7 @@ var ResetPassword = (function () {
 						output(true, "Password changed successfully!<br>" +
 							"<a href=\"./\">Go to the maze</a>", true);
 					},
-					fail: function () {
+					error: function () {
 						loader.stop();
 						output(false, "Password change failed. :( You can try" +
 						" it again though.<br><a href=\"./\">Back to " +
