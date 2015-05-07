@@ -12,10 +12,9 @@
 		"to": "index.html"
 	},
 	{
-		"from": "mazes/:id/tiles.xml",
+		"from": "tiles.xml",
 		"to": "_list/tiles_rss/tiles_by_creation",
 		"query": {
-			"id": ":id",
 			"limit": "10",
 			"descending": "true",
 			"include_docs": "true"

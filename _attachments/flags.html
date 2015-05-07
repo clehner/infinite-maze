@@ -52,11 +52,11 @@ function getFlagDocs(tileId, cb) {
 }
 
 function FlaggedTile(row) {
-	var tileId = this.tileId = row.key;
+	var tileId = this.tileId = row.key.shift();
+	var coords = row.key;
 	var users = row.value.users;
 	var numFlags = users.length;
 	var latestFlagTime = new Date(row.value.newest);
-	var coords = row.value.location;
 
 	var url = "./#" + coords;
 	var el = this.element = create("li");

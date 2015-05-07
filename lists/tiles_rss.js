@@ -15,17 +15,17 @@ function(head, req) {
 			};
 		})();
 	}
-	
-	var defaultMaze = "1";
+
+	var mazeTitle = "The Infinite Maze";
+	var mazeBase = 'http://www.theinfinitemaze.com/';
+
 	provides("xml", function() {
-		var mazeTitle = "The Infinite Maze";
-		var mazeId = req.query.id || defaultMaze;
-		var mazeAddr = '../' + (mazeId == defaultMaze ? '' : '?maze=' + mazeId);
 		send('<?xml version="1.0" encoding="utf-8"?>\n' +
 			'<feed xmlns="http://www.w3.org/2005/Atom">\n' +
 			'<title>' + mazeTitle + ' - New Tiles</title>' +
 			'<id>urn:uuid:3E6BDCD0-C684-4B1F-8A99-D04850B9303A</id>' +
-			'<link rel="alternate" href="' + mazeAddr + '"/>');
+			'<link rel="alternate" type="text/html" href="' + mazeBase + '"/>' +
+			'<link rel="self" type="application/rss+xml" href="' + mazeBase + 'tiles.xml"/>\n');
 		//var newest_date = new Date(0);
 		//send(JSON.stringify(req));
 		while (row = getRow()) {
@@ -36,19 +36,17 @@ function(head, req) {
 			}*/
 			var coords = "(" + value.location.join(", ") + ")";
 			var creator = value.creator;
-			var src = '../../db/' + row.id + '/tile.png';
+			var src = mazeBase + 'db/' + row.id + '/tile.png';
 			var title = "Tile at " + coords + " by " + creator + " on " +
 				date.toLocaleString();
-			var url = mazeAddr + "#" + value.location.join(",");
+			var url = mazeBase + "#" + value.location.join(",");
 			var entry = <entry>
 				<id>urn:uuid:{row.id}</id>
 				<title>{coords}</title>
 				<updated>{date.toISOString()}</updated>
 				<link href={url} />
-				<content type="xhtml">
-					<div xmlns="http://www.w3.org/1999/xhtml">
-						<img style="background:black" src={src} alt={title}/>
-					</div>
+				<content type="html">
+					&lt;img style="background:black" src="{src}" alt="{title}"&gt;
 				</content>
 			</entry>;
 			if (creator) {
@@ -56,7 +54,6 @@ function(head, req) {
 			}
 			send(entry);
 		}
-		
 		//send("<updated>" + newest_date.toISOString() + "</updated>");
 		
 		return "</feed>";
