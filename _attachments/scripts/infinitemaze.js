@@ -1315,8 +1315,12 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 				var x = doc.location[0];
 				var y = doc.location[1];
 				var tile = InfiniteMaze.viewer.mazeCanvas.getTile(x, y);
-				if (doc._deleted) {
+				if (change.deleted) {
 					tile.clear();
+					delete tile.info;
+					if (x in tilesInfo)
+						delete tilesInfo[x][y];
+					return;
 				}
 				(tilesInfo[x] || (tilesInfo[x] = {}))[y] = {
 					// imitation of maze_and_tiles view / maze list
@@ -1441,7 +1445,8 @@ var InfiniteMazeLoader = Classy(MazeLoader, {
 
 	deleteTile: function (tile) {
 		this.getTileDoc(tile, function (doc) {
-			this.db.removeDoc(doc, {
+			doc._deleted = true;
+			this.db.saveDoc(doc, {
 				success: function () {
 					tile.clear();
 				},
