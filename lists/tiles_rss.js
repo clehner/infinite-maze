@@ -18,8 +18,8 @@ function(head, req) {
 
 	var mazeTitle = "The Infinite Maze";
 	var host = req.headers.Host || 'www.theinfinitemaze.com';
-	var mazeBase = 'http://' + host + '/' +
-		req.requested_path.slice(0, -1).join('/') + '/';
+	var mazeBase = 'http://' +
+		[host].concat(req.requested_path.slice(0, -1), '').join('/');
 
 	provides("xml", function() {
 		send('<?xml version="1.0" encoding="utf-8"?>\n' +
@@ -27,7 +27,7 @@ function(head, req) {
 			'<title>' + mazeTitle + ' - New Tiles</title>' +
 			'<id>urn:uuid:3E6BDCD0-C684-4B1F-8A99-D04850B9303A</id>' +
 			'<link rel="alternate" type="text/html" href="' + mazeBase + '"/>' +
-			'<link rel="self" type="application/rss+xml" href="' + mazeBase + 'tiles.xml"/>\n');
+			'<link rel="self" type="application/atom+xml" href="' + mazeBase + 'tiles.xml"/>\n');
 		//var newest_date = new Date(0);
 		//send(JSON.stringify(req));
 		while (row = getRow()) {

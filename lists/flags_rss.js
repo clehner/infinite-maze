@@ -17,8 +17,8 @@ function(head, req) {
 	}
 
 	var host = req.headers.Host || 'www.theinfinitemaze.com';
-	var mazeBase = 'http://' + host + '/' +
-		req.requested_path.slice(0, -1).join('/') + '/';
+	var mazeBase = 'http://' +
+		[host].concat(req.requested_path.slice(0, -1), '').join('/');
 
 	provides("xml", function() {
 		send('<?xml version="1.0" encoding="utf-8"?>\n' +
@@ -27,7 +27,7 @@ function(head, req) {
 
 			'<subtitle>Tiles flagged by users for deletion</subtitle>\n' +
 			'<link rel="alternate" type="text/html" href="' + mazeBase + 'flags.html"/>\n' +
-			'<link rel="self" type="application/rss+xml" href="' + mazeBase + 'flags.xml"/>\n' +
+			'<link rel="self" type="application/atom+xml" href="' + mazeBase + 'flags.xml"/>\n' +
 			'<updated>2015-04-27T04:03:21+00:00</updated>\n' +
 			'<author><name>The Infinite Maze</name></author>\n' +
 			'<id>urn:uuid:CAD16D94-550B-4EFB-87F2-A6679099AE3A</id>\n');
