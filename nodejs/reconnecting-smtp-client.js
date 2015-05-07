@@ -1,10 +1,11 @@
 var SMTPConnection = require('smtp-connection');
 
 module.exports = function (options) {
-	var state;
+	var state = 'disconnected';
 	var conn;
 	var queue = [];
 	var retryMins = 1;
+	var noopTimeout;
 
 	function connect() {
 		state = 'connecting';
@@ -31,21 +32,48 @@ module.exports = function (options) {
 		}
 	}
 
+	function beIdle() {
+		if (queue.length === 0) {
+			state = 'idle';
+			startNoopTimeout();
+		} else {
+			state = 'sending';
+			var args = queue.unshift();
+			conn.send(args.envelope, args.msg, function (err, info) {
+				args.cb(err, info);
+				beIdle();
+			});
+		}
+	}
+
 	function onAuthed(er) {
 		if (er) {
 			console.log('smtp auth error:', er);
 			reconnect();
 		}
 		retryMins = 1;
-		state = 'connected';
-		queue.forEach(function (args) {
-			conn.send.apply(conn, args);
-		});
-		queue.length = 0;
+		beIdle();
+	}
+
+	function startNoopTimeout() {
+		noopTimeout = setTimeout(noop, 1000 * 60 * 2);
+	}
+
+	function noop() {
+		state = 'noop';
+		conn._sendCommand('NOOP');
+		conn._currentAction = function(str) {
+			if (str.substr(0, 3) !== '250') {
+				console.error('Unexpected response to NOOP:', str);
+			}
+			beIdle();
+		};
 	}
 
 	function onError(er) {
 		console.error('smtp error', er);
+		state = 'disconnected';
+		clearTimeout(noopTimeout);
 		if (queue.length) {
 			reconnect();
 		}
@@ -61,11 +89,15 @@ module.exports = function (options) {
 
 	return {
 		send: function (envelope, msg, cb) {
-			if (state == 'connected') {
+			if (state == 'idle') {
 				conn.send(envelope, msg, cb);
 			} else {
-				queue.push([envelope, msg, cb]);
-				if (state != 'connecting') {
+				queue.push({
+					envelope: envelope,
+					msg: msg,
+					cb: cb
+				});
+				if (state == 'disconnected') {
 					connect();
 				}
 			}
