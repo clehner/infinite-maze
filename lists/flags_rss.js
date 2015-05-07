@@ -42,16 +42,24 @@ function(head, req) {
 			var date = new Date(value.newest);
 			var src = mazeBase + 'db/' + tile_id + '/tile.png';
 			var url = mazeBase + 'flags.html#' + tile_id;
-			send(<entry>
+			var maze_url = mazeBase + '#' + location;
+			var entry = <entry>
 				<id>{url}</id>
-				<title>({location})</title>
+				<title>[{users.length}] ({location})</title>
 				<updated>{date.toISOString()}</updated>
 				<link href={url}/>
 				<content type="html">
-					&lt;img style="background:black" src="{src}" alt="({location})"&gt;&lt;br/&gt;
+					&lt;a href="{maze_url}"&gt;
+					&lt;img style="background:black" src="{src}" alt="({location})"&gt;
+					&lt;/a&gt;
+					&lt;br/&gt;
 					Flagged by {users.join(', ')}
 				</content>
-			</entry>);
+			</entry>
+			users.forEach(function (user) {
+				entry.appendChild(<author><name>{user}</name></author>);
+			});
+			send(entry);
 		}
 		
 		return '</feed>';
