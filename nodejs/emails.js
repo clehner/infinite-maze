@@ -14,7 +14,7 @@ var config = require('./config'),
 	debug = config.debug,
 	wait = 4000, // ms in between emails
 	update_seq = ~~process.argv[2] || 'now',
-	siteRoot = 'http://www.theinfinitemaze.com/';
+	siteRoot = config.mail.site.url;
 
 // queuing sending mails
 
@@ -152,7 +152,7 @@ var api = {
 
 require('./notifications/flagged_tiles')(api);
 require('./notifications/new_neighbors')(api);
+require('./notifications/password_reset')(api);
 /*
 require('./notifications/new_user')(api);
-require('./notifications/password_reset')(api);
 */
