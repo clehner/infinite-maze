@@ -103,15 +103,6 @@ var InfoTileBox = Classy(TileBox, {
 		infoRight.addEventListener("mouseout", checkIfInWay, false);
 		this.element.appendChild(infoRight);
 
-		var infoBottomLeft = this.infoBottomLeft =
-			document.createElement("span");
-		infoBottomLeft.className = "tile-info bottom-left";
-		// TODO: check if in way
-		this.element.appendChild(infoBottomLeft);
-
-		this.sizeText = document.createTextNode("");
-		infoBottomLeft.appendChild(this.sizeText);
-
 		var nameElement = this.nameElement = document.createElement("span");
 		nameElement.className = "name";
 		infoLeft.appendChild(nameElement);
@@ -154,7 +145,6 @@ var InfoTileBox = Classy(TileBox, {
 		// put the creators name on the tile
 		var name = tile.info.creator || "anonymous";
 		this.nameText.nodeValue = name;
-		this.sizeText.nodeValue = tile.info.size - 1670;
 		this.nameElement.title = 'This maze square was drawn by "' + name + '"';
 
 		// show or hide links
