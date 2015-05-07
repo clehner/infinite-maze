@@ -4,8 +4,10 @@ function sendFlagResolutionEmail(api, flagDoc, email, cb) {
 	console.log("Sending flag resolution email to " + user +
 		(api.debug ? " (debug)" : ""));
 	api.sendMail([email], api.render('flagged_tile.txt', {
-		name: user,
-		user_address: email,
+		user: {
+			name: user,
+			address: email
+		},
 		location: location,
 		tile_url: api.getTileUrl(location),
 		boundary: api.mimeBoundary()

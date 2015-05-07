@@ -91,9 +91,14 @@ function render(templateName, data) {
 		fs.readFileSync('templates/' + templateName, 'utf8'));
 	// specify template default values
 	var obj = {
-		siteRoot: siteRoot,
-		sender_name: cred.mail.sender_name,
-		sender_address: cred.mail.sender_address,
+		sender: {
+			name: cred.mail.sender.name,
+			address: cred.mail.sender.address,
+		},
+		site: {
+			name: cred.mail.site.name,
+			url: cred.mail.site.url
+		}
 	};
 	for (var key in data)
 		obj[key] = data[key];
@@ -114,7 +119,7 @@ function mailDate() {
 
 function sendMail(to, msg, cb) {
 	reconSmtp.send({
-		from: cred.mail.sender_address,
+		from: cred.mail.sender.address,
 		to: to
 	}, msg, function (err, info) {
 		if (info.rejected.length) {

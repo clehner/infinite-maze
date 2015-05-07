@@ -1,5 +1,5 @@
-From: "{{sender_name}}" <{{sender_address}}>,
-To: "{{name}}" <{{user_address}}>
+From: "{{sender.name}}" <{{sender.address}}>,
+To: "{{user.name}}" <{{user.address}}>
 Subject: New maze drawing
 MIME-version: 1.0
 Content-Type: multipart/alternative; boundary={{boundary}}
@@ -7,27 +7,26 @@ Content-Type: multipart/alternative; boundary={{boundary}}
 --{{boundary}}
 Content-Type: text/plain; charset=us-ascii
 
-Hi {{name}},
+Hi {{{user.name}}},
 
-{{creator}} drew something next to one of your drawings in the maze.
+{{{creator}}} drew something next to one of your drawings in the maze.
 
 See what they drew:
 {{{link}}}
 
 -- 
-The Infinite Maze
-http://www.theinfinitemaze.com/
+{{{site.name}}}
+{{{site.url}}}
 
 --{{boundary}}
 Content-Type: text/html; charset=UTF-8
-
-<p>Hi <u>{{name}}</u>,</p>
+<p>Hi <u>{{user.name}}</u>,</p>
 
 <p><u>{{creator}}</u> drew something next to one of your drawings in the maze.</p>
 
 <p><a href="{{link}}">See what they drew.</a></p>
 
 -- <br/>
-<a href="http://www.theinfinitemaze.com/">The Infinite Maze</a>
+<a href="{{site.url}}">{{site.name}}</a>
 
 --{{boundary}}--
