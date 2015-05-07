@@ -1,25 +1,37 @@
-var sys = require('sys');
-
 function sendNewTileEmail(api, tile, username, email) {
-	sys.puts("Sending new tile email to " + username +
+	console.log("Sending new tile email to " + username +
 		(api.debug ? " (debug)" : "") + ": " + JSON.stringify(tile));
-	api.mail.message({
-		from: api.sender,
-		to: '"' + username + '" <' + (api.debugAddress || email) + '>',
-		subject: 'New maze drawing',
-		'Content-Type': 'text/html'
-	})
-	.body(api.render('new_neighbor.html', {
+	api.sendMail([email], api.render('new_neighbor.txt', {
 		name: username,
+		user_address: email,
 		creator: tile.creator,
 		link: api.getTileUrl(tile.location),
-	}))
-	.send(function (er) {
+		boundary: api.mimeBoundary()
+	}), function (er) {
 		if (er) {
-			sys.debug('Error on tile to '+username+': '+er);
-			throw er;
+			console.error('Error on tile to '+username+': '+er);
+			return;
 		}
-		sys.debug('Sent tile email!');
+		console.log('Sent tile email!');
+	});
+}
+
+function notifyUsers(api, doc, usernames) {
+	// Notify users of a new drawing
+	usernames.forEach(function (username) {
+		// Don't notify a user of their own drawing.
+		if (username == doc.creator) return;
+		// Get the email address for a username
+		api.getUserEmail(username, function (er, email, prefs) {
+			if (er) {
+				console.error("Unable to get email", er, username, doc);
+				return;
+			}
+			if (prefs.receive_tile_notifications) {
+				// Send the email
+				api.queue(sendNewTileEmail, api, doc, username, email);
+			}
+		});
 	});
 }
 
@@ -42,23 +54,10 @@ function onTilesToEmail(api, doc) {
 		doc.emailed_neighbors = true;
 		api.saveDoc(doc, function (er) {
 			if (er) {
-				sys.debug("Error updating doc " + JSON.stringify(doc));
+				console.error("Error updating doc " + JSON.stringify(doc));
 				return;
 			}
-			usernames.forEach(function (username) {
-				// Don't notify a user of their own drawing.
-				if (username != doc.creator) {
-					// Get the email address for a username
-					api.getUserEmail(username, function (er, email, prefs) {
-						if (er) throw er;
-						if (prefs.receive_tile_notifications) {
-							// Send the email
-							api.queue(sendNewTileEmail, api,
-								doc, username, email);
-						}
-					});
-				}
-			});
+			notifyUsers(api, doc, usernames);
 		});
 	});
 }
