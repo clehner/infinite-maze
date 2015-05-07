@@ -38,7 +38,7 @@ module.exports = function (options) {
 			startNoopTimeout();
 		} else {
 			state = 'sending';
-			var args = queue.unshift();
+			var args = queue.shift();
 			conn.send(args.envelope, args.msg, function (err, info) {
 				args.cb(err, info);
 				beIdle();
@@ -84,8 +84,6 @@ module.exports = function (options) {
 		setTimeout(connect, retryMins * 60000);
 		retryMins *= 2;
 	}
-
-	connect();
 
 	return {
 		send: function (envelope, msg, cb) {
