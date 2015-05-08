@@ -26,7 +26,27 @@ function changePassword(api, username, password_sha, salt, cb) {
 	});
 }
 
-function sendPasswordResetEmail(api, username, email, requestId, token) {
+function prepareSendPasswordResetEmail(api, doc, token) {
+	api.getUserEmail(doc.user, function (er, email) {
+		if (er) {
+			console.error('Error getting user email for', doc.user);
+			return;
+		}
+		api.queue(sendPasswordResetEmail, api, doc.user, email,
+				doc._id, token, function () {
+			doc.emailed = true;
+			api.saveDoc(doc, function (er) {
+				if (er) {
+					console.error("Error updating " +
+						"password req doc", er, doc);
+					return;
+				}
+			});
+		});
+	});
+}
+
+function sendPasswordResetEmail(api, username, email, requestId, token, cb) {
 	console.log("Sending password reset email to " + username +
 		(api.debug ? " (debug)" : "") + ". request id = " + requestId);
 	api.sendMail([email], api.render('password_reset.txt', {
@@ -41,7 +61,8 @@ function sendPasswordResetEmail(api, username, email, requestId, token) {
 			console.error('Error sending pass reset email to', username, er);
 			return;
 		}
-		console.log('Sent password reset request!');
+		console.log('Sent password reset request');
+		cb();
 	});
 }
 
@@ -81,21 +102,7 @@ function onPasswordResetRequest(api, doc) {
 	var user = doc.user;
 	makePasswordResetToken(api, doc, function (token) {
 		if (!doc.emailed) {
-			// send out email
-			doc.emailed = true;
-			api.getUserEmail(doc.user, function (er, email) {
-				if (er) throw er;
-				api.saveDoc(doc, function (er) {
-					if (er) {
-						console.error("Error updating password req doc " +
-							JSON.stringify([er, doc]));
-						return;
-					}
-					api.queue(sendPasswordResetEmail, api,
-						user, email, reqId, token);
-				});
-			});
-
+			prepareSendPasswordResetEmail(api, doc, token);
 		} else if (doc.token) {
 			// the user has clicked the link and entered their new password.
 
