@@ -31,7 +31,7 @@ function sendLatest() {
 }
 function queue(func /*, args... */) {
 	var args = Array.prototype.slice.call(arguments, 1);
-	console.log("Queueing message: " + JSON.stringify(args));
+	console.log("Queueing message");
 	_queued.push([func, args]);
 	if (!queueing) {
 		queueing = true;

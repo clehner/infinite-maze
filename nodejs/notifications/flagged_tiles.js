@@ -1,8 +1,7 @@
 function sendFlagResolutionEmail(api, flagDoc, email, cb) {
 	var user = flagDoc.user;
 	var location = flagDoc.tile_location;
-	console.log("Sending flag resolution email to " + user +
-		(api.debug ? " (debug)" : ""));
+	console.log("Sending flag resolution email to ", user, '<' + email + '>');
 	api.sendMail([email], api.render('flagged_tile.txt', {
 		user: {
 			name: user,

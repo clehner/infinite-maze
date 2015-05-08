@@ -47,8 +47,8 @@ function prepareSendPasswordResetEmail(api, doc, token) {
 }
 
 function sendPasswordResetEmail(api, username, email, requestId, token, cb) {
-	console.log("Sending password reset email to " + username +
-		(api.debug ? " (debug)" : "") + ". request id = " + requestId);
+	console.log("Sending password reset email to", username, '<' + email + '>',
+		'id', requestId);
 	api.sendMail([email], api.render('password_reset.txt', {
 		user: {
 			name: username,
@@ -82,7 +82,8 @@ function onPasswordResetRequest(api, doc) {
 	}
 
 	if (doc.expires < Date.now()) {
-		console.log("Attempt to use an expired password reset." + reqId);
+		console.log("Attempt to use an expired password reset", reqId,
+			'by', doc.user);
 		api.removeDoc(doc, function (er, ok) {
 			if (er) {
 				console.error("Error deleting password reset req doc. id = " +

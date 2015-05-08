@@ -3,7 +3,7 @@ var sys = require('sys');
 function sendNewUserEmail(api, user) {
 	var name = user.name;
 	var email = user.email;
-	sys.puts("Sending welcome email to " + email + ": " + JSON.stringify(user));
+	console.log("Sending welcome email to ", user, '<' + email + '>');
 	api.mail.message({
 		from: api.sender,
 		to: '"' + name + '" <' + (api.debugAddress || email) + '>',
