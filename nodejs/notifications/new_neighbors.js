@@ -38,6 +38,7 @@ function notifyUsers(api, doc, usernames) {
 }
 
 function onTilesToEmail(api, doc) {
+	if (doc._deleted) return;
 	// Get the changed tile
 	// Get the usernames of the creators of the adjacent tiles.
 	api.db.view("maze", "adjacent_tile_creators", {
