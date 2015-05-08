@@ -155,7 +155,11 @@ FlaggedTile.prototype = {
 db.view("maze/tile_flags", {
 	group: true,
 	success: function (resp) {
-		resp.rows.forEach(function (row) {
+		resp.rows.sort(function (a, b) {
+			return b.value.newest - a.value.newest;
+		}).sort(function (a, b) {
+			return b.value.users.length - a.value.users.length;
+		}).forEach(function (row) {
 			if (row.value.newest)
 				new FlaggedTile(row).show();
 		});
