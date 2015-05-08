@@ -1941,7 +1941,7 @@ function SessionManager(db, userCtx) {
 		});
 	};
 
-	var expireTime = 3600000 * 12; // 12 hours
+	var expireTime = 3600000 * 24; // 24 hours
 
 	this.requestResetPassword = function (username, cb) {
 		this.getUserInfo(username, function () {
