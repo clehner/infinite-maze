@@ -9,7 +9,7 @@ Content-Type: text/plain; charset=us-ascii
 
 Welcome to {{site.name}}, a collaborative maze drawing site.
 
-You signed up with the username {{{user.name}}}.
+You signed up with the username "{{{user.name}}}".
 
 Have fun!
 
@@ -23,7 +23,6 @@ Content-Type: text/html; charset=UTF-8
 <p>Welcome to {{site.name}}, a collaborative maze drawing site.</p>
 <p>You signed up with the username <u>{{user.name}}</u>.</p>
 <p>Have fun!</p>
-<a href="{{site.url}}">{{site.name}}</a>
-<p><img src="{{site.url}}images/welcome-email-logo.png" alt="Welcome"></a></p>
+<p><a href="{{site.url}}"><img src="{{site.url}}images/welcome-email-logo.png" alt="Welcome"></a></p>
 
 --{{boundary}}--

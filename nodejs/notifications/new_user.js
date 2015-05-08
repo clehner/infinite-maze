@@ -1,5 +1,5 @@
 function sendNewUserEmail(api, user, cb) {
-	console.log("Sending welcome email to ", user.name,
+	console.log("Sending welcome email to", user.name,
 		'<' + user.email + '>');
 	api.sendMail([user.email], api.render('new_user.txt', {
 		user: {

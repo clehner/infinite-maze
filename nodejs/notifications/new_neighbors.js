@@ -1,5 +1,5 @@
 function sendNewTileEmail(api, tile, username, email) {
-	console.log("Sending new tile email to ", username, '<' + email + '>',
+	console.log("Sending new tile email to", username, '<' + email + '>',
 		tile.location);
 	api.sendMail([email], api.render('new_neighbor.txt', {
 		user: {
