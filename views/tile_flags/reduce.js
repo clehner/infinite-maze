@@ -1,4 +1,11 @@
 function(keys, values, rereduce) {
+	function unique(array) {
+		var elems = {};
+		return array.filter(function (elem) {
+			return !(elem in elems) && (elems[elem] = true);
+		});
+	}
+
 	var newest = -Infinity;
 	var users = [];
 	values.forEach(function (value) {
@@ -9,6 +16,6 @@ function(keys, values, rereduce) {
 	});
 	return {
 		newest: newest,
-		users: users
+		users: unique(users).slice(0, 12)
 	};
 }

@@ -12,5 +12,5 @@ function(keys, values, rereduce) {
 		return [];
 	}
 	var users = [].concat.apply([], values);
-	return unique(users);
+	return unique(users).slice(0, 12);
 }
