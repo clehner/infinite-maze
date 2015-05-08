@@ -1,36 +1,31 @@
-var sys = require('sys');
-
-function sendNewUserEmail(api, user) {
-	var name = user.name;
-	var email = user.email;
-	console.log("Sending welcome email to ", user, '<' + email + '>');
-	api.mail.message({
-		from: api.sender,
-		to: '"' + name + '" <' + (api.debugAddress || email) + '>',
-		subject: 'Welcome to the Infinite Maze!',
-		'Content-Type': 'text/html'
-	})
-	.body(api.render('new_user.html', {
-		name: name
-	}))
-	.send(function (er) {
-		if (er) {
-			sys.debug('Error to '+name+': '+er);
-			throw er;
-		}
-		sys.debug('Sent welcome email!');
-	});
+function sendNewUserEmail(api, user, cb) {
+	console.log("Sending welcome email to ", user.name,
+		'<' + user.email + '>');
+	api.sendMail([user.email], api.render('new_user.txt', {
+		user: {
+			name: user.name,
+			address: user.email
+		},
+		boundary: api.mimeBoundary()
+	}), cb);
 }
 
 function onNewUser(api, doc) {
-	doc.emailed_welcome = true;
-	api.saveDoc(doc, function (er, ok) {
-		if (er || !ok) {
-			sys.debug("Error: " + er + ", ok=" + ok + ", doc=" +
-				JSON.stringify(doc));
-			throw er;
+	var name = doc.name;
+	api.queue(sendNewUserEmail, api, doc, function(er) {
+		if (er) {
+			console.error('Error welcoming', name, er);
+			return;
 		}
-		api.queue(sendNewUserEmail, doc);
+		console.log('Sent welcome email to', name);
+		doc.emailed_welcome = true;
+		api.saveDoc(doc, function (er, ok) {
+			if (er || !ok) {
+				console.error("Error saving user doc", er, ok, doc);
+				return;
+			}
+			console.log('Saved user doc for ', name);
+		});
 	});
 }
 

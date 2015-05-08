@@ -153,6 +153,4 @@ var api = {
 require('./notifications/flagged_tiles')(api);
 require('./notifications/new_neighbors')(api);
 require('./notifications/password_reset')(api);
-/*
 require('./notifications/new_user')(api);
-*/

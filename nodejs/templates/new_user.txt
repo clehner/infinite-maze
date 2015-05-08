@@ -1,0 +1,29 @@
+From: "{{sender.name}}" <{{sender.address}}>,
+To: "{{user.name}}" <{{user.address}}>
+Subject: Welcome to the Infinite Maze!
+MIME-version: 1.0
+Content-Type: multipart/alternative; boundary={{boundary}}
+
+--{{boundary}}
+Content-Type: text/plain; charset=us-ascii
+
+Welcome to {{site.name}}, a collaborative maze drawing site.
+
+You signed up with the username {{{user.name}}}.
+
+Have fun!
+
+-- 
+{{{site.name}}}
+{{{site.url}}}
+
+--{{boundary}}
+Content-Type: text/html; charset=UTF-8
+
+<p>Welcome to {{site.name}}, a collaborative maze drawing site.</p>
+<p>You signed up with the username <u>{{user.name}}</u>.</p>
+<p>Have fun!</p>
+<a href="{{site.url}}">{{site.name}}</a>
+<p><img src="{{site.url}}images/welcome-email-logo.png" alt="Welcome"></a></p>
+
+--{{boundary}}--
