@@ -18,11 +18,48 @@ function sendNewTileEmail(api, tile, username, email) {
 	});
 }
 
+var notified = {};
+var empty = {};
+var timeout = 30 * 60 * 1000;
+// prevent mail flooding
+function notifiedUserRecently(username, location) {
+	var notifiedUser = notified[username] || (notified[username] = {});
+	var now = Date.now();
+	// mark location as notified
+	notifiedUser[location[0]+','+location[1]] = now;
+	// check if adjacent locations were notified recently
+	var lastAdjacentNotification = Math.max(
+		notifiedUser[(location[0]-1)+','+(location[1]-1)] || 0,
+		notifiedUser[(location[0]-1)+','+location[1]] || 0,
+		notifiedUser[(location[0]-1)+','+location[1]+1] || 0,
+		notifiedUser[(location[0]+1)+','+(location[1]-1)] || 0,
+		notifiedUser[(location[0]+1)+','+location[1]] || 0,
+		notifiedUser[(location[0]+1)+','+(location[1]+1)] || 0,
+		notifiedUser[location[0]+','+(location[1]+1)] || 0,
+		notifiedUser[location[0]+','+(location[1]-1)] || 0);
+	if (lastAdjacentNotification && (lastAdjacentNotification + timeout > now)) {
+		// notified user about adjacent square within timeout.
+		// skip notification about this square.
+		return true;
+	}
+	return false;
+}
+
 function notifyUsers(api, doc, usernames) {
 	// Notify users of a new drawing
 	usernames.forEach(function (username) {
 		// Don't notify a user of their own drawing.
 		if (username == doc.creator) return;
+
+		// Don't notify user if we already notified them recently about
+		// something nearby
+		if (notifiedUserRecently(username, doc.location)) {
+			console.log('Skipping notification to', username,
+				'about tile', doc.location.join(','),
+				'which had recent neighbor notification');
+			return;
+		}
+
 		// Get the email address for a username
 		api.getUserEmail(username, function (er, email, prefs) {
 			if (er) {
